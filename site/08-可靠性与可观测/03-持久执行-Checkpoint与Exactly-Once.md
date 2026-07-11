@@ -84,11 +84,16 @@ sequenceDiagram
   participant S as 状态存储
   participant W2 as Worker B（epoch 8）
   W1->>X: commit(command, idempotency_key)
-  X-->>W1: 外部效果已提交
-  Note over W1,X: ACK 或本地 receipt 丢失
-  Note over W1,S: Worker A 在 checkpoint 前崩溃或失去 lease
+  Note over W1,X: 外部效果已提交
+  alt 窗口 A：ACK / receipt 在返回途中丢失
+    X--xW1: ACK / receipt 未送达
+    Note over W1,S: 持久状态没有 receipt；W1 崩溃或失去 lease
+  else 窗口 B：receipt 已到 Worker，但未写入 checkpoint
+    X-->>W1: ACK / receipt 已送达
+    Note over W1,S: W1 在持久化 checkpoint 前崩溃；持久状态仍没有 receipt
+  end
   W2->>S: 获取 lease，ownership_epoch = 8
-  S-->>W2: 恢复 IN_DOUBT 与 in-flight command
+  S-->>W2: 恢复无 receipt 的 in-flight command
   W2->>X: 查询 receipt / 权威业务状态
   X-->>W2: 效果已发生
   W2->>S: 以 epoch 8 CAS 写入 reconciled 状态

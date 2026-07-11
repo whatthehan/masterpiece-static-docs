@@ -20,35 +20,35 @@
 
 不同读者可以从不同入口开始，但都要回到可验证的产出：
 
-| 你的状态                | 建议入口                                                            | 阅读方式                             |
-| ------------------- | --------------------------------------------------------------- | -------------------------------- |
-| 正式开始转型              | [如何阅读这本书](/masterpiece-static-docs/00-导读/01-如何使用这套教材.md)        | 按八周启动计划建立理论与 M0 证据，再进入首个手写 Agent |
-| 已经做过 Agent 原型       | [知识地图与学习门禁](/masterpiece-static-docs/00-导读/02-知识地图与学习门禁.md)     | 用章节验收矩阵定位缺口，不必机械重读已能通过的章节        |
-| 已有稳定单 Agent Runtime | [从学习到转型的完整路线](/masterpiece-static-docs/00-导读/05-从学习到转型的完整路线.md) | 按 L2–L6 补齐产品与生产能力；Rust 迁移仍需独立证据  |
+| 你的状态                | 建议入口                                                            | 阅读方式                                                                                |
+| ------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| 正式开始转型              | [如何阅读这本书](/masterpiece-static-docs/00-导读/01-如何使用这套教材.md)        | 按[八周启动计划](/masterpiece-static-docs/10-毕业门禁/04-八周理论学习计划.md)建立理论与 M0 证据，再进入首个手写 Agent |
+| 已经做过 Agent 原型       | [知识地图与学习门禁](/masterpiece-static-docs/00-导读/02-知识地图与学习门禁.md)     | 用章节验收矩阵定位缺口，不必机械重读已能通过的章节                                                           |
+| 已有稳定单 Agent Runtime | [从学习到转型的完整路线](/masterpiece-static-docs/00-导读/05-从学习到转型的完整路线.md) | 按 L2–L6 补齐产品与生产能力；Rust 迁移仍需独立证据                                                     |
 
 阅读时遵循五条约定：
 
-1. `00–08` 与 `10/01–06` 是首次手写 Agent 前的主线，按八周计划中的显式依赖顺序学习；`09` 与 `10/07` 是完成 L1 后的 Rust 迁移门禁。`08/03` 在首次门禁中只要求 durable 心智模型，不要求实现引擎。
+1. `00–08` 与 `10/01–06` 是首次手写 Agent 前的主线，按八周计划中的显式依赖顺序学习。Rust 的 R0/R1 基础学习可与 L0/L1 并行；任何真实组件迁移、跨语言契约落地和 `10/07` 迁移门禁都要等到 L1 baseline 与迁移证据齐备。`08/03` 在首次门禁中只要求 durable 心智模型，不要求实现引擎。
 2. 每章先写初始答案，阅读后做纸面/前置微实验，最后重答章末检查。标为“L1 后系统实验”的内容不阻塞首次动手。
 3. `必须掌握` 是进入手写 Agent Loop 前的门禁；`L1 后` 不等于没用，而是需要先有单 Agent baseline。
 4. 一手资料用于校验概念，不要求逐篇精读。优先读指定章节、方法图、限制和实验结论。
-5. M0 分两次收敛：任何模型探针前先完成任务契约、风险、非 Agent baseline 和 12–20 个平衡 seed cases；首次手写 Agent 前扩展为 30–50 个版本化案例。L1 是第一个手写单 Agent Runtime。
+5. 任何模型探针前先通过 **G0a（M0 草案）**：任务契约、风险、非 Agent baseline 和 12–20 个平衡 seed cases。理论阅读可以继续穿插；只有扩展并冻结 30–50 个版本化案例后才算正式通过 M0，才能进入 L0 SDK 实践和后续首个 Runtime。L1 是第一个手写单 Agent Runtime。
 
 ## 全书路线
 
-| 模块                                                                                               | 核心问题                   | 完成标志                       |
-| ------------------------------------------------------------------------------------------------ | ---------------------- | -------------------------- |
-| [00 导读与 M0](/masterpiece-static-docs/00-导读/01-如何使用这套教材.md)                                       | 怎样读这本书、先定义什么以及完整路线通向哪里 | 完成 M0 契约、案例和 baseline 方案   |
-| [01 数学与机器学习直觉](/masterpiece-static-docs/01-数学与机器学习直觉/01-概率-信息量与采样.md)                            | 概率、向量和泛化怎样影响模型行为       | 能解释随机性、相似度和分布偏移            |
-| [02 LLM 工作原理](/masterpiece-static-docs/02-LLM工作原理/01-Token与自回归生成.md)                             | 自回归模型如何训练与生成           | 能解释上下文、采样、KV Cache 与能力边界   |
-| [03 评测与实验科学](/masterpiece-static-docs/03-评测与实验科学/01-Grader-Trial与统计.md)                          | 如何证明差异不是随机波动           | 能设计 trial、grader、区间和轨迹评测   |
-| [04 TS/Node、模型接口与 Agent 内核](/masterpiece-static-docs/04-模型接口与Agent内核/01-TypeScript-Node运行时先修.md) | 如何把概率模型包进确定性运行时        | 能画出可取消、可收敛、有终态的状态机         |
-| [05 上下文、知识与记忆](/masterpiece-static-docs/05-上下文-知识与记忆/01-Context-Engineering.md)                  | 每一步应让模型看到什么            | 能区分来源、状态、知识、记忆、检索与压缩       |
-| [06 工具、协议与行动控制](/masterpiece-static-docs/06-工具-协议与行动控制/01-工具契约与错误模型.md)                          | 模型建议怎样安全变成外部动作         | 能设计工具契约、授权、审批、幂等与隔离        |
-| [07 安全、治理与 UX](/masterpiece-static-docs/07-安全与治理/01-Agent威胁建模.md)                                | 如何约束攻击并保留用户控制          | 能完成威胁模型和可控交互设计             |
-| [08 可靠性与可观测](/masterpiece-static-docs/08-可靠性与可观测/01-失败分类-超时-重试与取消.md)                            | 长链路如何在失败中保持可控          | 能解释取消、背压、checkpoint 和副作用语义 |
-| [09 Rust 迁移（L1 后）](/masterpiece-static-docs/09-Rust迁移理论-L1后/01-Rust迁移所需理论.md)                    | 何时把稳定执行面迁移到 Rust       | 能给出控制面/执行面边界及迁移证据          |
-| [10 毕业门禁](/masterpiece-static-docs/10-毕业门禁/01-综合系统心智模型.md)                                       | 是否已经具备动手所需心智模型         | 通过分域闭卷检查并完成 M0             |
+| 模块                                                                                               | 核心问题                    | 完成标志                             |
+| ------------------------------------------------------------------------------------------------ | ----------------------- | -------------------------------- |
+| [00 导读与 M0](/masterpiece-static-docs/00-导读/01-如何使用这套教材.md)                                       | 怎样读这本书、先定义什么以及完整路线通向哪里  | 从 G0a 草案收敛到包含 30–50 个版本化案例的正式 M0 |
+| [01 数学与机器学习直觉](/masterpiece-static-docs/01-数学与机器学习直觉/01-概率-信息量与采样.md)                            | 概率、向量和泛化怎样影响模型行为        | 能解释随机性、相似度和分布偏移                  |
+| [02 LLM 工作原理](/masterpiece-static-docs/02-LLM工作原理/01-Token与自回归生成.md)                             | 自回归模型如何训练与生成            | 能解释上下文、采样、KV Cache 与能力边界         |
+| [03 评测与实验科学](/masterpiece-static-docs/03-评测与实验科学/01-Grader-Trial与统计.md)                          | 如何证明差异不是随机波动            | 能设计 trial、grader、区间和轨迹评测         |
+| [04 TS/Node、模型接口与 Agent 内核](/masterpiece-static-docs/04-模型接口与Agent内核/01-TypeScript-Node运行时先修.md) | 如何把概率模型包进确定性运行时         | 能画出可取消、可收敛、有终态的状态机               |
+| [05 上下文、知识与记忆](/masterpiece-static-docs/05-上下文-知识与记忆/01-Context-Engineering.md)                  | 每一步应让模型看到什么             | 能区分来源、状态、知识、记忆、检索与压缩             |
+| [06 工具、协议与行动控制](/masterpiece-static-docs/06-工具-协议与行动控制/01-工具契约与错误模型.md)                          | 模型建议怎样安全变成外部动作          | 能设计工具契约、授权、审批、幂等与隔离              |
+| [07 安全、治理与 UX](/masterpiece-static-docs/07-安全与治理/01-Agent威胁建模.md)                                | 如何约束攻击并保留用户控制           | 能完成威胁模型和可控交互设计                   |
+| [08 可靠性与可观测](/masterpiece-static-docs/08-可靠性与可观测/01-失败分类-超时-重试与取消.md)                            | 长链路如何在失败中保持可控           | 能解释取消、背压、checkpoint 和副作用语义       |
+| [09 Rust 学习与迁移理论](/masterpiece-static-docs/09-Rust迁移理论-L1后/01-Rust迁移所需理论.md)                     | 如何并行学习 Rust，以及何时迁移稳定执行面 | 能分开 R0/R1 学习练习与 L1 后的真实迁移门禁      |
+| [10 毕业门禁](/masterpiece-static-docs/10-毕业门禁/01-综合系统心智模型.md)                                       | 是否已经具备动手所需心智模型          | 通过分域闭卷检查并完成 M0                   |
 
 ## 完整目录
 
@@ -61,16 +61,17 @@
 - 06：[工具契约](/masterpiece-static-docs/06-工具-协议与行动控制/01-工具契约与错误模型.md) · [身份/授权/审批](/masterpiece-static-docs/06-工具-协议与行动控制/02-身份-授权与审批.md) · [MCP](/masterpiece-static-docs/06-工具-协议与行动控制/03-MCP与互操作协议.md) · [幂等/补偿/沙箱](/masterpiece-static-docs/06-工具-协议与行动控制/04-幂等-补偿与沙箱.md)
 - 07：[威胁建模](/masterpiece-static-docs/07-安全与治理/01-Agent威胁建模.md) · [Prompt Injection](/masterpiece-static-docs/07-安全与治理/02-Prompt-Injection与不可信内容.md) · [最小权限/隐私](/masterpiece-static-docs/07-安全与治理/03-最小权限-隐私与Confused-Deputy.md) · [纵深防御](/masterpiece-static-docs/07-安全与治理/04-纵深防御与人类控制.md) · [Agent UX](/masterpiece-static-docs/07-安全与治理/05-Agent-UX与可控交互.md)
 - 08：[失败/重试/取消](/masterpiece-static-docs/08-可靠性与可观测/01-失败分类-超时-重试与取消.md) · [并发/背压](/masterpiece-static-docs/08-可靠性与可观测/02-并发-背压与预算.md) · [持久执行](/masterpiece-static-docs/08-可靠性与可观测/03-持久执行-Checkpoint与Exactly-Once.md) · [Trace/SLO/成本](/masterpiece-static-docs/08-可靠性与可观测/04-Trace-SLO与成本.md)
-- 09（L1 后）：[Rust 理论](/masterpiece-static-docs/09-Rust迁移理论-L1后/01-Rust迁移所需理论.md) · [跨语言契约](/masterpiece-static-docs/09-Rust迁移理论-L1后/02-跨语言契约与控制面-执行面.md)
+- 09（学习可并行，迁移在 L1 后）：[Rust 理论](/masterpiece-static-docs/09-Rust迁移理论-L1后/01-Rust迁移所需理论.md) · [跨语言契约](/masterpiece-static-docs/09-Rust迁移理论-L1后/02-跨语言契约与控制面-执行面.md)
 - 10：[综合模型](/masterpiece-static-docs/10-毕业门禁/01-综合系统心智模型.md) · [闭卷检查](/masterpiece-static-docs/10-毕业门禁/02-动手前闭卷检查.md) · [评分](/masterpiece-static-docs/10-毕业门禁/03-参考答案与评分.md) · [八周计划](/masterpiece-static-docs/10-毕业门禁/04-八周理论学习计划.md) · [资料索引](/masterpiece-static-docs/10-毕业门禁/05-一手资料索引.md) · [章节验收](/masterpiece-static-docs/10-毕业门禁/06-章节验收矩阵.md) · [Rust 迁移门禁](/masterpiece-static-docs/10-毕业门禁/07-Rust迁移门禁.md)
 
 ## 总依赖图
 
 ```mermaid
 flowchart TD
-    M0["M0：任务契约、Baseline 与案例"] --> MODEL["模型直觉：概率、表示与生成"]
+    G0A["G0a：M0 草案与 12–20 个案例"] --> MODEL["模型直觉：概率、表示与生成"]
     MODEL --> EVAL["实验科学：Trial、Grader 与统计证据"]
-    EVAL --> API["模型接口：事件、Schema 与 Tool Call"]
+    EVAL --> M0["M0：30–50 个版本化案例与 Baseline"]
+    M0 --> API["L0 模型接口：事件、Schema 与 Tool Call"]
     API --> LOOP["受约束 Agent Loop"]
     LOOP --> CONTEXT["Context、Knowledge 与 Memory"]
     CONTEXT --> ACTION["受控行动：授权、审批与幂等"]

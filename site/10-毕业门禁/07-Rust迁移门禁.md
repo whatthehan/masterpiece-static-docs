@@ -1,6 +1,6 @@
-# 07 · Rust 迁移门禁（L1 后）
+# 07 · Rust 真实迁移门禁（L1 后）
 
-这份门禁是一份迁移决策记录，而不是 Rust 学习进度表。它要求先证明问题确实位于候选组件，再证明新实现保持原有语义，并提前写出停止与回滚条件。
+这份门禁是一份真实组件迁移决策记录，而不是 Rust 学习进度表。R0/R1 基础学习可以在 L0/L1 并行；只要开始替换 Workbench 或生产组件，无论处于 R0–R4 哪一阶段，都必须使用本门禁。
 
 ## 何时使用
 
@@ -15,7 +15,7 @@
 
 ## 阶段门禁
 
-### R0 · 语言与纯计算
+### R0 · 纯逻辑
 
 必须证明：
 
@@ -35,7 +35,7 @@
 - 只读工具在并发与取消下无泄漏任务、无无界队列、Trace 连续。
 - CPU/阻塞工作不占用 async executor。
 
-### R2 · 跨语言 Sidecar
+### R2 · Sidecar 与协议
 
 必须证明：
 
@@ -45,9 +45,28 @@
 - contract/golden/property tests 覆盖版本、边界、错误、断流、取消、迟到响应和 unknown effect。
 - 进程边界不被宣称为自动资源/安全隔离；CPU/内存/文件/网络/凭证限制均有独立设置和测试。
 
-### R3 · Shadow、Canary 与生产迁移
+### R3 · 受控执行面
 
 必须证明：
+
+- Rust MCP server/gateway、policy proxy、parser/indexer 或 sandbox supervisor 仍由 Node 控制面编排。
+- 身份、权限上下文和 policy decision reference 可验证；资源服务执行前重新授权，不信任 `authorized=true`。
+- 幂等键、资源版本、连接池、限流、重试、背压和审计字段均有明确契约。
+- property/fuzz/chaos test 覆盖重复请求、并发冲突、越权、依赖故障与资源耗尽。
+- 文件、网络、凭证、CPU 和内存隔离独立生效，不把 Rust 内存安全当作沙箱。
+
+### R4 · 可选运行时核心
+
+必须证明：
+
+- 只有 Thread / Run / Item、事件存储、checkpoint、恢复、调度和流程版本契约稳定后，才选择候选运行时核心。
+- Node 与 Rust 对同一版本化事件、状态转移和错误分类达到 contract、golden、Eval 与 Trace parity。
+- 崩溃、重放、升级与旧版本在途 Run 的恢复测试通过，不改变业务授权和产品 UX 语义。
+- 实测收益仍满足预注册标准；证据不足时保留 Node 控制面与运行时核心。
+
+## 横切发布门禁
+
+以下要求适用于每一次真实组件迁移，不占用 R0–R4 的阶段编号：
 
 - Shadow 不产生副作用，比较 outcome/error/trace/audit/latency/resource/cost 而非只比文本。
 - 在预注册的 MDE 上显示真实改善，安全、正确性和尾延迟无退化。

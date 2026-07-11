@@ -1,8 +1,8 @@
 # 01 · Rust 迁移所需理论
 
-> 本模块全部属于 **L1 之后**。首个 Agent 仍以 TypeScript + Node 完成控制面、评测和运行时闭环；Rust 迁移只由测量到的资源、尾延迟、部署或隔离需求驱动。
+> Rust 的 R0/R1 语言与异步基础可从 L0/L1 并行学习；这不等于开始迁移。任何真实组件迁移仍须先固定 TypeScript + Node 的 L1 baseline，并由 profile/SLO、部署或隔离证据驱动。
 
-当 TypeScript + Node Runtime 已经稳定运行，团队很容易把“下一步”理解成换一种更快的语言。但语言迁移会同时引入新的异步模型、协议边界和运维组合；如果原有状态、授权与故障语义尚未稳定，Rust 只会把这些问题搬到更难调试的地方。
+准备迁移已稳定的 TypeScript + Node Runtime 时，团队很容易把“下一步”理解成换一种更快的语言。但语言迁移会同时引入新的异步模型、协议边界和运维组合；如果原有状态、授权与故障语义尚未稳定，Rust 只会把这些问题搬到更难调试的地方。
 
 因此，本章讨论的不是“为什么 Rust 更好”，而是怎样识别一个值得迁移的边界，以及迁移前必须建立哪些语言、并发与测试心智模型。
 
@@ -51,11 +51,13 @@ Rust 的穷尽匹配非常适合状态机，但仍不能证明业务授权或外
 
 ## 5. 渐进阶梯
 
-- R0：Cargo、ownership、Result、enum、trait、tests、Clippy；迁移纯函数。
-- R1：Tokio、Serde、reqwest、stream、timeout/cancel/backpressure；实现只读工具或流解析器。
-- R2：Axum/Tower、tracing、SQLx、JSON-RPC/SSE/gRPC；实现 sidecar。
-- R3：rmcp、policy proxy、MCP gateway、sandbox supervisor。
-- R4：只有契约、Trace 和 Eval 稳定后才考虑 runtime core。
+- R0 纯逻辑：Cargo、ownership、Result、enum、trait、tests、Clippy；用练习 crate 重写纯函数并对拍。
+- R1 异步与只读：Tokio、Serde、reqwest、stream、timeout/cancel/backpressure；实现学习用只读工具或流解析器。
+- R2 sidecar 与协议：Axum/Tower、tracing、SQLx、JSON-RPC/SSE/gRPC；在迁移门禁通过后实现独立 sidecar。
+- R3 受控执行面：rmcp、policy proxy、MCP gateway、sandbox supervisor。
+- R4 可选运行时核心：只有契约、Trace、Eval 和恢复语义稳定后才考虑 runtime core。
+
+Shadow、canary 与 rollback 是每次真实迁移都要经过的横切发布门禁，不占用 R0–R4 的阶段编号。
 
 ## 6. SDK 事实边界
 
@@ -69,9 +71,9 @@ Rust 的穷尽匹配非常适合状态机，但仍不能证明业务授权或外
 - 不让外部 API exactly-once。
 - 不修复错误工具契约和状态模型。
 
-## L1 后迁移实验
+## R0/R1 学习练习与 L1 后迁移实验
 
-把 TS 中一个无副作用的 state reducer 用 Rust enum 重写，用相同 JSON fixtures 对拍。然后迁移一个只读工具，验证 timeout、cancel、bounded concurrency 和 trace propagation，而不是先重写 Agent Loop。
+L1 前可以把 TS 中一个无副作用的 state reducer 用 Rust enum 重写，用相同 JSON fixtures 对拍，但不替换 Workbench 中的真实组件。L1 baseline 与迁移证据齐备后，再迁移一个只读工具，验证 timeout、cancel、bounded concurrency 和 trace propagation，而不是先重写 Agent Loop。
 
 ## 常见误区
 

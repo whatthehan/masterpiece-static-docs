@@ -24,35 +24,35 @@ url: https://whatthehan.github.io/masterpiece-static-docs/index.md
 
 不同读者可以从不同入口开始，但都要回到可验证的产出：
 
-| 你的状态                | 建议入口                                                            | 阅读方式                             |
-| ------------------- | --------------------------------------------------------------- | -------------------------------- |
-| 正式开始转型              | [如何阅读这本书](/masterpiece-static-docs/00-导读/01-如何使用这套教材.md)        | 按八周启动计划建立理论与 M0 证据，再进入首个手写 Agent |
-| 已经做过 Agent 原型       | [知识地图与学习门禁](/masterpiece-static-docs/00-导读/02-知识地图与学习门禁.md)     | 用章节验收矩阵定位缺口，不必机械重读已能通过的章节        |
-| 已有稳定单 Agent Runtime | [从学习到转型的完整路线](/masterpiece-static-docs/00-导读/05-从学习到转型的完整路线.md) | 按 L2–L6 补齐产品与生产能力；Rust 迁移仍需独立证据  |
+| 你的状态                | 建议入口                                                            | 阅读方式                                                                                |
+| ------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| 正式开始转型              | [如何阅读这本书](/masterpiece-static-docs/00-导读/01-如何使用这套教材.md)        | 按[八周启动计划](/masterpiece-static-docs/10-毕业门禁/04-八周理论学习计划.md)建立理论与 M0 证据，再进入首个手写 Agent |
+| 已经做过 Agent 原型       | [知识地图与学习门禁](/masterpiece-static-docs/00-导读/02-知识地图与学习门禁.md)     | 用章节验收矩阵定位缺口，不必机械重读已能通过的章节                                                           |
+| 已有稳定单 Agent Runtime | [从学习到转型的完整路线](/masterpiece-static-docs/00-导读/05-从学习到转型的完整路线.md) | 按 L2–L6 补齐产品与生产能力；Rust 迁移仍需独立证据                                                     |
 
 阅读时遵循五条约定：
 
-1. `00–08` 与 `10/01–06` 是首次手写 Agent 前的主线，按八周计划中的显式依赖顺序学习；`09` 与 `10/07` 是完成 L1 后的 Rust 迁移门禁。`08/03` 在首次门禁中只要求 durable 心智模型，不要求实现引擎。
+1. `00–08` 与 `10/01–06` 是首次手写 Agent 前的主线，按八周计划中的显式依赖顺序学习。Rust 的 R0/R1 基础学习可与 L0/L1 并行；任何真实组件迁移、跨语言契约落地和 `10/07` 迁移门禁都要等到 L1 baseline 与迁移证据齐备。`08/03` 在首次门禁中只要求 durable 心智模型，不要求实现引擎。
 2. 每章先写初始答案，阅读后做纸面/前置微实验，最后重答章末检查。标为“L1 后系统实验”的内容不阻塞首次动手。
 3. `必须掌握` 是进入手写 Agent Loop 前的门禁；`L1 后` 不等于没用，而是需要先有单 Agent baseline。
 4. 一手资料用于校验概念，不要求逐篇精读。优先读指定章节、方法图、限制和实验结论。
-5. M0 分两次收敛：任何模型探针前先完成任务契约、风险、非 Agent baseline 和 12–20 个平衡 seed cases；首次手写 Agent 前扩展为 30–50 个版本化案例。L1 是第一个手写单 Agent Runtime。
+5. 任何模型探针前先通过 **G0a（M0 草案）**：任务契约、风险、非 Agent baseline 和 12–20 个平衡 seed cases。理论阅读可以继续穿插；只有扩展并冻结 30–50 个版本化案例后才算正式通过 M0，才能进入 L0 SDK 实践和后续首个 Runtime。L1 是第一个手写单 Agent Runtime。
 
 ## 全书路线
 
-| 模块                                                                                               | 核心问题                   | 完成标志                       |
-| ------------------------------------------------------------------------------------------------ | ---------------------- | -------------------------- |
-| [00 导读与 M0](/masterpiece-static-docs/00-导读/01-如何使用这套教材.md)                                       | 怎样读这本书、先定义什么以及完整路线通向哪里 | 完成 M0 契约、案例和 baseline 方案   |
-| [01 数学与机器学习直觉](/masterpiece-static-docs/01-数学与机器学习直觉/01-概率-信息量与采样.md)                            | 概率、向量和泛化怎样影响模型行为       | 能解释随机性、相似度和分布偏移            |
-| [02 LLM 工作原理](/masterpiece-static-docs/02-LLM工作原理/01-Token与自回归生成.md)                             | 自回归模型如何训练与生成           | 能解释上下文、采样、KV Cache 与能力边界   |
-| [03 评测与实验科学](/masterpiece-static-docs/03-评测与实验科学/01-Grader-Trial与统计.md)                          | 如何证明差异不是随机波动           | 能设计 trial、grader、区间和轨迹评测   |
-| [04 TS/Node、模型接口与 Agent 内核](/masterpiece-static-docs/04-模型接口与Agent内核/01-TypeScript-Node运行时先修.md) | 如何把概率模型包进确定性运行时        | 能画出可取消、可收敛、有终态的状态机         |
-| [05 上下文、知识与记忆](/masterpiece-static-docs/05-上下文-知识与记忆/01-Context-Engineering.md)                  | 每一步应让模型看到什么            | 能区分来源、状态、知识、记忆、检索与压缩       |
-| [06 工具、协议与行动控制](/masterpiece-static-docs/06-工具-协议与行动控制/01-工具契约与错误模型.md)                          | 模型建议怎样安全变成外部动作         | 能设计工具契约、授权、审批、幂等与隔离        |
-| [07 安全、治理与 UX](/masterpiece-static-docs/07-安全与治理/01-Agent威胁建模.md)                                | 如何约束攻击并保留用户控制          | 能完成威胁模型和可控交互设计             |
-| [08 可靠性与可观测](/masterpiece-static-docs/08-可靠性与可观测/01-失败分类-超时-重试与取消.md)                            | 长链路如何在失败中保持可控          | 能解释取消、背压、checkpoint 和副作用语义 |
-| [09 Rust 迁移（L1 后）](/masterpiece-static-docs/09-Rust迁移理论-L1后/01-Rust迁移所需理论.md)                    | 何时把稳定执行面迁移到 Rust       | 能给出控制面/执行面边界及迁移证据          |
-| [10 毕业门禁](/masterpiece-static-docs/10-毕业门禁/01-综合系统心智模型.md)                                       | 是否已经具备动手所需心智模型         | 通过分域闭卷检查并完成 M0             |
+| 模块                                                                                               | 核心问题                    | 完成标志                             |
+| ------------------------------------------------------------------------------------------------ | ----------------------- | -------------------------------- |
+| [00 导读与 M0](/masterpiece-static-docs/00-导读/01-如何使用这套教材.md)                                       | 怎样读这本书、先定义什么以及完整路线通向哪里  | 从 G0a 草案收敛到包含 30–50 个版本化案例的正式 M0 |
+| [01 数学与机器学习直觉](/masterpiece-static-docs/01-数学与机器学习直觉/01-概率-信息量与采样.md)                            | 概率、向量和泛化怎样影响模型行为        | 能解释随机性、相似度和分布偏移                  |
+| [02 LLM 工作原理](/masterpiece-static-docs/02-LLM工作原理/01-Token与自回归生成.md)                             | 自回归模型如何训练与生成            | 能解释上下文、采样、KV Cache 与能力边界         |
+| [03 评测与实验科学](/masterpiece-static-docs/03-评测与实验科学/01-Grader-Trial与统计.md)                          | 如何证明差异不是随机波动            | 能设计 trial、grader、区间和轨迹评测         |
+| [04 TS/Node、模型接口与 Agent 内核](/masterpiece-static-docs/04-模型接口与Agent内核/01-TypeScript-Node运行时先修.md) | 如何把概率模型包进确定性运行时         | 能画出可取消、可收敛、有终态的状态机               |
+| [05 上下文、知识与记忆](/masterpiece-static-docs/05-上下文-知识与记忆/01-Context-Engineering.md)                  | 每一步应让模型看到什么             | 能区分来源、状态、知识、记忆、检索与压缩             |
+| [06 工具、协议与行动控制](/masterpiece-static-docs/06-工具-协议与行动控制/01-工具契约与错误模型.md)                          | 模型建议怎样安全变成外部动作          | 能设计工具契约、授权、审批、幂等与隔离              |
+| [07 安全、治理与 UX](/masterpiece-static-docs/07-安全与治理/01-Agent威胁建模.md)                                | 如何约束攻击并保留用户控制           | 能完成威胁模型和可控交互设计                   |
+| [08 可靠性与可观测](/masterpiece-static-docs/08-可靠性与可观测/01-失败分类-超时-重试与取消.md)                            | 长链路如何在失败中保持可控           | 能解释取消、背压、checkpoint 和副作用语义       |
+| [09 Rust 学习与迁移理论](/masterpiece-static-docs/09-Rust迁移理论-L1后/01-Rust迁移所需理论.md)                     | 如何并行学习 Rust，以及何时迁移稳定执行面 | 能分开 R0/R1 学习练习与 L1 后的真实迁移门禁      |
+| [10 毕业门禁](/masterpiece-static-docs/10-毕业门禁/01-综合系统心智模型.md)                                       | 是否已经具备动手所需心智模型          | 通过分域闭卷检查并完成 M0                   |
 
 ## 完整目录
 
@@ -65,16 +65,17 @@ url: https://whatthehan.github.io/masterpiece-static-docs/index.md
 - 06：[工具契约](/masterpiece-static-docs/06-工具-协议与行动控制/01-工具契约与错误模型.md) · [身份/授权/审批](/masterpiece-static-docs/06-工具-协议与行动控制/02-身份-授权与审批.md) · [MCP](/masterpiece-static-docs/06-工具-协议与行动控制/03-MCP与互操作协议.md) · [幂等/补偿/沙箱](/masterpiece-static-docs/06-工具-协议与行动控制/04-幂等-补偿与沙箱.md)
 - 07：[威胁建模](/masterpiece-static-docs/07-安全与治理/01-Agent威胁建模.md) · [Prompt Injection](/masterpiece-static-docs/07-安全与治理/02-Prompt-Injection与不可信内容.md) · [最小权限/隐私](/masterpiece-static-docs/07-安全与治理/03-最小权限-隐私与Confused-Deputy.md) · [纵深防御](/masterpiece-static-docs/07-安全与治理/04-纵深防御与人类控制.md) · [Agent UX](/masterpiece-static-docs/07-安全与治理/05-Agent-UX与可控交互.md)
 - 08：[失败/重试/取消](/masterpiece-static-docs/08-可靠性与可观测/01-失败分类-超时-重试与取消.md) · [并发/背压](/masterpiece-static-docs/08-可靠性与可观测/02-并发-背压与预算.md) · [持久执行](/masterpiece-static-docs/08-可靠性与可观测/03-持久执行-Checkpoint与Exactly-Once.md) · [Trace/SLO/成本](/masterpiece-static-docs/08-可靠性与可观测/04-Trace-SLO与成本.md)
-- 09（L1 后）：[Rust 理论](/masterpiece-static-docs/09-Rust迁移理论-L1后/01-Rust迁移所需理论.md) · [跨语言契约](/masterpiece-static-docs/09-Rust迁移理论-L1后/02-跨语言契约与控制面-执行面.md)
+- 09（学习可并行，迁移在 L1 后）：[Rust 理论](/masterpiece-static-docs/09-Rust迁移理论-L1后/01-Rust迁移所需理论.md) · [跨语言契约](/masterpiece-static-docs/09-Rust迁移理论-L1后/02-跨语言契约与控制面-执行面.md)
 - 10：[综合模型](/masterpiece-static-docs/10-毕业门禁/01-综合系统心智模型.md) · [闭卷检查](/masterpiece-static-docs/10-毕业门禁/02-动手前闭卷检查.md) · [评分](/masterpiece-static-docs/10-毕业门禁/03-参考答案与评分.md) · [八周计划](/masterpiece-static-docs/10-毕业门禁/04-八周理论学习计划.md) · [资料索引](/masterpiece-static-docs/10-毕业门禁/05-一手资料索引.md) · [章节验收](/masterpiece-static-docs/10-毕业门禁/06-章节验收矩阵.md) · [Rust 迁移门禁](/masterpiece-static-docs/10-毕业门禁/07-Rust迁移门禁.md)
 
 ## 总依赖图
 
 ```mermaid
 flowchart TD
-    M0["M0：任务契约、Baseline 与案例"] --> MODEL["模型直觉：概率、表示与生成"]
+    G0A["G0a：M0 草案与 12–20 个案例"] --> MODEL["模型直觉：概率、表示与生成"]
     MODEL --> EVAL["实验科学：Trial、Grader 与统计证据"]
-    EVAL --> API["模型接口：事件、Schema 与 Tool Call"]
+    EVAL --> M0["M0：30–50 个版本化案例与 Baseline"]
+    M0 --> API["L0 模型接口：事件、Schema 与 Tool Call"]
     API --> LOOP["受约束 Agent Loop"]
     LOOP --> CONTEXT["Context、Knowledge 与 Memory"]
     CONTEXT --> ACTION["受控行动：授权、审批与幂等"]
@@ -109,7 +110,9 @@ url: https://whatthehan.github.io/masterpiece-static-docs/00-%E5%AF%BC%E8%AF%BB/
 
 这本书不是按术语排列的 Agent 知识手册，也不是读完理论后再一次性动手的课程。它围绕同一个“研究—判断—行动 Agent”逐层展开：先定义任务与证据，再理解模型边界，随后把 Runtime、Context、工具、状态、评测与安全逐步装进一个可验证的应用。
 
-阅读顺序刻意把 M0 放在模型 API 和框架之前。数学与大语言模型原理也只讲到足以解释工程现象的深度：它们服务于预算、失败归因、检索、上下文和门禁设计，而不是把读者带向模型研究。
+从零开始时，直接按[八周启动计划](/masterpiece-static-docs/10-毕业门禁/04-八周理论学习计划.md)安排阅读、产出和门禁；已有经验的读者可以用[章节验收矩阵](/masterpiece-static-docs/10-毕业门禁/06-章节验收矩阵.md)定位缺口。
+
+阅读顺序刻意把 G0a（M0 草案）放在任何模型探针之前，并把正式 M0 放在 L0 SDK 实践和首个 Runtime 之前。数学与大语言模型原理可以在两道门禁之间穿插，只讲到足以解释工程现象的深度：它们服务于预算、失败归因、检索、上下文和门禁设计，而不是把读者带向模型研究。
 
 ## 1. 学习目标不是记忆术语
 
@@ -200,7 +203,7 @@ Agent 工程的困难来自两套系统叠加：
 
 ## 6. 进入动手阶段的最低证据
 
-- 完成一份任务契约和 30–50 个初始案例。
+- 正式通过 M0：完成任务契约、非 Agent baseline 和 30–50 个版本化案例。
 - 能画出模型、运行时、工具、策略、状态和人的信任边界。
 - 能说明 Schema 验证、语义验证、授权和审批的不同职责。
 - 能区分等待澄清、等待审批、拒绝、失败、取消请求、未知效果收敛、部分完成和预算耗尽。
@@ -259,23 +262,32 @@ P(y | x) = Π P(y_t | x, y_<t)
 
 ## 2. 依赖关系
 
-| 后续概念                | 必须先理解                                            |
-| ------------------- | ------------------------------------------------ |
-| 首次模型实验              | M0 Task Contract、baseline、task/trial/outcome     |
-| Structured Outputs  | Token 生成、条件概率、JSON Schema                        |
-| Tool Calling        | Structured Outputs、应用/模型边界                       |
-| Agent Loop          | Tool Calling；基本失败/取消/未知效果语义在 04/06 内同步建立，08 再系统化 |
-| Context Engineering | 上下文窗口、注意力限制、状态分类                                 |
-| RAG                 | embedding、检索指标、来源与权限                             |
-| Memory              | 状态、检索、写入策略；05/04 内先建立最小隐私/时效/删除语义，07 再深化治理       |
-| MCP                 | 工具契约、身份授权、Tool/Resource/Prompt、JSON-RPC          |
-| Durable Agent       | 幂等、事件历史、取消、版本和副作用                                |
-| Multi-Agent         | 单 Agent baseline、上下文隔离、委派协议、独立评测                 |
-| Rust 迁移             | 稳定契约、性能/隔离证据、跨语言测试                               |
+| 后续概念                | 必须先理解                                                         |
+| ------------------- | ------------------------------------------------------------- |
+| 首次模型探针              | G0a（M0 草案）：Task Contract 草案、风险、非 Agent baseline 和 12–20 个种子案例 |
+| L0 SDK 实践           | 正式 M0：完整 Task Contract、非 Agent baseline 和 30–50 个版本化案例        |
+| Structured Outputs  | Token 生成、条件概率、JSON Schema                                     |
+| Tool Calling        | Structured Outputs、应用/模型边界                                    |
+| Agent Loop          | Tool Calling；基本失败/取消/未知效果语义在 04/06 内同步建立，08 再系统化              |
+| Context Engineering | 上下文窗口、注意力限制、状态分类                                              |
+| RAG                 | embedding、检索指标、来源与权限                                          |
+| Memory              | 状态、检索、写入策略；05/04 内先建立最小隐私/时效/删除语义，07 再深化治理                    |
+| MCP                 | 工具契约、身份授权、Tool/Resource/Prompt、JSON-RPC                       |
+| Durable Agent       | 幂等、事件历史、取消、版本和副作用                                             |
+| Multi-Agent         | 单 Agent baseline、上下文隔离、委派协议、独立评测                              |
+| Rust 迁移             | 稳定契约、性能/隔离证据、跨语言测试                                            |
 
 ## 3. 首次手写单 Agent 前门禁
 
-### G0 · 问题与证据
+### G0a · M0 草案（任何模型探针前）
+
+- [ ] Task Contract 草案、风险清单和非 Agent baseline 已定义。
+- [ ] 12–20 个平衡种子案例覆盖正常、模糊、失败、拒绝、权限和攻击输入。
+- [ ] 草案评分至少 16/20，且结果与安全项均不为 0。
+
+G0a 只允许开始受控模型探针和继续理论学习，不代表正式 M0 已通过，也不允许启动 L0 SDK 实践。
+
+### G0 · 问题与证据（正式 M0）
 
 - [ ] M0 Task Contract、风险清单和 30–50 个案例可重复判定。
 - [ ] 有不用 Agent 的 baseline。
@@ -388,19 +400,20 @@ url: https://whatthehan.github.io/masterpiece-static-docs/00-%E5%AF%BC%E8%AF%BB/
 
 ## 路线与工程术语
 
-| 术语                | 含义                                                                                           |
-| ----------------- | -------------------------------------------------------------------------------------------- |
-| M0                | 首次实现前的分阶段问题定义：模型探针前有 Task Contract、风险、baseline 和 12–20 个 seed cases；Agent 实现前扩为 30–50 个版本化案例 |
-| L1                | 不依赖 Agent 框架，手写有状态、预算、取消、Trace 和工具校验的单 Agent Runtime                                         |
-| ACL               | Access Control List，资源访问控制条件；检索必须在授权范围内生成候选                                                  |
-| SSE               | Server-Sent Events，服务器通过有序事件流向客户端推送数据；TCP chunk 不等于完整 SSE event                              |
-| Affordance        | 工具向模型表达“能做什么、何时使用、效果是什么”的可用性契约                                                               |
-| Tombstone         | 表示对象已删除/失效的持久标记，用于阻止缓存或索引再次暴露旧数据                                                             |
-| Canary            | 只把少量受控流量路由到新版本，以测量风险后再扩大                                                                     |
-| Reducer           | 根据当前 state 与 event 纯函数式地产生下一 state 的逻辑                                                       |
-| Sidecar           | 与主服务分进程部署、通过稳定协议提供特定能力的邻接服务                                                                  |
-| N-API             | Node 原生扩展 ABI；用于进程内 Rust/C/C++ 扩展，不等于服务隔离                                                    |
-| Enforcement point | 真正强制规则的位置，如工具服务端授权或网络 egress policy，而非文字建议                                                   |
+| 术语                | 含义                                                                    |
+| ----------------- | --------------------------------------------------------------------- |
+| G0a（M0 草案）        | 任何模型探针前的问题定义门禁：Task Contract 草案、风险、非 Agent baseline 和 12–20 个平衡种子案例   |
+| M0                | L0 SDK 实践前的正式问题与评测基线：完整 Task Contract、非 Agent baseline 和 30–50 个版本化案例 |
+| L1                | 不依赖 Agent 框架，手写有状态、预算、取消、Trace 和工具校验的单 Agent Runtime                  |
+| ACL               | Access Control List，资源访问控制条件；检索必须在授权范围内生成候选                           |
+| SSE               | Server-Sent Events，服务器通过有序事件流向客户端推送数据；TCP chunk 不等于完整 SSE event       |
+| Affordance        | 工具向模型表达“能做什么、何时使用、效果是什么”的可用性契约                                        |
+| Tombstone         | 表示对象已删除/失效的持久标记，用于阻止缓存或索引再次暴露旧数据                                      |
+| Canary            | 只把少量受控流量路由到新版本，以测量风险后再扩大                                              |
+| Reducer           | 根据当前 state 与 event 纯函数式地产生下一 state 的逻辑                                |
+| Sidecar           | 与主服务分进程部署、通过稳定协议提供特定能力的邻接服务                                           |
+| N-API             | Node 原生扩展 ABI；用于进程内 Rust/C/C++ 扩展，不等于服务隔离                             |
+| Enforcement point | 真正强制规则的位置，如工具服务端授权或网络 egress policy，而非文字建议                            |
 
 ## 三组必须保持的区分
 
@@ -462,6 +475,8 @@ url: https://whatthehan.github.io/masterpiece-static-docs/00-%E5%AF%BC%E8%AF%BB/
 转型的真正起点不是第一次调用模型，而是先回答“系统怎样才算成功，以及怎样证明”。如果这一步缺失，后续增加工具、记忆或多 Agent 只会放大一个尚未定义清楚的问题。
 
 对贯穿全书的研究—判断—行动案例，M0 会先固定允许读取的资料、必须审批的动作、真实结果的检查位置和更简单的基线。此后每一阶段的技术变化，都必须回到同一批任务和风险上比较。
+
+M0 分两道门禁收敛：任何模型探针前先用 12–20 个平衡种子案例通过 G0a（M0 草案）；扩展并冻结 30–50 个版本化案例后，才算正式通过 M0，并可进入 L0 SDK 实践。理论阅读和纸面微实验可以在两道门禁之间穿插。
 
 ## 学习目标
 
@@ -547,7 +562,7 @@ Baseline：一次模型调用，只使用用户粘贴的资料，不调用工具
 预算：记录上限，不在 M0 阶段凭感觉设“无限”。
 ```
 
-### M0 验收 Rubric
+### G0a / M0 验收 Rubric
 
 每项 0/1/2 分，至少 16/20，且“安全不变量”“Outcome 检查”不得为 0：
 
@@ -599,9 +614,9 @@ Baseline：一次模型调用，只使用用户粘贴的资料，不调用工具
 
 ## 前置微实验（45 分钟）
 
-为贯穿案例写 12 个最初任务，先用单次模型无工具完成。记录准确、拒绝、延迟、Token、成本和失败分类。然后补齐到 30–50 个，不急于写 Agent。
+先为贯穿案例写 12–20 个平衡种子任务，不调用模型，完成 Task Contract、风险和非 Agent baseline 方案，并按 Rubric 通过 G0a。之后才运行受控的单次模型、无工具探针，记录准确、拒绝、延迟、Token、成本和失败分类；再补齐并冻结 30–50 个版本化案例，正式退出 M0。此时仍不急于写 Agent。
 
-通过证据：12 个任务都有明确输入、预期 outcome、至少一个 grader 和版本字段；不能用“看起来合理”评分。
+通过证据：G0a 的 12–20 个任务和正式 M0 的 30–50 个任务都有明确输入、预期 outcome、至少一个 grader 和版本字段；不能用“看起来合理”评分。
 
 ## 常见误区
 
@@ -624,7 +639,7 @@ Baseline：一次模型调用，只使用用户粘贴的资料，不调用工具
 
 ## 本章小结
 
-M0 把“做一个 Agent”改写为一组可判定的任务、风险与真实结果，并用更简单的方案建立比较起点。下一章把这份基线放回完整转型路线，说明前置学习之后，Workbench 将如何持续演进为可生产的 Agent 应用。
+G0a 先阻止未定义的问题进入模型探针，正式 M0 再用 30–50 个版本化案例建立可重复的比较起点。下一章把这份基线放回完整转型路线，说明前置学习之后，Workbench 将如何持续演进为可生产的 Agent 应用。
 
 [下一章：从学习到转型的完整路线](/masterpiece-static-docs/00-导读/05-从学习到转型的完整路线.md)
 
@@ -646,7 +661,8 @@ url: https://whatthehan.github.io/masterpiece-static-docs/00-%E5%AF%BC%E8%AF%BB/
 flowchart TD
     subgraph MAIN["Agent 应用主线"]
         direction TB
-        M0["M0 问题与评测基线"] --> L0["L0 模型与 API 运行时"]
+        G0A["G0a M0 草案"] --> M0["M0 问题与评测基线"]
+        M0 --> L0["L0 模型与 API 运行时"]
         L0 --> L1["L1 手写单 Agent 内核"]
         L1 --> L2["L2 Context、状态与协议"]
         L2 --> L3["L3 知识、记忆与受控行动"]
@@ -670,41 +686,46 @@ flowchart TD
     L6 -.-> R4
 ```
 
-TypeScript + Node 始终是产品与控制面的主线。Rust 轨道从纯逻辑和边界清晰的服务开始，只在稳定性、隔离、部署或实测性能证据成立时承接更多执行与数据职责。
+TypeScript + Node 始终是产品与控制面的主线。Rust 的语言与异步基础可以随 L0/L1 并行学习；真实组件迁移只在 L1 baseline 已固定，且稳定性、隔离、部署或实测性能证据成立后开始。
 
 ## 2. Agent 应用主线的阶段证据
 
-| 阶段     | 能力变化                      | 代表交付物                                                                            | 进入 / 退出证据                                          | 当前暂不做                         |
-| ------ | ------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------- | ----------------------------- |
-| **M0** | 从功能想法转为可判定的问题             | Task Contract、风险清单、12–20 个种子案例（seed cases）、非 Agent baseline；首次手写前扩为 30–50 个版本化案例 | 进入：选定真实任务族；退出：成功与真实 Outcome 可重复检查                  | 不急着写 Prompt、接工具或选框架           |
-| **L0** | 能用模型与 API 机制解释行为和失败       | 官方 TypeScript SDK 流式 CLI、结构化输出、用量与错误记录                                           | 进入：M0 可评测；退出：能重建流式响应，并区分模型、协议、工具与应用错误              | 不训练模型，不追榜单，不做 GPU 优化          |
-| **L1** | 从“调用模型”变为掌握有限状态 Runtime   | 手写 Loop、3–5 个工具、预算、取消、Trace 与自动回归                                                | 进入：L0 接口边界清楚；退出：同一失败能定位到具体系统层                      | 不先用 Agent 框架，不引入多 Agent       |
-| **L2** | 把一次运行变为可连接 UI、可恢复、可演进的应用  | Thread / Run / Item、语义事件流、Context snapshot、最小 MCP 与 Skill                        | 进入：L1 的 Loop 和工具契约稳定；退出：重连可恢复，取消后停止新工作并能收敛已提交或在途效果 | 不无限追加上下文，不让外部协议绑定领域逻辑         |
-| **L3** | 让 Agent 基于可信证据工作并受控改变外部世界 | 有 ACL 的检索、来源链、分级工具、preview、审批与幂等                                                 | 进入：状态和工具边界可审计；退出：恶意参数与注入都不能绕过策略                    | 不默认上 Agentic RAG、长期记忆或任意代码执行  |
-| **L4** | 让任务跨进程、部署与长时间等待安全存活       | Durable Workflow、外部事件等待、流程版本、故障矩阵                                                | 进入：确有长任务或恢复需求；退出：强杀、重复事件和升级后无重复副作用                 | 不把 checkpoint 当作 exactly-once |
-| **L5** | 从“能运行”升级为“可验证、可控制、可运营”    | 生产 readiness review、评测回归、安全红队、SLO、成本与 UX 证据                                      | 进入：核心流程可恢复；退出：质量、安全、恢复、成本和 UX 五类门禁通过               | 不用单次 Demo、截图或平台仪表盘替代证据        |
-| **L6** | 在通用底座上形成一个可测量的场景专长        | 1–2 个专项作品及其 baseline 对比                                                          | 进入：L5 底座成立；退出：专项能力相对基线有可测收益                        | 不同时追多个方向；多 Agent 等能力按条件引入     |
+| 阶段             | 能力变化                      | 代表交付物                                                             | 进入 / 退出证据                                          | 当前暂不做                         |
+| -------------- | ------------------------- | ----------------------------------------------------------------- | -------------------------------------------------- | ----------------------------- |
+| **G0a（M0 草案）** | 在接触模型前先约束问题               | Task Contract 草案、风险清单、非 Agent baseline、12–20 个平衡种子案例（seed cases）  | 进入：选定真实任务族；退出：评分 ≥16/20 且结果与安全项非 0                 | 不做模型探针、选型或 SDK 实践             |
+| **M0**         | 从草案收敛为可重复评测的问题基线          | 完整 Task Contract、非 Agent baseline、30–50 个冻结版本的案例及 grader/slice 字段 | 进入：G0a 已通过；退出：成功与真实 Outcome 可重复检查，案例可用于自动回归        | 不把 12–20 个草案案例当成正式 M0         |
+| **L0**         | 能用模型与 API 机制解释行为和失败       | 官方 TypeScript SDK 流式 CLI、结构化输出、用量与错误记录                            | 进入：正式 M0 已通过；退出：能重建流式响应，并区分模型、协议、工具与应用错误           | 不训练模型，不追榜单，不做 GPU 优化          |
+| **L1**         | 从“调用模型”变为掌握有限状态 Runtime   | 手写 Loop、3–5 个工具、预算、取消、Trace 与自动回归                                 | 进入：L0 接口边界清楚；退出：同一失败能定位到具体系统层                      | 不先用 Agent 框架，不引入多 Agent       |
+| **L2**         | 把一次运行变为可连接 UI、可恢复、可演进的应用  | Thread / Run / Item、语义事件流、Context snapshot、最小 MCP 与 Skill         | 进入：L1 的 Loop 和工具契约稳定；退出：重连可恢复，取消后停止新工作并能收敛已提交或在途效果 | 不无限追加上下文，不让外部协议绑定领域逻辑         |
+| **L3**         | 让 Agent 基于可信证据工作并受控改变外部世界 | 有 ACL 的检索、来源链、分级工具、preview、审批与幂等                                  | 进入：状态和工具边界可审计；退出：恶意参数与注入都不能绕过策略                    | 不默认上 Agentic RAG、长期记忆或任意代码执行  |
+| **L4**         | 让任务跨进程、部署与长时间等待安全存活       | Durable Workflow、外部事件等待、流程版本、故障矩阵                                 | 进入：确有长任务或恢复需求；退出：强杀、重复事件和升级后无重复副作用                 | 不把 checkpoint 当作 exactly-once |
+| **L5**         | 从“能运行”升级为“可验证、可控制、可运营”    | 生产 readiness review、评测回归、安全红队、SLO、成本与 UX 证据                       | 进入：核心流程可恢复；退出：质量、安全、恢复、成本和 UX 五类门禁通过               | 不用单次 Demo、截图或平台仪表盘替代证据        |
+| **L6**         | 在通用底座上形成一个可测量的场景专长        | 1–2 个专项作品及其 baseline 对比                                           | 进入：L5 底座成立；退出：专项能力相对基线有可测收益                        | 不同时追多个方向；多 Agent 等能力按条件引入     |
+
+G0a 通过后可以穿插理论阅读和纸面微实验，但不能据此启动 L0 SDK 实践；正式 M0 未通过时，也不能开始首个 L1 Runtime。
 
 ## 3. Rust 轨道的迁移证据
 
-| 阶段     | 能力变化                | 代表交付物                                                | 进入 / 退出证据                                                                  | 当前暂不做                |
-| ------ | ------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------- | -------------------- |
-| **R0** | 掌握所有权、错误和契约化纯逻辑     | budget、event 或 policy crate                          | 进入：L0 同期开始；退出：fixture 与 TypeScript 版本对拍                                    | 不接管 Agent 编排         |
-| **R1** | 能写可取消、有超时和背压的异步 I/O | 流式模型 client 或只读 tool executor                        | 进入：R0 语言基础；退出：错误、取消与关闭路径均有测试                                               | 不重写完整 Runtime        |
-| **R2** | 能以稳定协议提供独立服务        | Axum / Tower sidecar、共享 Schema 与 Trace               | 进入：L2 契约已明确；退出：contract test、trace 传播与 graceful shutdown 通过                | 不因偏好提前使用进程内绑定        |
-| **R3** | 承接权限敏感或资源密集的执行面     | MCP gateway、policy proxy、parser 或 sandbox supervisor | 进入：L3 行动边界清楚；退出：权限、幂等、限流、审计和故障测试通过                                         | 不把内存安全等同于沙箱安全        |
-| **R4** | 在证据支持下选择性迁移运行时核心    | 事件核心或 Agent Application Server 的迁移版本                 | 进入：Thread / Run / Item 与恢复契约稳定；退出：Trace / Eval parity、canary 与 rollback 通过 | 不用“Rust 理论上更快”作为迁移理由 |
+| 阶段     | 能力变化                | 代表交付物                                                | 进入 / 退出证据                                                                         | 当前暂不做                |
+| ------ | ------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------- | -------------------- |
+| **R0** | 掌握所有权、错误和契约化纯逻辑     | 学习用 budget、event 或 policy crate                      | 进入：可与 L0 同期学习；退出：fixture 与 TypeScript 版本对拍                                        | 不把练习 crate 当作真实迁移    |
+| **R1** | 能写可取消、有超时和背压的异步 I/O | 学习用流式 client、只读 tool executor 或 parser               | 进入：可与 L1 同期学习；退出：错误、取消与关闭路径均有测试                                                   | 不重写完整 Runtime        |
+| **R2** | 能以稳定协议提供独立服务        | Axum / Tower sidecar、共享 Schema 与 Trace               | 进入：L1 baseline 与迁移证据齐备，且 L2 契约已明确；退出：contract test、trace 传播与 graceful shutdown 通过 | 不因偏好提前使用进程内绑定        |
+| **R3** | 承接权限敏感或资源密集的受控执行面   | MCP gateway、policy proxy、parser 或 sandbox supervisor | 进入：L1 baseline 与迁移证据齐备，且 L3 行动边界清楚；退出：权限、幂等、限流、审计和故障测试通过                          | 不把内存安全等同于沙箱安全        |
+| **R4** | 在证据支持下选择性迁移运行时核心    | 事件核心或 Agent Application Server 的迁移版本                 | 进入：迁移证据持续成立，Thread / Run / Item 与恢复契约稳定；退出：Trace / Eval parity 与发布门禁通过            | 不用“Rust 理论上更快”作为迁移理由 |
+
+R0/R1 在 L1 前只代表学习与对拍练习。任何阶段一旦要替换 Workbench 或生产中的真实组件，都必须先满足 L1 baseline、profile/SLO、部署与隔离证据，并经过 shadow、canary、rollback 等横切发布门禁。
 
 ## 4. 同一个 Workbench 如何滚动演进
 
-不要为每个阶段另做一个互不相干的玩具项目。选定研究、客服、销售、数据分析或个人效率中的一个任务族后，让同一 Workbench 经历六次可比较的变化：
+不要为每个阶段另做一个互不相干的玩具项目。M0 与 L0 是六次迭代的共同前置；选定研究、客服、销售、数据分析或个人效率中的一个任务族后，让同一 Workbench 经历六次可比较的变化：
 
-1. **Runtime**：手写单 Agent Loop 和工具分发。
-2. **Protocol**：加入 Thread / Run / Item、语义事件和客户端重连。
-3. **Control**：加入预算、取消、权限、preview 与审批。
-4. **Context**：加入 snapshot、压缩、动态工具、MCP 与 Skill。
-5. **Durability**：加入 checkpoint、外部事件、幂等和流程版本。
-6. **Production**：加入 Eval、Trace、安全红队、后台任务、成本和发布门禁。
+1. **Runtime（L1）**：手写单 Agent Loop、工具分发、预算、取消和 Trace。
+2. **Protocol / Context（L2）**：加入 Thread / Run / Item、语义事件、客户端重连、Context snapshot、MCP 与 Skill。
+3. **Knowledge / Control（L3）**：加入有 ACL 的检索、来源与记忆策略、分级工具、preview、审批和幂等。
+4. **Durability（L4）**：加入 checkpoint、外部事件、故障恢复和流程版本。
+5. **Production（L5）**：加入 Eval、Trace、安全红队、后台任务、成本和发布门禁。
+6. **Specialty（L6）**：在通用底座上形成一个可测量的场景专项，只按证据引入多 Agent 等复杂能力。
 
 每次迭代都回放 M0 数据集，并保留上一层 baseline。这样，复杂度是否带来质量或可靠性收益可以被测量，架构也不会随着框架练习不断推倒重来。
 
@@ -4471,11 +4492,16 @@ sequenceDiagram
   participant S as 状态存储
   participant W2 as Worker B（epoch 8）
   W1->>X: commit(command, idempotency_key)
-  X-->>W1: 外部效果已提交
-  Note over W1,X: ACK 或本地 receipt 丢失
-  Note over W1,S: Worker A 在 checkpoint 前崩溃或失去 lease
+  Note over W1,X: 外部效果已提交
+  alt 窗口 A：ACK / receipt 在返回途中丢失
+    X--xW1: ACK / receipt 未送达
+    Note over W1,S: 持久状态没有 receipt；W1 崩溃或失去 lease
+  else 窗口 B：receipt 已到 Worker，但未写入 checkpoint
+    X-->>W1: ACK / receipt 已送达
+    Note over W1,S: W1 在持久化 checkpoint 前崩溃；持久状态仍没有 receipt
+  end
   W2->>S: 获取 lease，ownership_epoch = 8
-  S-->>W2: 恢复 IN_DOUBT 与 in-flight command
+  S-->>W2: 恢复无 receipt 的 in-flight command
   W2->>X: 查询 receipt / 权威业务状态
   X-->>W2: 效果已发生
   W2->>S: 以 epoch 8 CAS 写入 reconciled 状态
@@ -4637,9 +4663,9 @@ url: https://whatthehan.github.io/masterpiece-static-docs/09-Rust%E8%BF%81%E7%A7
 
 # 01 · Rust 迁移所需理论
 
-> 本模块全部属于 **L1 之后**。首个 Agent 仍以 TypeScript + Node 完成控制面、评测和运行时闭环；Rust 迁移只由测量到的资源、尾延迟、部署或隔离需求驱动。
+> Rust 的 R0/R1 语言与异步基础可从 L0/L1 并行学习；这不等于开始迁移。任何真实组件迁移仍须先固定 TypeScript + Node 的 L1 baseline，并由 profile/SLO、部署或隔离证据驱动。
 
-当 TypeScript + Node Runtime 已经稳定运行，团队很容易把“下一步”理解成换一种更快的语言。但语言迁移会同时引入新的异步模型、协议边界和运维组合；如果原有状态、授权与故障语义尚未稳定，Rust 只会把这些问题搬到更难调试的地方。
+准备迁移已稳定的 TypeScript + Node Runtime 时，团队很容易把“下一步”理解成换一种更快的语言。但语言迁移会同时引入新的异步模型、协议边界和运维组合；如果原有状态、授权与故障语义尚未稳定，Rust 只会把这些问题搬到更难调试的地方。
 
 因此，本章讨论的不是“为什么 Rust 更好”，而是怎样识别一个值得迁移的边界，以及迁移前必须建立哪些语言、并发与测试心智模型。
 
@@ -4688,11 +4714,13 @@ Rust 的穷尽匹配非常适合状态机，但仍不能证明业务授权或外
 
 ## 5. 渐进阶梯
 
-- R0：Cargo、ownership、Result、enum、trait、tests、Clippy；迁移纯函数。
-- R1：Tokio、Serde、reqwest、stream、timeout/cancel/backpressure；实现只读工具或流解析器。
-- R2：Axum/Tower、tracing、SQLx、JSON-RPC/SSE/gRPC；实现 sidecar。
-- R3：rmcp、policy proxy、MCP gateway、sandbox supervisor。
-- R4：只有契约、Trace 和 Eval 稳定后才考虑 runtime core。
+- R0 纯逻辑：Cargo、ownership、Result、enum、trait、tests、Clippy；用练习 crate 重写纯函数并对拍。
+- R1 异步与只读：Tokio、Serde、reqwest、stream、timeout/cancel/backpressure；实现学习用只读工具或流解析器。
+- R2 sidecar 与协议：Axum/Tower、tracing、SQLx、JSON-RPC/SSE/gRPC；在迁移门禁通过后实现独立 sidecar。
+- R3 受控执行面：rmcp、policy proxy、MCP gateway、sandbox supervisor。
+- R4 可选运行时核心：只有契约、Trace、Eval 和恢复语义稳定后才考虑 runtime core。
+
+Shadow、canary 与 rollback 是每次真实迁移都要经过的横切发布门禁，不占用 R0–R4 的阶段编号。
 
 ## 6. SDK 事实边界
 
@@ -4706,9 +4734,9 @@ Rust 的穷尽匹配非常适合状态机，但仍不能证明业务授权或外
 - 不让外部 API exactly-once。
 - 不修复错误工具契约和状态模型。
 
-## L1 后迁移实验
+## R0/R1 学习练习与 L1 后迁移实验
 
-把 TS 中一个无副作用的 state reducer 用 Rust enum 重写，用相同 JSON fixtures 对拍。然后迁移一个只读工具，验证 timeout、cancel、bounded concurrency 和 trace propagation，而不是先重写 Agent Loop。
+L1 前可以把 TS 中一个无副作用的 state reducer 用 Rust enum 重写，用相同 JSON fixtures 对拍，但不替换 Workbench 中的真实组件。L1 baseline 与迁移证据齐备后，再迁移一个只读工具，验证 timeout、cancel、bounded concurrency 和 trace propagation，而不是先重写 Agent Loop。
 
 ## 常见误区
 
@@ -4906,6 +4934,8 @@ flowchart TD
     CONTROL -->|"已验证的 Command"| EXEC["Executor / Tool Gateway<br/>Policy · Sink Validation · Receipt"]
     EXEC -->|"最小权限调用"| SYSTEM["权威系统<br/>Knowledge · Domain State · Actions"]
     SYSTEM -->|"Receipt 与真实 Outcome"| EXEC
+    EXEC -->|"结构化结果 · 错误 · Receipt"| CONTROL
+    CONTROL -->|"状态 · 语义事件<br/>进度 / 等待信息"| UX
     CONTROL --> OBS["Trace · Eval · Metrics · Audit"]
     EXEC --> OBS
 ```
@@ -5246,14 +5276,14 @@ url: https://whatthehan.github.io/masterpiece-static-docs/10-%E6%AF%95%E4%B8%9A%
 
 ### 产出（3–4 小时）
 
-- 一份填完的 M0：用户、任务族、输入/输出、成功/失败、禁止动作、预算、数据切片和发布门禁。
+- 一份填完的 G0a（M0 草案）：用户、任务族、输入/输出、成功/失败、禁止动作、预算、数据切片和发布门禁。
 - 一个非 Agent baseline 方案：搜索+模板、单次 LLM 或确定性 workflow。
 - 12–20 个 seed cases：正常、模糊、边界、拒绝、失败和攻击至少各 2 个。
 - 一张 case → trial → grader → metric → gate 图。
 
 ### 门禁（1 小时）
 
-不借助资料说明“什么结果算成功”和“为什么需要 Agent”。M0 初版按导读评分至少 16/20，且结果与安全项不得为 0。未通过时不进行模型探针/选型；完整 30–50 案例在第 3 周收敛，并于首个 Agent 实现前冻结版本。
+不借助资料说明“什么结果算成功”和“为什么需要 Agent”。G0a 按导读评分至少 16/20，且结果与安全项不得为 0。未通过时不进行模型探针/选型；通过只代表 M0 草案可继续收敛，不代表正式 M0 已通过。完整 30–50 个版本化案例在第 3 周收敛。
 
 ## 第 2 周 · 模型究竟产生什么
 
@@ -5290,7 +5320,7 @@ url: https://whatthehan.github.io/masterpiece-static-docs/10-%E6%AF%95%E4%B8%9A%
 
 ### 门禁（1 小时）
 
-能解释为什么不用 Wald 近似处理小样本/极端率；为什么 trial 不是独立 task；为什么 Schema 合法不等于语义安全；为什么断流的半个 tool arguments 不能执行。
+先确认 30–50 个案例已经标注并冻结版本，且 Task Contract、非 Agent baseline、grader 与 slice 可用于重复评测；这是正式 M0 的退出门禁，未通过时只继续理论阅读和纸面微实验，不进入 L0 SDK 实践或首个 Runtime。随后应能解释为什么不用 Wald 近似处理小样本/极端率；为什么 trial 不是独立 task；为什么 Schema 合法不等于语义安全；为什么断流的半个 tool arguments 不能执行。
 
 ## 第 4 周 · 受控 Agent Loop 与 Context Engineering
 
@@ -5410,7 +5440,7 @@ url: https://whatthehan.github.io/masterpiece-static-docs/10-%E6%AF%95%E4%B8%9A%
 
 # 05 · 一手资料索引
 
-> 查证基准：2026-07-11。`精读` 表示阅读本书章节直接引用的定义、图、实验与限制，不是从头通读整篇论文/整本规范；`查阅` 表示实施时按需核对；`延伸` 和 `L1 后` 不属于首次动手门禁。
+> 查证基准：2026-07-11。`精读` 表示阅读本书章节直接引用的定义、图、实验与限制，不是从头通读整篇论文/整本规范；`查阅` 表示实施时按需核对；`并行学习` 表示可随 L0/L1 学习但不替换真实组件；`延伸` 和 `L1 后` 不属于首次动手门禁。
 
 这是一张查证地图，不是必须从头刷完的书单。先阅读对应章节，在遇到定义、版本边界或实验结论时再进入一手资料；阅读后应能说明它支持了什么判断、适用条件是什么，以及哪些结论不能外推。
 
@@ -5555,9 +5585,9 @@ OpenTelemetry GenAI semantic conventions 仍快速演进；固定版本并放在
 | 精读   | TS 状态建模         | [Discriminated unions](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) |
 | 精读   | Node Event Loop | [Don't Block the Event Loop](https://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop)      |
 | 精读   | Node Streams    | [Streams](https://nodejs.org/api/stream.html)                                                              |
-| L1 后 | Rust 语言         | [The Rust Programming Language](https://doc.rust-lang.org/book/)                                           |
-| L1 后 | Rust 并发类型       | [Send and Sync](https://doc.rust-lang.org/book/ch16-04-extensible-concurrency-sync-and-send.html)          |
-| L1 后 | Tokio           | [Tutorial](https://tokio.rs/tokio/tutorial)、[Graceful Shutdown](https://tokio.rs/tokio/topics/shutdown)    |
+| 并行学习 | Rust 语言         | [The Rust Programming Language](https://doc.rust-lang.org/book/)                                           |
+| 并行学习 | Rust 并发类型       | [Send and Sync](https://doc.rust-lang.org/book/ch16-04-extensible-concurrency-sync-and-send.html)          |
+| 并行学习 | Tokio           | [Tutorial](https://tokio.rs/tokio/tutorial)、[Graceful Shutdown](https://tokio.rs/tokio/topics/shutdown)    |
 | L1 后 | MCP Rust SDK    | [modelcontextprotocol/rust-sdk](https://github.com/modelcontextprotocol/rust-sdk)                          |
 
 截至基准日，OpenAI 没有官方 Rust SDK 或 Rust Agents SDK；官方 libraries 页面列出的 Rust 方案属于社区库。Rust 侧模型调用应通过 adapter 与 contract/eval tests 隔离。
@@ -5597,13 +5627,13 @@ url: https://whatthehan.github.io/masterpiece-static-docs/10-%E6%AF%95%E4%B8%9A%
 
 ## 00 · 方法与任务定义
 
-| 章节           | 必留产出                                  | 通过证据                                        | 闭卷对应    |
-| ------------ | ------------------------------------- | ------------------------------------------- | ------- |
-| 00/01 阅读本书   | 个人学习节奏与错误模型清单                         | 能区分纸面微实验、L1 实验和实施门禁                         | 全卷执行方式  |
-| 00/02 知识地图   | 依赖图和 G0/G1/G2/L1 边界                   | 能解释为什么 M0 早于首次模型实验                          | 9、27–29 |
-| 00/03 术语与边界  | 术语卡片与一组反例                             | 不混用 M0/L1、ACL、SSE、Reducer、Enforcement point | 8–18    |
-| 00/04 M0     | 填完的 Task Contract、baseline、seed cases | 评分 ≥16/20，结果/安全非 0                          | 9、28    |
-| 00/05 完整转型路线 | M0–L6 阶段卡与个人路线裁剪                      | 能说明当前阶段、下一交付物和明确不做项                         | 9、27–29 |
+| 章节           | 必留产出                                           | 通过证据                                            | 闭卷对应    |
+| ------------ | ---------------------------------------------- | ----------------------------------------------- | ------- |
+| 00/01 阅读本书   | 个人学习节奏与错误模型清单                                  | 能区分纸面微实验、L1 实验和实施门禁                             | 全卷执行方式  |
+| 00/02 知识地图   | 依赖图和 G0a/M0/G1/G2/L1 边界                        | 能解释为什么 G0a 早于模型探针、正式 M0 早于 L0 SDK 实践            | 9、27–29 |
+| 00/03 术语与边界  | 术语卡片与一组反例                                      | 不混用 G0a/M0/L1、ACL、SSE、Reducer、Enforcement point | 8–18    |
+| 00/04 M0     | G0a 草案、Task Contract、baseline、30–50 个版本化 cases | G0a 的 12–20 个案例评分 ≥16/20 且结果/安全非 0；正式 M0 可重复评测  | 9、28    |
+| 00/05 完整转型路线 | G0a、M0–L6 阶段卡与个人路线裁剪                           | 能说明当前阶段、下一交付物和明确不做项                             | 9、27–29 |
 
 ## 01–02 · 数学、机器学习与 LLM
 
@@ -5675,19 +5705,19 @@ url: https://whatthehan.github.io/masterpiece-static-docs/10-%E6%AF%95%E4%B8%9A%
 | 08/03 Durable 心智模型 | 双 Worker+lease/fencing/CAS 纸面时序 | 能解释 exactly-once 边界和为什么此实施在 L1 后                      | 不计入核心卷；辅助 21、27 |
 | 08/04 Trace/SLO/成本 | trace tree、SLI/SLO、脱敏与成功任务成本    | 能用一个 Run ID 对齐 outcome/trace/audit/cost，安全零容忍不被错误预算稀释 | 19、28、29        |
 
-## 09–10 · L1 后与综合毕业
+## 09–10 · Rust 轨道与综合毕业
 
-| 章节             | 必留产出                                                                | 通过证据                         | 闭卷对应       |
-| -------------- | ------------------------------------------------------------------- | ---------------------------- | ---------- |
-| 09/01 Rust 理论  | 迁移假设、R0–R4 阶梯和不保证清单                                                 | L1 完成且瓶颈有数据；无证据则结论是“不迁移”     | 10/07 独立门禁 |
-| 09/02 跨语言契约    | wire-type table、identity/integrity 和 contract/golden/property tests | 安全关键：不把进程边界当自动隔离，资源服务重新授权    | 10/07 独立门禁 |
-| 10/01 综合模型     | 20 分钟闭卷重画                                                           | 分层、14 步 Run 路径、12 不变量无重大缺口   | 27–29      |
-| 10/02–03 闭卷与评分 | 答卷、原子评分、错误模型清单                                                      | 总分、A/B/C 分域和硬门禁全过            | 全卷         |
-| 10/04 八周计划     | 每周产出证据包                                                             | 未跳过 M0/安全/评测门禁，L1 后项未偷渡到首个实现 | 全卷         |
+| 章节             | 必留产出                                                                | 通过证据                                                 | 闭卷对应       |
+| -------------- | ------------------------------------------------------------------- | ---------------------------------------------------- | ---------- |
+| 09/01 Rust 理论  | 学习/迁移分界、R0–R4 阶梯和不保证清单                                              | R0/R1 学习可并行；真实迁移须有 L1 baseline 与 profile/SLO/部署/隔离证据 | 10/07 独立门禁 |
+| 09/02 跨语言契约    | wire-type table、identity/integrity 和 contract/golden/property tests | 安全关键：不把进程边界当自动隔离，资源服务重新授权                            | 10/07 独立门禁 |
+| 10/01 综合模型     | 20 分钟闭卷重画                                                           | 分层、14 步 Run 路径、12 不变量无重大缺口                           | 27–29      |
+| 10/02–03 闭卷与评分 | 答卷、原子评分、错误模型清单                                                      | 总分、A/B/C 分域和硬门禁全过                                    | 全卷         |
+| 10/04 八周计划     | 每周产出证据包                                                             | 未把 G0a 当正式 M0，且未跳过安全/评测门禁或把 L1 后项偷渡到首个实现             | 全卷         |
 
 ## 毕业证据包最小清单
 
-1. M0 + 非 Agent baseline + 30–50 个版本化 cases。
+1. 正式 M0 + 非 Agent baseline + 30–50 个版本化 cases；G0a 草案不计入毕业证据。
 2. 统计/评测计划：graders、trials、区间、MDE/power、停止与发布门禁。
 3. TypeScript/Node runtime 图、流 event reducer、Agent 状态机和不变量。
 4. Context Manifest、ACL-scoped retrieval、provenance 和 Memory 删除策略。
@@ -5706,9 +5736,9 @@ url: https://whatthehan.github.io/masterpiece-static-docs/10-%E6%AF%95%E4%B8%9A%
 url: https://whatthehan.github.io/masterpiece-static-docs/10-%E6%AF%95%E4%B8%9A%E9%97%A8%E7%A6%81/07-Rust%E8%BF%81%E7%A7%BB%E9%97%A8%E7%A6%81.md
 ---
 
-# 07 · Rust 迁移门禁（L1 后）
+# 07 · Rust 真实迁移门禁（L1 后）
 
-这份门禁是一份迁移决策记录，而不是 Rust 学习进度表。它要求先证明问题确实位于候选组件，再证明新实现保持原有语义，并提前写出停止与回滚条件。
+这份门禁是一份真实组件迁移决策记录，而不是 Rust 学习进度表。R0/R1 基础学习可以在 L0/L1 并行；只要开始替换 Workbench 或生产组件，无论处于 R0–R4 哪一阶段，都必须使用本门禁。
 
 ## 何时使用
 
@@ -5723,7 +5753,7 @@ url: https://whatthehan.github.io/masterpiece-static-docs/10-%E6%AF%95%E4%B8%9A%
 
 ## 阶段门禁
 
-### R0 · 语言与纯计算
+### R0 · 纯逻辑
 
 必须证明：
 
@@ -5743,7 +5773,7 @@ url: https://whatthehan.github.io/masterpiece-static-docs/10-%E6%AF%95%E4%B8%9A%
 - 只读工具在并发与取消下无泄漏任务、无无界队列、Trace 连续。
 - CPU/阻塞工作不占用 async executor。
 
-### R2 · 跨语言 Sidecar
+### R2 · Sidecar 与协议
 
 必须证明：
 
@@ -5753,9 +5783,28 @@ url: https://whatthehan.github.io/masterpiece-static-docs/10-%E6%AF%95%E4%B8%9A%
 - contract/golden/property tests 覆盖版本、边界、错误、断流、取消、迟到响应和 unknown effect。
 - 进程边界不被宣称为自动资源/安全隔离；CPU/内存/文件/网络/凭证限制均有独立设置和测试。
 
-### R3 · Shadow、Canary 与生产迁移
+### R3 · 受控执行面
 
 必须证明：
+
+- Rust MCP server/gateway、policy proxy、parser/indexer 或 sandbox supervisor 仍由 Node 控制面编排。
+- 身份、权限上下文和 policy decision reference 可验证；资源服务执行前重新授权，不信任 `authorized=true`。
+- 幂等键、资源版本、连接池、限流、重试、背压和审计字段均有明确契约。
+- property/fuzz/chaos test 覆盖重复请求、并发冲突、越权、依赖故障与资源耗尽。
+- 文件、网络、凭证、CPU 和内存隔离独立生效，不把 Rust 内存安全当作沙箱。
+
+### R4 · 可选运行时核心
+
+必须证明：
+
+- 只有 Thread / Run / Item、事件存储、checkpoint、恢复、调度和流程版本契约稳定后，才选择候选运行时核心。
+- Node 与 Rust 对同一版本化事件、状态转移和错误分类达到 contract、golden、Eval 与 Trace parity。
+- 崩溃、重放、升级与旧版本在途 Run 的恢复测试通过，不改变业务授权和产品 UX 语义。
+- 实测收益仍满足预注册标准；证据不足时保留 Node 控制面与运行时核心。
+
+## 横切发布门禁
+
+以下要求适用于每一次真实组件迁移，不占用 R0–R4 的阶段编号：
 
 - Shadow 不产生副作用，比较 outcome/error/trace/audit/latency/resource/cost 而非只比文本。
 - 在预注册的 MDE 上显示真实改善，安全、正确性和尾延迟无退化。
