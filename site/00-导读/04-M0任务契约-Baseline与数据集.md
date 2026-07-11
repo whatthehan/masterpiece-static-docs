@@ -1,4 +1,8 @@
-# 04 · M0：任务规格、Baseline 与数据集
+# 04 · M0：任务规格、基线（Baseline）与数据集
+
+转型的真正起点不是第一次调用模型，而是先回答“系统怎样才算成功，以及怎样证明”。如果这一步缺失，后续增加工具、记忆或多 Agent 只会放大一个尚未定义清楚的问题。
+
+对贯穿全书的研究—判断—行动案例，M0 会先固定允许读取的资料、必须审批的动作、真实结果的检查位置和更简单的基线。此后每一阶段的技术变化，都必须回到同一批任务和风险上比较。
 
 ## 学习目标
 
@@ -158,3 +162,9 @@ Baseline：一次模型调用，只使用用户粘贴的资料，不调用工具
 
 - [Anthropic Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)
 - [OpenAI Evaluation best practices](https://developers.openai.com/api/docs/guides/evaluation-best-practices)
+
+## 本章小结
+
+M0 把“做一个 Agent”改写为一组可判定的任务、风险与真实结果，并用更简单的方案建立比较起点。下一章把这份基线放回完整转型路线，说明前置学习之后，Workbench 将如何持续演进为可生产的 Agent 应用。
+
+[下一章：从学习到转型的完整路线](/masterpiece-static-docs/00-导读/05-从学习到转型的完整路线.md)

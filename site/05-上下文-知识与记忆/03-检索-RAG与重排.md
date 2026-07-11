@@ -1,5 +1,9 @@
 # 03 · 检索、RAG 与重排
 
+有了来源、权限和时间字段，系统仍要回答一个实际问题：面对大量政策与业务资料，怎样把当前退款问题所需的证据送进有限 Context。检索增强生成（Retrieval-Augmented Generation，RAG）不是外挂在 Agent 旁边的“知识功能”，而是 Runtime 构造证据投影的一条受约束数据管线。
+
+本章从候选生成、融合、重排一直走到引用验证，并始终保留前一章的 ACL 与 Provenance。这样才能分别判断是证据没有被召回、排序错误、Context 打包丢失条件，还是模型在已有证据上生成了错误结论。
+
 ## 学习目标
 
 - 理解 RAG 是“检索候选 + 上下文增强 + 生成”的系统，不是防幻觉开关。
@@ -8,12 +12,18 @@
 
 ## 1. 最小管线
 
-```text
-ingest → normalize → chunk → index
-actor/tenant/purpose → 授权分区或可下推 ACL predicate
-query → rewrite → 在授权范围内 sparse/dense retrieve
-      → 防御性 ACL/metadata 复验 → fusion → rerank
-      → deduplicate/context pack → generate → cite/verify
+```mermaid
+flowchart TD
+  A["ingest"] --> B["normalize"] --> C["chunk"] --> D["index"]
+  E["actor / tenant / purpose"] --> F["授权分区 / 可下推 ACL predicate"]
+  G["query"] --> H["rewrite"]
+  D --> I["授权范围内 sparse / dense retrieve"]
+  F --> I
+  H --> I
+  I --> J["防御性 ACL / metadata 复验"]
+  J --> K["fusion"] --> L["rerank"]
+  L --> M["deduplicate / context pack"]
+  M --> N["generate"] --> O["cite / verify"]
 ```
 
 每一箭头都可能失败。向量数据库只是其中一个组件。
@@ -72,6 +82,10 @@ query → rewrite → 在授权范围内 sparse/dense retrieve
 - 召回不足时继续优化 Prompt 即可。
 - 引用了 URL 就说明 Claim 有依据。
 - Agentic RAG 总比固定检索好。
+
+## 本章小结
+
+RAG 的质量来自一条可分层评测的数据管线：先在授权范围内召回，再重排、打包、生成并验证引用；任何一层失败都不应被笼统归咎于模型。下一章将区分[状态、记忆与压缩](/masterpiece-static-docs/05-上下文-知识与记忆/04-状态-记忆与压缩.md)，决定哪些检索结果和任务经验可以跨步骤或跨 Thread 保留。
 
 ## 章末检查
 

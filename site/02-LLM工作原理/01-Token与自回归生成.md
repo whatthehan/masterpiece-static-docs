@@ -1,4 +1,8 @@
-# 01 · Token 与自回归生成
+# 01 · 词元（Token）与自回归生成
+
+贯穿案例中的资料、工具定义、历史消息和输出草案，在进入模型后都会竞争同一份 Token 预算。对 Agent 工程师而言，这不仅是计费问题：预算还决定请求能否容纳必要约束、何时被截断，以及一条工具轨迹可以安全走多远。
+
+本章从文本如何变成序列开始，建立模型与外部世界之间最基本的边界。模型逐 Token 产生候选内容；邮件是否发出、数据库是否更新，始终要由应用 Runtime 校验并执行。
 
 ## 学习目标
 
@@ -9,20 +13,20 @@
 ## 1. 文本进入模型前发生什么
 
 ```text
-Unicode 文本 → 字节/字符序列 → tokenizer → Token IDs → embedding vectors
+Unicode 文本 → 字节/字符序列 → 分词器（tokenizer）→ Token IDs → 嵌入向量
 ```
 
 Token 可能是整词、子词、空格、标点、字节片段或特殊控制符。CJK、emoji、代码、JSON、长 ID 的 Token 密度差异很大，不存在可靠的固定“一个 Token 等于几个字符”。
 
 同一段文本在不同 tokenizer 或版本中可能产生不同 ID。Token ID 只在相应词表中有意义。
 
-## 2. Chat 对象最终仍会序列化
+## 2. 对话（Chat）对象最终仍会序列化
 
 应用看到的 role、message、tool definition 和 attachment metadata 是 API 结构；提供方会把它们编码为模型可处理的序列。系统消息、工具 Schema、历史和工具结果都会消耗上下文预算，不能只统计用户正文。
 
 ## 3. 自回归分解
 
-Decoder-only 模型的教学抽象是：给定前缀，预测下一个 Token，然后把选中的 Token 加回前缀继续预测。
+仅解码器（decoder-only）模型的教学抽象是：给定前缀，预测下一个 Token，然后把选中的 Token 加回前缀继续预测。
 
 ```text
 P(x_1...x_T) = Π P(x_t | x_<t)
@@ -74,3 +78,9 @@ function_call({"amount":100})
 - [Neural Machine Translation of Rare Words with Subword Units](https://aclanthology.org/P16-1162/)
 - [SentencePiece](https://aclanthology.org/D18-2012/)
 - [OpenAI tiktoken](https://github.com/openai/tiktoken)
+
+## 本章小结
+
+模型看到的是受预算约束的 Token 序列，输出也是逐 Token 生成的候选；API 结构和真实外部动作都位于模型之外。下一章继续追踪这些 Token 如何在 Transformer 中互相影响，以及 KV Cache 为什么能改善生成性能，却不能充当 Agent 的长期记忆。
+
+[下一章：Transformer、注意力与 KV 缓存](/masterpiece-static-docs/02-LLM工作原理/02-Transformer-Attention与KV-Cache.md)

@@ -1,5 +1,9 @@
 # 03 · Eval 驱动迭代
 
+有了统计方法和结构化 Trace，团队才有条件把“这次退款失败了”变成可重复的工程问题。真正困难的不是想到更多优化点，而是在模型、Prompt、Context、工具、策略与 Runtime 之间定位责任层，并证明一次改动改善了目标指标而没有换来新的安全或成本回归。
+
+本章把评测（Evaluation，Eval）放进日常研发循环：真实失败成为版本化案例，单一假设接受多次 Trial 检验，通过门禁后才进入灰度。这个闭环也会成为下一部分学习模型接口和手写 Agent 内核时的验证框架，使 Schema、流式事件和状态机不再只是孤立语法。
+
 ## 学习目标
 
 - 把失败转成可重复案例和回归门禁。
@@ -8,15 +12,16 @@
 
 ## 1. 迭代闭环
 
-```text
-发现失败
-→ 最小复现并分类
-→ 加入 regression task
-→ 提出单一假设
-→ 改 model/prompt/context/tool/policy/runtime 中一层
-→ 多 trial 比较
-→ 安全与成本复核
-→ canary / monitor
+```mermaid
+flowchart TD
+  A["发现失败"] --> B["最小复现并分类"]
+  B --> C["加入回归任务"]
+  C --> D["提出单一假设"]
+  D --> E["只修改 model / prompt / context / tool / policy / runtime 中一层"]
+  E --> F["多次 Trial 配对比较"]
+  F --> G["安全与成本复核"]
+  G --> H["灰度发布与监控"]
+  H -->|新失败| A
 ```
 
 先定位失败层再修复。用更长 Prompt 修工具超时，或用更强模型修授权漏洞，都是层次错误。
@@ -72,6 +77,10 @@ failure and refusal behavior explainable
 - 用户点赞可以替代任务成功指标。
 - 生产监控可以替代离线攻击测试。
 - 固定评测集越调越高就表示泛化更好。
+
+## 本章小结
+
+Eval 驱动迭代的核心是先归因、再做单变量改动，并让离线回归、生产监控与用户证据各司其职。带着这套证据门禁，下一部分从 [TypeScript + Node 运行时先修](/masterpiece-static-docs/04-模型接口与Agent内核/01-TypeScript-Node运行时先修.md)开始，把模型调用逐步组装成可测试、可取消的 Agent Runtime。
 
 ## 章末检查
 

@@ -1,5 +1,9 @@
 # 08 · 框架与 SDK 学习优先级
 
+理解模型协议、工具门禁和单 Agent 状态机之后，框架才成为可以理性评估的工程选项。否则，示例代码越短，越容易看不见谁持有状态、恢复时哪些步骤会重跑，以及授权和幂等仍由哪一层负责。
+
+本章不试图罗列所有生态工具，而是沿着本书的学习依赖给出投入顺序：先用官方 SDK 看清协议，再用同一套 Eval 与故障注入对照高层 Runtime。选择框架的依据是它能否降低已知成本且不破坏既有门禁。
+
 > 查证基准：2026-07-11。这里的“暂不投入”是对“TypeScript + Node 主语言、先完成单 Agent L1、再渐进迁往 Rust 执行面”这条路线的排序，不是对项目质量的普遍评价。所有 SDK 和框架 API 在实施当天重新核对。
 
 ## 学习目标
@@ -35,7 +39,7 @@ OpenAI Agents SDK for TypeScript 当前提供 Agent loop、tools、handoffs、gu
 
 LangGraph 的官方定位聚焦长运行、有状态编排，包括 durable execution、streaming、human-in-the-loop 和 persistence/checkpoint。当你已有这些真实需求时，学习它可以避免自己重建一部分编排基础设施。
 
-但“有 checkpointer”不会消除本教材的问题：外部 Activity 仍需幂等，恢复仍需版本语义，多 Worker 仍需所有权控制，审批仍需绑定不变提案。若任务只是一个短时、三个只读工具的 Loop，LangGraph 带来的新语义和依赖大于收益。
+但“有 checkpointer”不会消除本书讨论的问题：外部 Activity 仍需幂等，恢复仍需版本语义，多 Worker 仍需所有权控制，审批仍需绑定不变提案。若任务只是一个短时、三个只读工具的 Loop，LangGraph 带来的新语义和依赖大于收益。
 
 ## 4. 框架选型实验
 
@@ -65,6 +69,10 @@ L1 后，主要依赖 OpenAI，希望减少 Loop/Tracing/HITL 样板代码？
 没有证据需要 multi-agent？
   └─ 是 → 不学 AutoGen/CrewAI/handoffs/crews。
 ```
+
+## 本章小结
+
+官方模型 SDK 是理解协议的起点，高层 Agent 框架则应在手写 L1 Runtime 之后按真实需求限时评估；任何抽象都不能接管应用的授权、领域状态和副作用语义。下一部分从 [Context Engineering](/masterpiece-static-docs/05-上下文-知识与记忆/01-Context-Engineering.md)继续，处理 Runtime 每一轮如何在有限窗口内选择状态、工具与证据。
 
 ## 章末检查
 

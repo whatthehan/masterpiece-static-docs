@@ -1,5 +1,9 @@
 # 06 · Agent Loop 与状态机
 
+前几章分别建立了 Context、模型事件、Schema 和工具门禁，现在需要把它们收束成一个能够持续推进任务的 Runtime。退款命令（command）提交后若丢失回执，系统既不能盲目重试，也不能把用户的取消请求直接写成 `CANCELLED`；此时真正决定可靠性的，是状态、事件、守卫条件（Guard）与执行效果（Effect）的明确关系。
+
+因此，Agent Loop 应被理解为有预算的状态机，而不是围绕模型的无限 `while`。本章以取消、未知副作用和效果收敛（reconciliation）为主线，展示 Runtime 如何在不确定观察下仍然持有确定性的控制边界。
+
 ## 学习目标
 
 - 把 Agent 理解为受约束反馈控制系统。
@@ -80,16 +84,17 @@ MANUAL_INTERVENTION
 
 ## 4. 取消不是瞬时终态
 
-```text
-RUNNING/EXECUTING
-  ─ cancel_requested → CANCEL_REQUESTED
-  → CANCELLING
-  ├─ 确认未提交效果 → CANCELLED
-  ├─ 确认效果已提交 → COMPLETED_WITH_EFFECT_AFTER_CANCEL
-  └─ 无法确认 → IN_DOUBT → RECONCILING
-                         ├─ CANCELLED
-                         ├─ COMPLETED_WITH_EFFECT_AFTER_CANCEL
-                         └─ MANUAL_INTERVENTION / PARTIAL
+```mermaid
+flowchart TD
+  A["RUNNING / EXECUTING"] -->|cancel_requested| B["CANCEL_REQUESTED"]
+  B --> C["CANCELLING"]
+  C -->|确认未提交效果| D["CANCELLED"]
+  C -->|确认效果已提交| E["COMPLETED_WITH_EFFECT_AFTER_CANCEL"]
+  C -->|无法确认| F["IN_DOUBT"]
+  F --> G["RECONCILING"]
+  G -->|确认无效果| D
+  G -->|确认已发生效果| E
+  G -->|期限内仍无法确认| H["MANUAL_INTERVENTION / PARTIAL"]
 ```
 
 取消后禁止新的模型规划动作，但 Runtime 可以执行预先定义的 reconciliation：按幂等键查询、接收迟到回执、补偿或转人工。它不是 Agent 自主产生的新业务动作。
@@ -178,6 +183,10 @@ tool/concurrency budget
 - Streaming 文本结束就能标记 `COMPLETED`。
 - 请求取消后可以立即写 `CANCELLED`。
 - Checkpoint 只需保存最后一条消息。
+
+## 本章小结
+
+一个可上线的 Agent Runtime 必须用显式状态和事件处理等待、取消、预算耗尽与未知副作用；模型负责提议，Reducer 与策略负责决定哪些变化可以发生。掌握单 Agent 内核后，下一章再讨论[架构模式与多 Agent 边界](/masterpiece-static-docs/04-模型接口与Agent内核/07-架构模式与多Agent边界.md)，用评测决定是否值得增加编排复杂度。
 
 ## 章末检查
 
