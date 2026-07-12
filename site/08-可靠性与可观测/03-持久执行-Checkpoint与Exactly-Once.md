@@ -1,72 +1,94 @@
 # 03 · 持久执行、Checkpoint 与 Exactly-Once
 
-一个需要等待审批数小时的 Run，不能把正确性寄托在某个 Node 进程一直存活。进程崩溃、Worker 接管和流程升级都会迫使系统回答：哪些决定已经完成、哪些外部效果仍不确定、当前由谁拥有写入权，以及旧审批能否继续使用。
+`order_123` 已进入 Reconciliation Pool，Worker A 正准备查询支付回执，进程却在部署期间退出。几秒后 Worker B 接管。它不能从一句“用户已取消”重新猜测任务，也不能因为 checkpoint 中没有 ACK 就再次退款；它必须恢复原提案、原幂等键、Cancel intent、未知效果和当前所有权。
 
-本章讨论持久执行（Durable Execution）的核心状态与恢复协议。检查点（Checkpoint）负责保存可恢复语义，却不能神奇地让第三方副作用只发生一次；所谓恰好一次（Exactly-Once）必须被拆成投递、处理、提交和用户可观察效果分别验证。
+这就是持久执行（Durable Execution）解决的问题：不是让进程永不失败，而是让另一个进程能从持久事实继续。上一章已经定义容量与核对优先级，本章推进到 **跨 Worker 的所有权、Replay 与版本语义**。
 
-> 本章是核心心智模型，但引入 durable workflow 引擎、多 Worker 恢复和长任务是 **L1 之后** 的实施项，不是首个 Agent 的前置依赖。
+> Durable Workflow、多 Worker 恢复与跨小时任务是 L1 之后的能力，不是首个 Agent Loop 的前置依赖；它们属于全书毕业而非八周启动的硬要求。
 
 ## 学习目标
 
-- 理解长任务为什么需要持久化语义状态和单写所有权。
-- 区分 replay、delivery、handler execution 与真实业务效果。
-- 设计能恢复、可升级、不盲目重复动作的 event/checkpoint 协议。
+- 保存足以恢复语义状态的 Checkpoint，而不只是聊天文本。
+- 用 Lease、Heartbeat、Fencing Token 和 CAS 保持单写所有权。
+- 区分 Replay、消息投递、Handler 执行与真实业务效果。
 
-## 1. Checkpoint 保存什么
-
-至少包含：
+## 1. Worker B 需要恢复什么
 
 ```text
-run/thread identity
-workflow/runtime/schema/prompt/tool/policy version
-current state + ownership epoch + event cursor
-completed tool receipts / idempotency keys
-in-flight commands and their effect status
-pending approval proposal, hash and expiry
-budgets, attempts, deadlines and cancel state
-context artifact/source references
-error, reconciliation and compensation state
+run_id: run_refund_123
+state: RECONCILING
+actor: 小林
+proposal: order_123 / CNY 100.00 / resource_version 42
+approval_hash + approval_expiry
+idempotency_key: refund:order_123:v42
+in_flight_effect: unknown
+cancel_intent: true
+reconciliation_deadline + remaining_query_budget
+runtime/workflow/schema/prompt/tool/policy versions
+ownership_epoch + event_cursor
+context/source artifact references
 ```
 
-只保存对话文本，无法判断哪些副作用已提交、谁拥有 Run、审批是否仍有效，或应从哪个状态恢复。
+只恢复消息历史，Worker B 无法知道哪项业务意图已经提交、Cancel 发生在何时、能否继续使用旧审批，或应该查询哪个幂等记录。
 
 ## 2. Event History 与 Replay
 
-Durable workflow 通常通过事件历史重建确定性控制逻辑。Replay 不应再次直接读取随机数、当前时间或外部服务；这些结果要作为 event 或 Activity 结果记录。
+Durable Workflow 通常通过事件历史重建确定性控制逻辑。Replay 重新计算的是“这些已记录事件应导出什么状态”，不应再次直接读取当前时间、随机数、模型或外部服务。
 
-模型和工具调用属于外部非确定性 Activity。引擎可能为恢复而重新投递，因此仍需幂等、去重、结果缓存或查询收敛。
+模型与工具调用属于外部非确定性 Activity。它们的结果、错误和版本要作为事件记录；恢复时引擎可能重新投递 Activity，因此 Handler 仍需幂等、去重、结果缓存或权威查询。Replay 从来不承诺模型再次生成同一内容。
 
-## 3. 单写者与所有权协议
+## 3. Lease 不是所有权的最后一道防线
 
-持久化不会自动防止两个 Worker 同时恢复同一 Run。最小协议需要：
+同一 Run 的最小所有权协议包括：
 
-- Lease：带过期时间的处理权，不是永久锁。
-- Heartbeat：持有者在长步骤中证明存活并更新进度。
-- `ownership_epoch` / fencing token：每次接管单调增加；下游拒绝旧 epoch 的迟到写入。
-- CAS/optimistic concurrency：状态转移必须以预期 version/epoch 原子提交。
-- Single-writer invariant：同一 Run 在一个 epoch 内只有一个可提交控制决定的所有者。
+- **Lease**：有过期时间的处理权。
+- **Heartbeat**：长步骤持续证明持有者存活并更新进度。
+- **Fencing token / `ownership_epoch`**：每次接管单调增加，下游拒绝旧 epoch 的迟到写入。
+- **CAS / Optimistic Concurrency**：状态转移只有在预期版本和 epoch 一致时才能原子提交。
+- **Single-writer invariant**：一个 epoch 内只有一个控制决定可以成为权威状态。
 
-Lease 过期不会杀死旧 Worker，所以没有 fencing/CAS 时，旧 Worker 仍可在新 Worker 接管后写回过期状态。
+Lease 过期不会杀死旧 Worker。没有 Fencing/CAS 时，Worker A 可能在 Worker B 接管后恢复网络并写回过期状态。
 
-## 4. 队列与投递语义
+## 4. `order_123` 的接管时序
 
-- Visibility timeout 应超过正常处理时间，长任务通过 heartbeat 延长。
-- 消息可能重复投递；consumer 要用 message/call/idempotency ID 去重。
-- Poison message 不应无限重试；达上限后进 DLQ/隔离区，保留诊断与可控 replay。
-- 数据库变更与发送事件之间使用 transactional outbox；消费端用 inbox/dedup 收敛。
+```mermaid
+sequenceDiagram
+  participant A as Worker A（epoch 7）
+  participant S as 状态存储
+  participant P as 支付系统
+  participant B as Worker B（epoch 8）
+  A->>S: checkpoint(RECONCILING, effect=unknown, cancel=true)
+  A--xS: 进程退出 / lease 过期
+  B->>S: CAS 获取 lease，ownership_epoch=8
+  S-->>B: 恢复 proposal、幂等键与 cancel intent
+  B->>P: query(refund:order_123:v42)
+  P-->>B: refund_id=rf_789, amount=CNY 100.00
+  B->>S: CAS(epoch=8) 写入 reconciled outcome
+  A->>S: 迟到写入(epoch=7, effect=absent)
+  S-->>A: fencing/CAS 拒绝
+```
 
-DLQ 是异常管理机制，不是丢弃责任的垃圾桶；需定义告警、所有者、修复、重放前置和保留期。
+Worker B 没有重新调用模型，也没有再次提交退款。它执行的是上一章定义的确定性核对动作，最终把 Run 写成 `COMPLETED_WITH_EFFECT_AFTER_CANCEL`。
 
-## 5. Exactly-once 的边界
+## 5. 队列与投递语义
 
-要分别讨论：
+- Visibility Timeout 要覆盖正常处理时间，长 Activity 通过 Heartbeat 延长。
+- 消息可能重复投递，Consumer 通过 message/call/idempotency ID 去重。
+- Poison Message 达到上限后进入 DLQ/隔离区，保留诊断、责任人和可控 Replay 条件。
+- 数据库变更与发布事件之间使用 Transactional Outbox；消费端使用 Inbox/Dedup 收敛。
 
-- 消息 delivery 次数。
-- Handler execution 次数。
-- 数据库 commit 次数。
-- 用户可观察业务效果次数。
+DLQ 不是垃圾桶。必须定义告警、所有者、修复方式、重放前置、数据保留与删除策略。
 
-某层宣传 exactly-once 不代表第三方支付、邮件或外部 API 只产生一次效果。更现实的目标是：
+## 6. Exactly-Once 必须拆开说
+
+分别询问：
+
+- 消息被 Delivery 几次？
+- Handler 被执行几次？
+- 数据库被 Commit 几次？
+- 用户可观察的业务效果发生几次？
+
+某层宣称 Exactly-Once，不代表第三方支付、邮件或外部 API 只产生一次效果。更现实的端到端目标是：
 
 ```text
 at-least-once attempt
@@ -75,67 +97,53 @@ at-least-once attempt
 + reconciliation
 ```
 
-## 6. Crash 窗口与取消竞态
+对于 `order_123`，Worker 可以被投递多次，支付系统仍应只存在一笔与同一业务意图匹配的 100 元退款。
 
-```mermaid
-sequenceDiagram
-  participant W1 as Worker A（epoch 7）
-  participant X as 外部系统
-  participant S as 状态存储
-  participant W2 as Worker B（epoch 8）
-  W1->>X: commit(command, idempotency_key)
-  Note over W1,X: 外部效果已提交
-  alt 窗口 A：ACK / receipt 在返回途中丢失
-    X--xW1: ACK / receipt 未送达
-    Note over W1,S: 持久状态没有 receipt；W1 崩溃或失去 lease
-  else 窗口 B：receipt 已到 Worker，但未写入 checkpoint
-    X-->>W1: ACK / receipt 已送达
-    Note over W1,S: W1 在持久化 checkpoint 前崩溃；持久状态仍没有 receipt
-  end
-  W2->>S: 获取 lease，ownership_epoch = 8
-  S-->>W2: 恢复无 receipt 的 in-flight command
-  W2->>X: 查询 receipt / 权威业务状态
-  X-->>W2: 效果已发生
-  W2->>S: 以 epoch 8 CAS 写入 reconciled 状态
-  W1->>S: 迟到写入 epoch 7
-  S-->>W1: fencing / CAS 拒绝
+## 7. 长 Run 的版本演进
+
+跨小时或跨天 Run 可能跨越多次部署。Checkpoint 必须固定或可解释地迁移：
+
+```text
+workflow + runtime + state schema
+prompt + model/provider route
+tool contract + policy + context builder
 ```
 
-通过外部幂等键、outbox/inbox、receipt/权威状态查询和 reconciliation 收敛。Checkpoint 无法与任意第三方系统形成一个全局原子事务。
+恢复时不应让新代码重新解释旧审批。优先让旧 Run 路由到兼容 Worker；确需迁移时，使用版本化 Migration、Shadow Replay 和明确回滚。无法安全迁移的 Run 保持旧执行器或转人工。下一章之后的发布运营会进一步处理旧 Run 与新 Run 的切流。
 
-## 7. 版本演进与补偿
-
-长期 Run 可能跨部署。恢复时要固定 workflow/state/schema/prompt/tool/policy version，对事件和 snapshot 做向后兼容或显式迁移。无法安全迁移时，固定旧 Worker 或转人工，不用新逻辑重新解释旧审批。
-
-Saga 式 compensation 是业务动作，不是底层 rollback。每步需说明是否可补偿、前置条件、补偿失败所有者和用户可见语义。
+补偿（Compensation）是新的业务动作，不是数据库式 Rollback。每个补偿都要定义前置条件、授权、幂等、失败所有者和用户可见语义。
 
 ## 纸面微实验（45 分钟）
 
-推演两个 Worker 在 lease 过期边界同时处理一个 Run：Worker A 已提交外部效果但未写 checkpoint，Worker B 以新 epoch 接管。写出每个 event、CAS 条件、fencing 检查、receipt 查询和最终状态。若 A 的迟到写入能覆盖 B，或 B 会盲目重试，即不通过。
+推演 Worker A 在以下位置退出：支付 Commit 前、Commit 后 ACK 前、Receipt 到达后 Checkpoint 前、Reconciliation 查询后状态写入前。让 Worker B 以新 epoch 接管，并写出：
+
+1. 恢复的持久字段。
+2. 可以 Replay 的控制逻辑与禁止重放的 Activity。
+3. CAS/Fencing 条件。
+4. 最终 Outcome 和旧 Worker 迟到写入的处理。
 
 ## L1 后系统实验
 
-在 effect commit、ACK、checkpoint 之间的每个边界杀死 Worker，并强制 lease 过期和双 Worker 恢复。验证：只有新 epoch 能提交状态；相同业务 intent 只产生一次效果；poison event 进 DLQ；旧版 Run 不被新逻辑误解。
+在上述四个边界强杀 Worker，强制 Lease 过期与双 Worker 竞争。验证：只有新 epoch 能提交状态；同一业务意图只产生一次可观察效果；Poison Event 进入 DLQ；旧版 Run 不被新逻辑或新模型路由静默改写。
 
 ## 常见误区
 
-- Checkpoint 就是保存最后一条消息。
-- Durable workflow 自动提供外部 exactly-once。
-- 有 lease 就不需 fencing/CAS。
-- Queue 消息只会交给一个 Worker 一次。
-- Replay 可重新调用模型并获得同一结果。
-- DLQ 中的数据可以不再治理。
+- Checkpoint 是最后一条消息。
+- Durable Workflow 自动提供第三方 Exactly-Once。
+- 有 Lease 就不需要 Fencing 与 CAS。
+- Replay 可以重新调用模型并得到相同结果。
+- 新部署可以直接用新逻辑恢复所有旧 Run。
 
 ## 章末检查
 
-1. 为什么 Activity 仍需幂等，即使使用 durable workflow？
-2. Lease 之后为什么还需要 fencing token 和 CAS？
-3. Outbox、Inbox/Dedup 和 DLQ 分别解决什么？
-4. 为什么外部效果后 crash 必须先 reconcile？
+1. Worker B 为什么不能因 Checkpoint 中没有 ACK 就重新退款？
+2. Lease 之后为什么还需要 Fencing Token 和 CAS？
+3. Replay 与 Activity 重新投递有什么区别？
+4. Exactly-Once 为什么必须分别讨论投递、处理、Commit 与业务效果？
 
 ## 本章小结
 
-持久执行的核心不是保存聊天记录，而是保存版本、所有权、预算、审批、回执与未知效果，使新 Worker 能用 fencing、CAS 和权威查询安全接管。外部 Exactly-Once 仍需幂等与 reconciliation 共同逼近；下一章用[Trace、SLO 与成本](/masterpiece-static-docs/08-可靠性与可观测/04-Trace-SLO与成本.md)证明这些恢复路径是否真的工作。
+持久执行保存的是可恢复事实、所有权和版本，不是“让进程一直活着”。Worker B 通过新 epoch、原幂等键和权威查询接住了 `order_123`，旧 Worker 的迟到写入被拒绝。下一章将用[Trace、SLO 与成本](/masterpiece-static-docs/08-可靠性与可观测/04-Trace-SLO与成本.md)复盘整条事故：哪一步造成未知效果，系统为何没有重复退款，用户又等了多久才得到真相。
 
 ## 一手资料
 

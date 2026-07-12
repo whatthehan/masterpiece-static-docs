@@ -61,6 +61,31 @@ Event：Run 生命周期中的不可变语义变化
 
 “用户已经看到一部分文本”不代表事务提交或工具完成。
 
+### Provider Event 不是产品事件
+
+这里最容易出现一条看似省事、实际很脆弱的捷径：浏览器直接消费模型提供方的原始事件。这样做会让 UI 绑定厂商事件名，也会在断线后失去“哪些 Item 已经成为应用事实”的判断依据。
+
+真实链路至少有四层：
+
+```text
+Provider Event
+  → Provider Adapter：解析厂商协议、闭合 Item、保留 provider IDs
+  → Canonical RunEvent：应用稳定的 Thread / Run / Item 语义
+  → SSE / WebSocket Adapter：重连、序列、兼容和公开字段
+  → UI Reducer：派生用户看到的状态
+```
+
+| 层                  | 可以变化的内容                        | 不应承担的责任                    |
+| ------------------ | ------------------------------ | -------------------------- |
+| Provider Event     | 厂商事件名、delta 结构、finish reason   | 产品长期兼容契约                   |
+| Canonical RunEvent | 领域事件版本、Run/Item 语义             | 直接暴露密钥、原始 reasoning 或未校验参数 |
+| Transport Frame    | SSE `id`、heartbeat、snapshot 通知 | 定义退款是否成功                   |
+| UI Projection      | 文本、工具卡片、审批和终态展示                | 充当业务权威状态                   |
+
+例如，工具参数 delta 可以先由 Provider Adapter 累积；只有 Item 明确闭合并通过 Schema 校验，Runtime 才产生 `tool.proposed`。提供方的 response completed 也不能越过 Runtime，直接把应用 Run 写成 `COMPLETED`。
+
+完整 TypeScript 契约、断线补发和 UI Reducer 将在 [Agent Application Server 与 UI 事件协议](/masterpiece-static-docs/04-模型接口与Agent内核/09-Agent-Application-Server与UI事件协议.md)实现。
+
 ## 5. 错误分类
 
 | 层               | 例子                | 处理责任                   |
@@ -95,16 +120,19 @@ Event：Run 生命周期中的不可变语义变化
 
 ## 本章小结
 
-模型响应应被视为一组可关联、可判定完整性的语义 Item，而不是一个最终字符串；Provider state、应用状态和本轮 Context 也必须分别治理。下一章将用 [JSON Schema](/masterpiece-static-docs/04-模型接口与Agent内核/04-JSON-Schema基础.md) 为这些模型输出和工具参数建立可执行的结构契约。
+模型响应应被视为一组可关联、可判定完整性的语义 Item，而不是一个最终字符串；Provider state、应用状态和本轮 Context 也必须分别治理。Provider Event 先经过 Adapter 才能成为稳定的产品事件。下一章将用 [JSON Schema](/masterpiece-static-docs/04-模型接口与Agent内核/04-JSON-Schema基础.md) 为这些模型输出和工具参数建立可执行的结构契约。
 
 ## 章末检查
 
 1. Provider state、application state 和 model context 有何差异？
 2. 为什么工具只能在完整 item 并通过校验后执行？
 3. 断流后怎样避免把部分回答误标为完成？
+4. 为什么浏览器不应直接把 Provider Event 当作产品状态协议？
 
 ## 一手资料
 
 - [OpenAI Conversation state](https://developers.openai.com/api/docs/guides/conversation-state)
 - [OpenAI Function calling](https://developers.openai.com/api/docs/guides/function-calling)
 - [WHATWG Server-sent events](https://html.spec.whatwg.org/multipage/server-sent-events.html)
+
+[前置探针后、M0 尚未冻结：返回 M0 收敛任务基线](/masterpiece-static-docs/00-导读/04-M0任务契约-Baseline与数据集.md) · [M0 已冻结：继续 L0 JSON Schema](/masterpiece-static-docs/04-模型接口与Agent内核/04-JSON-Schema基础.md)

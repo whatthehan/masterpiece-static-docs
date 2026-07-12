@@ -4,7 +4,7 @@
 
 本章不试图罗列所有生态工具，而是沿着本书的学习依赖给出投入顺序：先用官方 SDK 看清协议，再用同一套 Eval 与故障注入对照高层 Runtime。选择框架的依据是它能否降低已知成本且不破坏既有门禁。
 
-> 查证基准：2026-07-11。这里的“暂不投入”是对“TypeScript + Node 主语言、先完成单 Agent L1、再渐进迁往 Rust 执行面”这条路线的排序，不是对项目质量的普遍评价。所有 SDK 和框架 API 在实施当天重新核对。
+> 查证基准：2026-07-12。这里的“暂不投入”是对“TypeScript + Node 主语言、先完成单 Agent L1、再渐进迁往 Rust 执行面”这条路线的排序，不是对项目质量的普遍评价。所有 SDK 和框架 API 在实施当天重新核对。
 
 ## 学习目标
 
@@ -14,20 +14,20 @@
 
 ## 1. 结论表
 
-| 技术                                  | 结论                   | 什么时候学                                            | 只学什么                                                                                         | 不要投入什么                                                                                 |
-| ----------------------------------- | -------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| TypeScript + Node 原生能力              | **必学，现在**            | 理论第 3 周起                                         | discriminated union、event loop、stream、`AbortSignal`、Worker Threads、有界并发                      | 不用框架类型替代领域 State/Event                                                                 |
-| 模型提供方官方 TS SDK（例如 OpenAI JS/TS SDK） | **必学，第一个实现**         | 理论门禁后立即                                          | 原始 request/response、stream events、tools、structured outputs、usage/error、stateful/stateless 区别 | 不把 SDK 类型传遍领域层；不先学全部便利 API                                                             |
-| JSON Schema + 运行时校验器（Ajv/Zod 等）     | **必学，现在**            | 模型 API 前后                                        | provider 支持子集、strict object、missing/null、正反 fixtures、版本                                      | 不把类型推导/Schema 当业务授权和 sink 安全                                                           |
-| OpenAI Agents SDK for TypeScript    | **值得学，L1 后对照**       | 手写 Loop+Eval 已达 L1，且以 OpenAI 为主要提供方              | Agent loop、tools、sessions/HITL、guardrails、tracing；用同一 M0 对拍手写 Runtime                        | 不先学 handoff/multi-agent/sandbox agent；不假设 guardrail 自动覆盖所有 tool/handoff/hosted tool 路径 |
-| LangGraph JS                        | **有条件值得，L1 后**       | 确有长任务、checkpoint/resume、HITL 或显式图状控制需求           | StateGraph/Functional API 二选一、checkpointer、interrupt/resume、序列化/重放语义                         | 不为普通 3–5 工具 Loop 先引入；不把 checkpoint 当外部 exactly-once                                    |
-| MCP TypeScript SDK                  | **按需必学，不是 Agent 框架** | 真正需要互操作 client/server 时                          | 稳定协议角色、lifecycle/capability、transport、auth、tool/resource/prompt 和安全                          | 不为内部函数包一层 MCP；不用 RC/experimental Tasks 做首个实现基线                                         |
-| Vercel AI SDK                       | **可选，产品 UI 层**       | React/Next.js 中需要多提供方流式 UI/工具交互时                 | `streamText`、typed tool parts、UI transport；放在 adapter/product edge                           | 不用它承担权威 Agent state、授权、幂等或 durable semantics                                           |
-| Temporal/等价 durable workflow 引擎     | **值得学，但仅 L1 后按需**    | 任务真的跨进程/部署生存，需恢复和长等待                             | deterministic workflow/activity、history/replay、versioning、idempotency、lease/worker 故障        | 不为短任务先引入；不宣称提供任意外部 exactly-once                                                        |
-| Mastra                              | **可选对照，不是前置**        | L1 后，需 TS 一体化 agent/workflow/memory/server 产品开发时 | 用一个小 POC 对比状态、取消、评测、可观测和逃生边界                                                                 | 不系统学整个产品面，不同时与 LangGraph/Agents SDK 并行学                                                |
-| LangChain 广泛抽象                      | **不需系统投入**           | 只在某个 loader/retriever/integration 能显著节省工作时       | 就地查用到的组件，用 adapter 隔离                                                                        | 不背 chains/agents 全套 API，不让 Document/Message 类型渗入领域层                                    |
-| AutoGen / CrewAI                    | **前期不投入**            | 只在 L1 后已证明需要 Python-first 多 Agent 会话/团队模式时       | 用委派协议、成本和故障评测做一次限时 POC                                                                       | 不为“Agent 应该多个”而改变 TS-first 路线，不学多 Agent 聊天模板                                           |
-| Rust Agent 框架/非官方模型 SDK             | **前期不投入**            | Rust 迁移门禁通过后才评估                                  | 先学 Rust/Tokio/Serde/Axum/Tower/tracing 和稳定 wire contract；社区 SDK 放 adapter 后                  | 不用不成熟框架重写 Agent 控制面                                                                    |
+| 技术                                  | 结论                                       | 什么时候学                                                        | 只学什么                                                                                                        | 不要投入什么                                                                                 |
+| ----------------------------------- | ---------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| TypeScript + Node 原生能力              | **必学，现在**                                | 理论第 3 周起                                                     | discriminated union、event loop、stream、`AbortSignal`、Worker Threads、有界并发                                     | 不用框架类型替代领域 State/Event                                                                 |
+| 模型提供方官方 TS SDK（例如 OpenAI JS/TS SDK） | **必学，第一个实现**                             | 理论门禁后立即                                                      | 原始 request/response、stream events、tools、structured outputs、usage/error、stateful/stateless 区别                | 不把 SDK 类型传遍领域层；不先学全部便利 API                                                             |
+| JSON Schema + 运行时校验器（Ajv/Zod 等）     | **必学，现在**                                | 模型 API 前后                                                    | provider 支持子集、strict object、missing/null、正反 fixtures、版本                                                     | 不把类型推导/Schema 当业务授权和 sink 安全                                                           |
+| OpenAI Agents SDK for TypeScript    | **值得学，L1 后对照**                           | 手写 Loop+Eval 已达 L1，且以 OpenAI 为主要提供方                          | Agent loop、tools、sessions/HITL、guardrails、tracing；用同一 M0 对拍手写 Runtime                                       | 不先学 handoff/multi-agent/sandbox agent；不假设 guardrail 自动覆盖所有 tool/handoff/hosted tool 路径 |
+| LangGraph JS                        | **有条件值得，L1 后**                           | 确有长任务、checkpoint/resume、HITL 或显式图状控制需求                       | StateGraph/Functional API 二选一、checkpointer、interrupt/resume、序列化/重放语义                                        | 不为普通 3–5 工具 Loop 先引入；不把 checkpoint 当外部 exactly-once                                    |
+| MCP TypeScript SDK                  | **按需必学，不是 Agent 框架**                     | 真正需要互操作 client/server 时                                      | 稳定协议角色、lifecycle/capability、transport、auth、tool/resource/prompt 和安全                                         | 不为内部函数包一层 MCP；不用 RC/experimental Tasks 做首个实现基线                                         |
+| Vercel AI SDK 7                     | **值得评估，L1 后的 TS Agent/Product Platform** | 需要多提供方 Agent、审批、流式 UI、Harness adapter 或可选 Durable Workflow 时 | 按需求选择 `ToolLoopAgent`、runtime/tool context、approval、telemetry、UI transport、`WorkflowAgent` 或 `HarnessAgent` | 不把整个平台当默认必修；不让 SDK 类型取代领域 Event/State、资源授权和外部幂等                                        |
+| Temporal/等价 durable workflow 引擎     | **值得学，但仅 L1 后按需**                        | 任务真的跨进程/部署生存，需恢复和长等待                                         | deterministic workflow/activity、history/replay、versioning、idempotency、lease/worker 故障                       | 不为短任务先引入；不宣称提供任意外部 exactly-once                                                        |
+| Mastra                              | **可选对照，不是前置**                            | L1 后，需 TS 一体化 agent/workflow/memory/server 产品开发时             | 用一个小 POC 对比状态、取消、评测、可观测和逃生边界                                                                                | 不系统学整个产品面，不同时与 LangGraph/Agents SDK 并行学                                                |
+| LangChain 广泛抽象                      | **不需系统投入**                               | 只在某个 loader/retriever/integration 能显著节省工作时                   | 就地查用到的组件，用 adapter 隔离                                                                                       | 不背 chains/agents 全套 API，不让 Document/Message 类型渗入领域层                                    |
+| AutoGen / CrewAI                    | **前期不投入**                                | 只在 L1 后已证明需要 Python-first 多 Agent 会话/团队模式时                   | 用委派协议、成本和故障评测做一次限时 POC                                                                                      | 不为“Agent 应该多个”而改变 TS-first 路线，不学多 Agent 聊天模板                                           |
+| Rust Agent 框架/非官方模型 SDK             | **前期不投入**                                | Rust 迁移门禁通过后才评估                                              | 先学 Rust/Tokio/Serde/Axum/Tower/tracing 和稳定 wire contract；社区 SDK 放 adapter 后                                 | 不用不成熟框架重写 Agent 控制面                                                                    |
 
 ## 2. 为什么官方模型 SDK 必学，Agents SDK 要晚一步
 
@@ -41,7 +41,30 @@ LangGraph 的官方定位聚焦长运行、有状态编排，包括 durable exec
 
 但“有 checkpointer”不会消除本书讨论的问题：外部 Activity 仍需幂等，恢复仍需版本语义，多 Worker 仍需所有权控制，审批仍需绑定不变提案。若任务只是一个短时、三个只读工具的 Loop，LangGraph 带来的新语义和依赖大于收益。
 
-## 4. 框架选型实验
+## 4. AI SDK 7 已经不只是 UI Adapter
+
+早期把 Vercel AI SDK 主要看成多提供方模型调用和 React/Next.js 流式 UI 工具是合理的；截至 2026 年 7 月，这个定位已经过窄。AI SDK 7 的公开能力覆盖了多步 Agent、类型化 runtime/tool context、工具审批、超时、Telemetry、`WorkflowAgent` 持久运行，以及把 Claude Code、Codex 等外部 Harness 接入统一接口的 `HarnessAgent`。其 UI transport 只是产品面的一部分。
+
+把它提升为“默认必修”仍然不合理，原因也更具体：
+
+- L1 首次实现仍需直面 Provider Event、完整 Tool Item 和取消，才能看见抽象遮住了什么。
+- AI SDK 7 是较新的大版本，要求 Node.js 22 与 ESM；`HarnessAgent` 等部分能力在发布时仍带实验性边界。
+- 一个项目通常只需要其中一条切片，例如 UI stream、ToolLoopAgent 或 WorkflowAgent，不应一次引入全部平台语义。
+- SDK 的 approval、workflow 和 telemetry 能减少样板代码，但资源服务授权、业务幂等、RunEvent 兼容和 Outcome Eval 仍属于应用。
+
+因此采用“切片对照”，而不是二选一：
+
+| 真实需求                     | 先评估的 AI SDK 7 切片                      | 仍由应用持有                       |
+| ------------------------ | ------------------------------------- | ---------------------------- |
+| 多提供方模型与有界工具循环            | Core + `ToolLoopAgent`                | 领域 State/Event、能力策略、Eval     |
+| 将 Claude Code/Codex 嵌入产品 | `HarnessAgent` + 对应 adapter + sandbox | Workspace 授权、任务所有权、审计和结果验收   |
+| 审批后继续执行                  | tool approval API                     | proposal hash、actor、资源版本、有效期 |
+| 跨进程长任务                   | `WorkflowAgent`                       | 外部 Effect 幂等、流程版本策略、故障矩阵     |
+| React/Next.js Agent UI   | UI message/transport                  | Canonical RunEvent、重连序列与业务真相 |
+
+最后一行尤其重要：AI SDK UI 或 AG-UI 都可以成为产品 Adapter，但不应反向定义退款系统的领域事件。下一章会用同一条退款 Trace 实现这个边界。
+
+## 5. 框架选型实验
 
 任何 L1 后框架都用同一个限时对照，不用“示例跑通”决策：
 
@@ -51,7 +74,7 @@ LangGraph 的官方定位聚焦长运行、有状态编排，包括 durable exec
 4. 记录逃生边界：是否可替换 model/tool/store/tracer，能否导出原始 event，是否能在框架外强制授权。
 5. 只有减少了已知的实现成本，且未破坏门禁，才采用。
 
-## 5. 简化决策树
+## 6. 简化决策树
 
 ```text
 还没有手写单 Agent L1？
@@ -63,8 +86,8 @@ L1 后，主要依赖 OpenAI，希望减少 Loop/Tracing/HITL 样板代码？
 有长任务、checkpoint/resume 或显式图编排需求？
   └─ 是 → 限时评估 LangGraph JS；需更强工作流恢复时同时评估 Temporal。
 
-只是 Next.js 流式 UI/多提供方展示？
-  └─ 是 → 可用 Vercel AI SDK，但不下放权威 Runtime 语义。
+需要 TS 多提供方 Agent、审批、Harness 接入、Durable 或流式 UI？
+  └─ 是 → 只评估对应的 AI SDK 7 切片，并保留领域 State/Event 边界。
 
 没有证据需要 multi-agent？
   └─ 是 → 不学 AutoGen/CrewAI/handoffs/crews。
@@ -72,7 +95,7 @@ L1 后，主要依赖 OpenAI，希望减少 Loop/Tracing/HITL 样板代码？
 
 ## 本章小结
 
-官方模型 SDK 是理解协议的起点，高层 Agent 框架则应在手写 L1 Runtime 之后按真实需求限时评估；任何抽象都不能接管应用的授权、领域状态和副作用语义。下一部分从 [Context Engineering](/masterpiece-static-docs/05-上下文-知识与记忆/01-Context-Engineering.md)继续，处理 Runtime 每一轮如何在有限窗口内选择状态、工具与证据。
+官方模型 SDK 是理解协议的起点，高层 Agent 框架则应在手写 L1 Runtime 之后按真实需求限时评估。AI SDK 7 已从 UI 工具扩展为 TS Agent/Product Platform，但也应按切片采用；任何抽象都不能接管应用的授权、领域状态和副作用语义。下一章先把 L1 接到 [Agent Application Server 与 UI 事件协议](/masterpiece-static-docs/04-模型接口与Agent内核/09-Agent-Application-Server与UI事件协议.md)，再进入 Context Engineering。
 
 ## 章末检查
 
@@ -80,6 +103,7 @@ L1 后，主要依赖 OpenAI，希望减少 Loop/Tracing/HITL 样板代码？
 2. 哪三类真实需求出现时，LangGraph 才可能值得引入？
 3. 为什么 guardrail/checkpointer/类型校验都不能替代资源服务授权与幂等副作用？
 4. 你会用哪些相同 Eval 和故障注入对照手写 Runtime 与候选框架？
+5. 为什么 AI SDK 7 不应再被归类为“仅 UI 层”，又为什么仍不是默认必修？
 
 ## 一手资料
 
@@ -91,6 +115,8 @@ L1 后，主要依赖 OpenAI，希望减少 Loop/Tracing/HITL 样板代码？
 - [LangGraph persistence](https://docs.langchain.com/oss/javascript/langgraph/persistence)
 - [LangGraph interrupts](https://docs.langchain.com/oss/javascript/langgraph/interrupts)
 - [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
+- [Vercel — AI SDK 7](https://vercel.com/changelog/ai-sdk-7)
+- [Vercel — Program Claude Code, Codex and other harnesses with AI SDK](https://vercel.com/changelog/program-agent-harnesses-with-ai-sdk)
 - [Vercel AI SDK: Tool calling](https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling)
 - [Temporal Workflow Execution](https://docs.temporal.io/workflow-execution)
 - [Mastra](https://mastra.ai/)

@@ -1,8 +1,10 @@
 # 01 · Grader、Trial 与统计
 
-一个 Agent 应用如果在动手实现前没有证据标准，后续每一次“优化”都只能靠印象。以贯穿后文的订单退款工作台（Workbench）为例，二十次试跑中十八次成功，并不足以回答它能否发布：失败是否集中在越权请求、同一任务的多次结果是否相关、大语言模型裁判（LLM-as-a-Judge）是否偏爱更长回答，都需要被明确建模。
+一个 Agent 应用如果没有证据标准，后续每一次“优化”都只能靠印象。但你不需要先学完整统计，才有资格调用第一次模型 API。首读先解决一个更小的问题：同一个 baseline 和模型候选，究竟由什么外部证据判断成功？
 
-因此，本部分先从评测器（Grader）、试次（Trial）与统计开始。这里建立的分析单位、证据类型和不确定性表达，会成为后续比较模型接口、工具契约、Runtime 与检索方案时共同使用的尺子。
+以贯穿后文的订单退款工作台（Workbench）为例，二十次试跑中十八次成功，并不足以回答它能否发布：失败是否集中在越权请求、同一任务的多次结果是否相关、大语言模型裁判（LLM-as-a-Judge）是否偏爱更长回答，都需要被明确建模。这些统计问题在第 3 周、当你已经有 L0 记录与 L1 Trace 时二刷；此刻先把 Grader 接到 3 个 M0 锚点上。
+
+这里建立的分析单位、证据类型和不确定性表达，会成为后续比较模型接口、工具契约、Runtime 与检索方案时共同使用的尺子。
 
 ## 学习目标
 
@@ -10,6 +12,17 @@
 - 对成功率、差异和稀有违规给出不确定性范围。
 - 处理 task 内多 trial 相关、成对比较和重复“看结果再停止”的偏差。
 - 理解 LLM-as-a-Judge 的偏差和校准要求。
+
+## 首读边界：先用 30 分钟建立最小 Eval
+
+第一次到这里，只读本节和第 1 节，然后立刻进入 L0 前置接口探针；第 2–7 节留到第 3 周二刷。
+
+1. 为正常、模糊、应停止 3 个 M0 锚点各准备相同初始环境。
+2. 写一个确定性 Outcome Grader，查询 proposal、退款记录与越权访问记录，而不是给最终文本打“看起来合理”分。
+3. 让非 Agent baseline 和一个固定候选 fixture 各运行一次；记录 `task_id`、`trial_id`、输入版本、输出、真实 Outcome 与 grader 结果。
+4. 若失败，先问任务、环境或 grader 是否定义错误；不要立刻改 Prompt，也不要从一次结果推断模型优劣。
+
+通过证据：你能展示同一 grader 怎样判 baseline 与固定候选，并指出它检查的是哪一个外部事实。此时可以进入 L0 前置接口探针，并用同一 grader 判真实 API 返回的候选；探针不等于通过 L0。
 
 ## 1. Grader 不是一条固定优先级
 
@@ -83,9 +96,9 @@ task 2 ─ trial 1, 2, 3...
 
 每个 trial 从清洁环境开始。共享缓存、残留文件、资源枯竭或同一随机种子会制造相关失败或虚假提升。Agent 的真实环境噪声与模型质量要分开记录。
 
-## 前置微实验（60 分钟）
+## 第 3 周二刷实验（60 分钟）
 
-同一 Task 运行 20 次：计算成功率并用统计库给 Wilson interval；解释为什么区间仍很宽。再用 Judge 比较 A/B，交换顺序并加入更冗长但事实相同的版本，测 position/verbosity bias。
+完成 L0 记录和首个 L1 Loop 后再回来：同一 Task 运行 20 次，计算成功率并用统计库给 Wilson interval；解释为什么区间仍很宽。再用 Judge 比较 A/B，交换顺序并加入更冗长但事实相同的版本，测 position/verbosity bias。
 
 通过证据：报告 task/trial 数、区间、Judge 混淆矩阵或一致率，并明确哪些结论样本不足。
 
@@ -100,7 +113,7 @@ task 2 ─ trial 1, 2, 3...
 
 ## 本章小结
 
-评测的核心不是得到一个漂亮总分，而是为每个质量维度选择合适证据，并诚实表达样本、相关性与不确定性。下一章将沿着同一证据标准进入[结果、轨迹与 Trace](/masterpiece-static-docs/03-评测与实验科学/02-结果-轨迹与Trace.md)，解释为什么真实结果正确仍不足以证明执行过程可靠。
+评测的核心不是得到一个漂亮总分，而是为每个质量维度选择合适证据，并诚实表达样本、相关性与不确定性。首读只需让最小 Outcome Grader 工作；有了 L0/L1 真实记录，再二刷多 Trial、区间与 Judge 校准。
 
 ## 章末检查
 
@@ -115,3 +128,5 @@ task 2 ─ trial 1, 2, 3...
 - [OpenAI Evaluation best practices](https://developers.openai.com/api/docs/guides/evaluation-best-practices)
 - [G-Eval](https://arxiv.org/abs/2303.16634)
 - [NIST/SEMATECH e-Handbook of Statistical Methods](https://www.itl.nist.gov/div898/handbook/)
+
+[继续实作主线：模型 API、状态与流式事件](/masterpiece-static-docs/04-模型接口与Agent内核/03-模型API-状态与流式事件.md) · [顺读知识支线：结果、轨迹与 Trace](/masterpiece-static-docs/03-评测与实验科学/02-结果-轨迹与Trace.md)

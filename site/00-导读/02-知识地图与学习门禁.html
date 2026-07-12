@@ -2,159 +2,289 @@
 <html lang="zh">
   <head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>02 · 知识地图与学习门禁 - Agentic Masterpiece</title>
+<title>02 · 从一次 Agent 任务看懂全书 - Agentic Masterpiece</title>
 <script>{;const saved = localStorage.getItem('rspress-theme-appearance');const preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches;const defaultTheme = 'auto';const theme = saved === 'light' || saved === 'dark' || saved === 'auto' ? saved : defaultTheme;const isDark = theme === 'auto' ? preferDark : theme === 'dark';document.documentElement.classList.toggle('dark', isDark);document.documentElement.classList.toggle('rp-dark', isDark);document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';}</script>
 <link href="/masterpiece-static-docs/static/css/styles.7f095e6272.css" rel="stylesheet">
 <script defer src="/masterpiece-static-docs/static/js/styles.97e0519c6b.js"></script>
 <script defer src="/masterpiece-static-docs/static/js/lib-react.153111d74d.js"></script>
 <script defer src="/masterpiece-static-docs/static/js/lib-router.575081ccc8.js"></script>
 <script defer src="/masterpiece-static-docs/static/js/5193.f8417e4998.js"></script>
-<script defer src="/masterpiece-static-docs/static/js/index.f9c08a0e4f.js"></script>
+<script defer src="/masterpiece-static-docs/static/js/index.5c825d42b3.js"></script>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="generator" content="Rspress v2.0.17">
 <meta property="og:type" content="website">
-<meta property="og:title" content="02 · 知识地图与学习门禁 - Agentic Masterpiece">
-<meta name="description" content="如果把全书看成一次工程转型，这张知识地图就不是章节目录，而是一组依赖约束：先知道模型不保证什么，才能设计 Runtime；先区分状态、权限与真实效果，才能让 Agent 接触外部系统；先有 baseline 和评测，才有资格购买更多自主性。 贯穿案例会从“根据资料给出判断”逐步发展到“经策略校验后执行动作”。每多一层能力，都必须同时补上可观察证据和失败边界，而不是只让演示看起来更聪明。">
-<meta property="og:description" content="如果把全书看成一次工程转型，这张知识地图就不是章节目录，而是一组依赖约束：先知道模型不保证什么，才能设计 Runtime；先区分状态、权限与真实效果，才能让 Agent 接触外部系统；先有 baseline 和评测，才有资格购买更多自主性。 贯穿案例会从“根据资料给出判断”逐步发展到“经策略校验后执行动作”。每多一层能力，都必须同时补上可观察证据和失败边界，而不是只让演示看起来更聪明。"></head>
+<meta property="og:title" content="02 · 从一次 Agent 任务看懂全书 - Agentic Masterpiece">
+<meta name="description" content="你让 Claude Code 或 Codex“定位失败测试、修复并验证”。它没有一次性吐出一段代码，而是先读规则和文件，调用搜索或 Shell，拿到结果后继续判断；有时请求许可，有时压缩历史，有时让另一个 Agent 审查。 这些行为很容易被统称为“模型很聪明”，但它们其实来自不同工程层。先把一次熟悉任务拆开，后面的模型、Runtime、Context、工具与评测才会各自找到位置。">
+<meta property="og:description" content="你让 Claude Code 或 Codex“定位失败测试、修复并验证”。它没有一次性吐出一段代码，而是先读规则和文件，调用搜索或 Shell，拿到结果后继续判断；有时请求许可，有时压缩历史，有时让另一个 Agent 审查。 这些行为很容易被统称为“模型很聪明”，但它们其实来自不同工程层。先把一次熟悉任务拆开，后面的模型、Runtime、Context、工具与评测才会各自找到位置。"></head>
 
   <body>
-    <div id="__rspress_root"><header class="rp-nav"><div class="rp-nav__left"><div class="rp-nav__title"><a href="/masterpiece-static-docs/" class="rp-nav__title__link rp-link"><span>Agentic Masterpiece</span></a></div></div><div class="rp-nav__right"><button class="rp-search-button"><div class="rp-search-button__content"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="none" viewBox="0 0 20 21" class="rp-search-button__icon"><path fill="currentColor" d="M8.333 1.913A6.667 6.667 0 0 1 15 8.58c0 1.54-.525 2.957-1.402 4.085l4.49 4.492a.834.834 0 0 1-1.177 1.178l-4.491-4.49a6.64 6.64 0 0 1-4.087 1.402 6.667 6.667 0 0 1 0-13.334m0 1.667a5 5 0 1 0 0 10 5 5 0 0 0 0-10"></path></svg><span class="rp-search-button__word">搜索</span></div><div class="rp-search-button__hotkey" style="opacity:0"><span></span><span>K</span></div></button><div class="rp-search-button--mobile"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="none" viewBox="0 0 20 21"><path fill="currentColor" d="M8.333 1.913A6.667 6.667 0 0 1 15 8.58c0 1.54-.525 2.957-1.402 4.085l4.49 4.492a.834.834 0 0 1-1.177 1.178l-4.491-4.49a6.64 6.64 0 0 1-4.087 1.402 6.667 6.667 0 0 1 0-13.334m0 1.667a5 5 0 1 0 0 10 5 5 0 0 0 0-10"></path></svg></div><ul class="rp-nav-menu rp-nav-menu--right"><li class="rp-nav-menu__item rp-nav-menu__item--active"><a href="/masterpiece-static-docs/" class="rp-nav-menu__item__container rp-link">全书</a></li><li class="rp-nav-menu__item"><a href="https://github.com/whatthehan/masterpiece-static-docs" target="_blank" class="rp-nav-menu__item__container rp-link">GitHub</a></li></ul><div class="rp-nav__others"><div class="rp-nav-menu__divider"></div><div class="rp-switch-appearance"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" class="rp-switch-appearance__icon rp-switch-appearance__icon--sun"><path fill="currentColor" d="m7.001 15.848-1.226 1.226a.58.58 0 0 0 0 .818.58.58 0 0 0 .818 0l1.226-1.226a.58.58 0 0 0 0-.818.58.58 0 0 0-.818 0m-.352-8.735a.584.584 0 0 0 .825-.825L6.237 5.051a.584.584 0 0 0-.825.825zM5.011 11.07h-1.75a.584.584 0 0 0 0 1.167h1.75c.324 0 .584-.26.584-.583a.585.585 0 0 0-.584-.584m7.003-5.835c.324 0 .584-.26.584-.584V2.9a.58.58 0 0 0-.584-.584.58.58 0 0 0-.583.583V4.65c0 .323.262.584.583.584m5.616 1.621 1.226-1.225a.58.58 0 0 0 0-.818.58.58 0 0 0-.818 0l-1.226 1.225a.58.58 0 0 0 0 .818.576.576 0 0 0 .818 0m3.138 4.214h-1.75a.58.58 0 0 0-.584.584c0 .324.26.584.583.584h1.751a.584.584 0 1 0 0-1.167m-3.389 5.124a.584.584 0 0 0-.825.825l1.238 1.238a.584.584 0 0 0 .825-.826zm-5.365-9.795a5.256 5.256 0 0 0-5.257 5.258 5.256 5.256 0 0 0 5.257 5.257 5.256 5.256 0 0 0 5.257-5.257 5.256 5.256 0 0 0-5.257-5.258m0 11.675a.58.58 0 0 0-.583.583v1.751a.582.582 0 1 0 1.167 0v-1.75a.584.584 0 0 0-.584-.584"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="currentColor" viewBox="0 0 19 19" class="rp-switch-appearance__icon rp-switch-appearance__icon--moon"><path fill="currentColor" d="M9.166 0a9.2 9.2 0 0 1 1.857.188.834.834 0 0 1 .042 1.623 4.47 4.47 0 1 0 5.457 5.457l.048-.135a.834.834 0 0 1 1.575.177q.186.902.188 1.856A9.168 9.168 0 1 1 9.166 0"></path></svg></div></div><button aria-label="mobile hamburger" class="rp-nav-hamburger rp-nav-hamburger__sm"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" fill="none" viewBox="0 0 21 21"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.667" d="M3.645 5.225h13.333M3.645 10.225h13.333M3.645 15.225h13.333"></path></svg></button><button aria-label="mobile hamburger" class="rp-nav-hamburger rp-nav-hamburger__md"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" fill="none" viewBox="0 0 21 21"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.667" d="M3.645 5.225h13.333M3.645 10.225h13.333M3.645 15.225h13.333"></path></svg><ul class="rp-hover-group rp-hover-group--hidden rp-hover-group--right"><div class="rp-nav-menu__others-mobile__container"><div class="rp-nav-hamburger__md__hover-group"><div class="rp-nav-screen-appearance"><div class="rp-nav-screen-appearance__left">主题</div><div class="rp-nav-screen-appearance__right"></div></div><div class="rp-nav-screen-divider"></div></div></div></ul></button></div></header><div class="rp-doc-layout__menu"><div class="rp-sidebar-menu"><button type="button" class="rp-sidebar-menu__left"><svg width="1em" height="1em" viewBox="0 0 32 32"><path fill="currentColor" d="M4 6h24v2H4zm0 18h24v2H4zm0-12h24v2H4zm0 6h24v2H4z"></path></svg><span>菜单</span></button><button type="button" class="rp-sidebar-menu__right"><span class="rp-sidebar-menu__right__text">目录</span><svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-sidebar-menu__right__icon" style="transform:rotate(0deg);transition:transform 0.2s ease-out"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></button></div></div><div class="rp-doc-layout__container"><aside class="rp-doc-layout__sidebar rp-scrollbar"><a href="/masterpiece-static-docs/" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">全书首页</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>00 导读与 M0</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/00-导读/01-如何使用这套教材" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 如何阅读这本书</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/00-导读/02-知识地图与学习门禁" class="rp-sidebar-item rp-sidebar-item--active rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 知识地图与学习门禁</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/00-导读/03-术语与边界" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 术语与边界</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/00-导读/04-M0任务契约-Baseline与数据集" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · M0：任务规格、基线（Baseline）与数据集</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/00-导读/05-从学习到转型的完整路线" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · 从学习到转型的完整路线</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>01 数学与机器学习直觉</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/01-数学与机器学习直觉/01-概率-信息量与采样" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 概率、信息量与采样</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/01-数学与机器学习直觉/02-向量-嵌入与相似度" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 向量、嵌入（Embedding）与相似度</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/01-数学与机器学习直觉/03-训练-泛化与分布偏移" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 训练、泛化与分布偏移</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>02 LLM 工作原理</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/02-LLM工作原理/01-Token与自回归生成" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 词元（Token）与自回归生成</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/02-LLM工作原理/02-Transformer-Attention与KV-Cache" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · Transformer、注意力（Attention）与 KV 缓存（KV Cache）</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/02-LLM工作原理/03-预训练-后训练与推理" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 预训练、后训练与推理</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/02-LLM工作原理/04-上下文窗口-采样与能力边界" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 上下文窗口、采样与能力边界</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>03 评测与实验科学</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/03-评测与实验科学/01-Grader-Trial与统计" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Grader、Trial 与统计</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/03-评测与实验科学/02-结果-轨迹与Trace" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 结果、轨迹与 Trace</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/03-评测与实验科学/03-Eval驱动迭代" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · Eval 驱动迭代</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>04 模型接口与 Agent 内核</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/04-模型接口与Agent内核/01-TypeScript-Node运行时先修" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · TypeScript + Node 运行时先修</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-模型接口与Agent内核/02-指令层级-Prompt与Context" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 指令层级、Prompt 与 Context</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-模型接口与Agent内核/03-模型API-状态与流式事件" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 模型 API、状态与流式事件</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-模型接口与Agent内核/04-JSON-Schema基础" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · JSON Schema 基础</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-模型接口与Agent内核/05-结构化输出与工具调用" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · 结构化输出与工具调用</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-模型接口与Agent内核/06-Agent-Loop与状态机" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">06 · Agent Loop 与状态机</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-模型接口与Agent内核/07-架构模式与多Agent边界" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">07 · 架构模式与多 Agent 边界</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-模型接口与Agent内核/08-框架与SDK学习优先级" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">08 · 框架与 SDK 学习优先级</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>05 上下文、知识与记忆</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/05-上下文-知识与记忆/01-Context-Engineering" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Context Engineering</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-上下文-知识与记忆/02-来源-权限与新鲜度" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 来源、权限与新鲜度</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-上下文-知识与记忆/03-检索-RAG与重排" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 检索、RAG 与重排</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-上下文-知识与记忆/04-状态-记忆与压缩" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 状态、记忆与压缩</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>06 工具、协议与行动控制</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/06-工具-协议与行动控制/01-工具契约与错误模型" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 工具契约与错误模型</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/06-工具-协议与行动控制/02-身份-授权与审批" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 身份、授权与审批</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/06-工具-协议与行动控制/03-MCP与互操作协议" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · MCP 与互操作协议</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/06-工具-协议与行动控制/04-幂等-补偿与沙箱" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 幂等、补偿与沙箱</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>07 安全与治理</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/07-安全与治理/01-Agent威胁建模" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Agent 威胁建模</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-安全与治理/02-Prompt-Injection与不可信内容" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · Prompt Injection 与不可信内容</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-安全与治理/03-最小权限-隐私与Confused-Deputy" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 最小权限、隐私与 Confused Deputy</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-安全与治理/04-纵深防御与人类控制" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 纵深防御与人类控制</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-安全与治理/05-Agent-UX与可控交互" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · Agent UX 与可控交互</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>08 可靠性与可观测</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/08-可靠性与可观测/01-失败分类-超时-重试与取消" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 失败分类、超时、重试与取消</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-可靠性与可观测/02-并发-背压与预算" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 并发、背压与预算</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-可靠性与可观测/03-持久执行-Checkpoint与Exactly-Once" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 持久执行、Checkpoint 与 Exactly-Once</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-可靠性与可观测/04-Trace-SLO与成本" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · Trace、SLO 与成本</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>09 Rust 学习与迁移理论</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/09-Rust迁移理论-L1后/01-Rust迁移所需理论" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Rust 迁移所需理论</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/09-Rust迁移理论-L1后/02-跨语言契约与控制面-执行面" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 跨语言契约与控制面/执行面</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>10 毕业门禁</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/10-毕业门禁/01-综合系统心智模型" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 综合系统心智模型</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/10-毕业门禁/02-动手前闭卷检查" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 动手前闭卷检查</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/10-毕业门禁/03-参考答案与评分" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 参考答案与评分</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/10-毕业门禁/04-八周理论学习计划" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 八周启动计划：从理论到首个 Agent</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/10-毕业门禁/05-一手资料索引" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · 一手资料索引</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/10-毕业门禁/06-章节验收矩阵" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">06 · 章节验收矩阵</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/10-毕业门禁/07-Rust迁移门禁" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">07 · Rust 真实迁移门禁（L1 后）</span></div><div class="rp-sidebar-item__right"></div></a></aside><div class="rp-doc-layout__doc"><main class="rp-doc-layout__doc-container"><div class="rp-doc rspress-doc"><!--$--><h1 class="rp-toc-include" id="02--知识地图与学习门禁"><a href="#02--知识地图与学习门禁" class="rp-header-anchor rp-link" aria-hidden="true">#</a>02 · 知识地图与学习门禁<!-- --> </h1><div class="rp-not-doc rp-llms-container"><button class="rp-not-doc rp-llms-button rp-llms-copy-button"><div class="rp-llms-copy-button__icon-wrapper"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-llms-copy-button__icon-success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-llms-copy-button__icon-copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg></div><span>复制 Markdown</span></button><button class="rp-llms-button rp-llms-view-options__trigger "><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-llms-view-options__arrow "><path fill="currentColor" d="M16 22 6 12l1.4-1.4 8.6 8.6 8.6-8.6L26 12z"></path></svg></button></div>
-<p>如果把全书看成一次工程转型，这张知识地图就不是章节目录，而是一组依赖约束：先知道模型不保证什么，才能设计 Runtime；先区分状态、权限与真实效果，才能让 Agent 接触外部系统；先有 baseline 和评测，才有资格购买更多自主性。</p>
-<p>贯穿案例会从“根据资料给出判断”逐步发展到“经策略校验后执行动作”。每多一层能力，都必须同时补上可观察证据和失败边界，而不是只让演示看起来更聪明。</p>
-<h2 class="rp-toc-include" id="1-四层心智模型"><a href="#1-四层心智模型" class="rp-header-anchor rp-link" aria-hidden="true">#</a>1. 四层心智模型</h2>
-<h3 class="rp-toc-include" id="第一层模型是条件概率生成器"><a href="#第一层模型是条件概率生成器" class="rp-header-anchor rp-link" aria-hidden="true">#</a>第一层：模型是条件概率生成器</h3>
-<p>给定上下文 <code>x</code>，模型逐 Token 估计下一个 Token 的分布：</p>
-<div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>P(y | x) = Π P(y_t | x, y_&lt;t)</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
-<p>它没有数据库事务、权限系统或可靠时钟。看似完整的计划仍只是生成结果。</p>
-<h3 class="rp-toc-include" id="第二层agent-是带反馈的控制系统"><a href="#第二层agent-是带反馈的控制系统" class="rp-header-anchor rp-link" aria-hidden="true">#</a>第二层：Agent 是带反馈的控制系统</h3>
-<p>运行时把模型的候选动作放入循环：观察环境、形成决策、校验、执行、获得新观察，再决定继续或终止。</p>
-<h3 class="rp-toc-include" id="第三层agent-application-是社会技术系统"><a href="#第三层agent-application-是社会技术系统" class="rp-header-anchor rp-link" aria-hidden="true">#</a>第三层：Agent Application 是社会技术系统</h3>
-<p>真实应用还包括用户意图、组织权限、外部服务、数据治理、成本约束和责任归属。正确回答不等于正确行动。</p>
-<h3 class="rp-toc-include" id="第四层生产可靠性来自证据链"><a href="#第四层生产可靠性来自证据链" class="rp-header-anchor rp-link" aria-hidden="true">#</a>第四层：生产可靠性来自证据链</h3>
-<p>一次演示没有统计意义。可重复案例、轨迹、故障注入、策略测试和生产指标共同形成证据。</p>
-<h2 class="rp-toc-include" id="2-依赖关系"><a href="#2-依赖关系" class="rp-header-anchor rp-link" aria-hidden="true">#</a>2. 依赖关系</h2>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>后续概念</th><th>必须先理解</th></tr></thead><tbody><tr><td>首次模型探针</td><td>G0a（M0 草案）：Task Contract 草案、风险、非 Agent baseline 和 12–20 个种子案例</td></tr><tr><td>L0 SDK 实践</td><td>正式 M0：完整 Task Contract、非 Agent baseline 和 30–50 个版本化案例</td></tr><tr><td>Structured Outputs</td><td>Token 生成、条件概率、JSON Schema</td></tr><tr><td>Tool Calling</td><td>Structured Outputs、应用/模型边界</td></tr><tr><td>Agent Loop</td><td>Tool Calling；基本失败/取消/未知效果语义在 04/06 内同步建立，08 再系统化</td></tr><tr><td>Context Engineering</td><td>上下文窗口、注意力限制、状态分类</td></tr><tr><td>RAG</td><td>embedding、检索指标、来源与权限</td></tr><tr><td>Memory</td><td>状态、检索、写入策略；05/04 内先建立最小隐私/时效/删除语义，07 再深化治理</td></tr><tr><td>MCP</td><td>工具契约、身份授权、Tool/Resource/Prompt、JSON-RPC</td></tr><tr><td>Durable Agent</td><td>幂等、事件历史、取消、版本和副作用</td></tr><tr><td>Multi-Agent</td><td>单 Agent baseline、上下文隔离、委派协议、独立评测</td></tr><tr><td>Rust 迁移</td><td>稳定契约、性能/隔离证据、跨语言测试</td></tr></tbody></table></div>
-<h2 class="rp-toc-include" id="3-首次手写单-agent-前门禁"><a href="#3-首次手写单-agent-前门禁" class="rp-header-anchor rp-link" aria-hidden="true">#</a>3. 首次手写单 Agent 前门禁</h2>
-<h3 class="rp-toc-include" id="g0a--m0-草案任何模型探针前"><a href="#g0a--m0-草案任何模型探针前" class="rp-header-anchor rp-link" aria-hidden="true">#</a>G0a · M0 草案（任何模型探针前）</h3>
-<ul class="contains-task-list">
-<li class="task-list-item"><input type="checkbox" disabled=""/> Task Contract 草案、风险清单和非 Agent baseline 已定义。</li>
-<li class="task-list-item"><input type="checkbox" disabled=""/> 12–20 个平衡种子案例覆盖正常、模糊、失败、拒绝、权限和攻击输入。</li>
-<li class="task-list-item"><input type="checkbox" disabled=""/> 草案评分至少 16/20，且结果与安全项均不为 0。</li>
-</ul>
-<p>G0a 只允许开始受控模型探针和继续理论学习，不代表正式 M0 已通过，也不允许启动 L0 SDK 实践。</p>
-<h3 class="rp-toc-include" id="g0--问题与证据正式-m0"><a href="#g0--问题与证据正式-m0" class="rp-header-anchor rp-link" aria-hidden="true">#</a>G0 · 问题与证据（正式 M0）</h3>
-<ul class="contains-task-list">
-<li class="task-list-item"><input type="checkbox" disabled=""/> M0 Task Contract、风险清单和 30–50 个案例可重复判定。</li>
-<li class="task-list-item"><input type="checkbox" disabled=""/> 有不用 Agent 的 baseline。</li>
-<li class="task-list-item"><input type="checkbox" disabled=""/> 能区分 task、trial、outcome、trajectory、grader 和 harness。</li>
-</ul>
-<h3 class="rp-toc-include" id="g1--模型边界"><a href="#g1--模型边界" class="rp-header-anchor rp-link" aria-hidden="true">#</a>G1 · 模型边界</h3>
-<ul class="contains-task-list">
-<li class="task-list-item"><input type="checkbox" disabled=""/> 能解释自回归生成与随机性的来源。</li>
-<li class="task-list-item"><input type="checkbox" disabled=""/> 知道上下文窗口是容量上限，不是可靠记忆。</li>
-<li class="task-list-item"><input type="checkbox" disabled=""/> 知道后训练改善行为倾向，不构成形式化保证。</li>
-</ul>
-<h3 class="rp-toc-include" id="g2--接口边界"><a href="#g2--接口边界" class="rp-header-anchor rp-link" aria-hidden="true">#</a>G2 · 接口边界</h3>
-<ul class="contains-task-list">
-<li class="task-list-item"><input type="checkbox" disabled=""/> 能区分自由文本、结构化输出、工具调用和工具结果。</li>
-<li class="task-list-item"><input type="checkbox" disabled=""/> 能解释结构合法与业务正确的差异。</li>
-<li class="task-list-item"><input type="checkbox" disabled=""/> 能从语义事件重建一次流式响应。</li>
-</ul>
-<h3 class="rp-toc-include" id="g3--agent-边界"><a href="#g3--agent-边界" class="rp-header-anchor rp-link" aria-hidden="true">#</a>G3 · Agent 边界</h3>
-<ul class="contains-task-list">
-<li class="task-list-item"><input type="checkbox" disabled=""/> 能把 Loop 表达为有限状态机。</li>
-<li class="task-list-item"><input type="checkbox" disabled=""/> 每个循环都有 step、时间、Token、成本和权限预算。</li>
-<li class="task-list-item"><input type="checkbox" disabled=""/> 明确定义等待澄清/审批、取消请求、未知效果、完成、拒绝、失败、部分完成和超限。</li>
-</ul>
-<h3 class="rp-toc-include" id="g4--行动边界"><a href="#g4--行动边界" class="rp-header-anchor rp-link" aria-hidden="true">#</a>G4 · 行动边界</h3>
-<ul class="contains-task-list">
-<li class="task-list-item"><input type="checkbox" disabled=""/> 工具执行端重新验证 actor、resource、action、scope 和前置条件。</li>
-<li class="task-list-item"><input type="checkbox" disabled=""/> 区分 query、可逆 command 和不可逆 command。</li>
-<li class="task-list-item"><input type="checkbox" disabled=""/> 写操作具备 preview、审批、幂等、审计或补偿中的适用组合。</li>
-</ul>
-<h3 class="rp-toc-include" id="g5--证据边界"><a href="#g5--证据边界" class="rp-header-anchor rp-link" aria-hidden="true">#</a>G5 · 证据边界</h3>
-<ul class="contains-task-list">
-<li class="task-list-item"><input type="checkbox" disabled=""/> 有非 Agent baseline。</li>
-<li class="task-list-item"><input type="checkbox" disabled=""/> 有正例、反例、权限、失败和攻击案例。</li>
-<li class="task-list-item"><input type="checkbox" disabled=""/> 评测区分 outcome 与 trajectory，并运行多次 trial。</li>
-</ul>
-<p>任一门禁缺失，都不应给 Agent 接入真实高影响动作。</p>
-<h2 class="rp-toc-include" id="4-l1-后门禁"><a href="#4-l1-后门禁" class="rp-header-anchor rp-link" aria-hidden="true">#</a>4. L1 后门禁</h2>
-<ul>
-<li><strong>Durable/后台任务</strong>：lease、fencing、checkpoint/replay、幂等 Activity、版本迁移和故障矩阵。</li>
-<li><strong>Multi-Agent</strong>：委派 envelope、权限衰减、重复/迟到消息、循环终止和独立收益评测。</li>
-<li><strong>Rust 迁移</strong>：TS baseline 稳定，跨语言 Schema/Trace/Eval 对拍，并有性能、隔离或部署证据。</li>
-</ul>
-<p>这些内容需要理解其边界，但不阻塞第一个 mock/只读工具的单 Agent。</p>
-<h2 class="rp-toc-include" id="5-一页架构检查图"><a href="#5-一页架构检查图" class="rp-header-anchor rp-link" aria-hidden="true">#</a>5. 一页架构检查图</h2>
+    <div id="__rspress_root"><header class="rp-nav"><div class="rp-nav__left"><div class="rp-nav__title"><a href="/masterpiece-static-docs/" class="rp-nav__title__link rp-link"><span>Agentic Masterpiece</span></a></div></div><div class="rp-nav__right"><button class="rp-search-button"><div class="rp-search-button__content"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="none" viewBox="0 0 20 21" class="rp-search-button__icon"><path fill="currentColor" d="M8.333 1.913A6.667 6.667 0 0 1 15 8.58c0 1.54-.525 2.957-1.402 4.085l4.49 4.492a.834.834 0 0 1-1.177 1.178l-4.491-4.49a6.64 6.64 0 0 1-4.087 1.402 6.667 6.667 0 0 1 0-13.334m0 1.667a5 5 0 1 0 0 10 5 5 0 0 0 0-10"></path></svg><span class="rp-search-button__word">搜索</span></div><div class="rp-search-button__hotkey" style="opacity:0"><span></span><span>K</span></div></button><div class="rp-search-button--mobile"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="none" viewBox="0 0 20 21"><path fill="currentColor" d="M8.333 1.913A6.667 6.667 0 0 1 15 8.58c0 1.54-.525 2.957-1.402 4.085l4.49 4.492a.834.834 0 0 1-1.177 1.178l-4.491-4.49a6.64 6.64 0 0 1-4.087 1.402 6.667 6.667 0 0 1 0-13.334m0 1.667a5 5 0 1 0 0 10 5 5 0 0 0 0-10"></path></svg></div><ul class="rp-nav-menu rp-nav-menu--right"><li class="rp-nav-menu__item rp-nav-menu__item--active"><a href="/masterpiece-static-docs/" class="rp-nav-menu__item__container rp-link">全书</a></li><li class="rp-nav-menu__item"><a href="https://github.com/whatthehan/masterpiece-static-docs" target="_blank" class="rp-nav-menu__item__container rp-link">GitHub</a></li></ul><div class="rp-nav__others"><div class="rp-nav-menu__divider"></div><div class="rp-switch-appearance"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" class="rp-switch-appearance__icon rp-switch-appearance__icon--sun"><path fill="currentColor" d="m7.001 15.848-1.226 1.226a.58.58 0 0 0 0 .818.58.58 0 0 0 .818 0l1.226-1.226a.58.58 0 0 0 0-.818.58.58 0 0 0-.818 0m-.352-8.735a.584.584 0 0 0 .825-.825L6.237 5.051a.584.584 0 0 0-.825.825zM5.011 11.07h-1.75a.584.584 0 0 0 0 1.167h1.75c.324 0 .584-.26.584-.583a.585.585 0 0 0-.584-.584m7.003-5.835c.324 0 .584-.26.584-.584V2.9a.58.58 0 0 0-.584-.584.58.58 0 0 0-.583.583V4.65c0 .323.262.584.583.584m5.616 1.621 1.226-1.225a.58.58 0 0 0 0-.818.58.58 0 0 0-.818 0l-1.226 1.225a.58.58 0 0 0 0 .818.576.576 0 0 0 .818 0m3.138 4.214h-1.75a.58.58 0 0 0-.584.584c0 .324.26.584.583.584h1.751a.584.584 0 1 0 0-1.167m-3.389 5.124a.584.584 0 0 0-.825.825l1.238 1.238a.584.584 0 0 0 .825-.826zm-5.365-9.795a5.256 5.256 0 0 0-5.257 5.258 5.256 5.256 0 0 0 5.257 5.257 5.256 5.256 0 0 0 5.257-5.257 5.256 5.256 0 0 0-5.257-5.258m0 11.675a.58.58 0 0 0-.583.583v1.751a.582.582 0 1 0 1.167 0v-1.75a.584.584 0 0 0-.584-.584"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="currentColor" viewBox="0 0 19 19" class="rp-switch-appearance__icon rp-switch-appearance__icon--moon"><path fill="currentColor" d="M9.166 0a9.2 9.2 0 0 1 1.857.188.834.834 0 0 1 .042 1.623 4.47 4.47 0 1 0 5.457 5.457l.048-.135a.834.834 0 0 1 1.575.177q.186.902.188 1.856A9.168 9.168 0 1 1 9.166 0"></path></svg></div></div><button aria-label="mobile hamburger" class="rp-nav-hamburger rp-nav-hamburger__sm"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" fill="none" viewBox="0 0 21 21"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.667" d="M3.645 5.225h13.333M3.645 10.225h13.333M3.645 15.225h13.333"></path></svg></button><button aria-label="mobile hamburger" class="rp-nav-hamburger rp-nav-hamburger__md"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" fill="none" viewBox="0 0 21 21"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.667" d="M3.645 5.225h13.333M3.645 10.225h13.333M3.645 15.225h13.333"></path></svg><ul class="rp-hover-group rp-hover-group--hidden rp-hover-group--right"><div class="rp-nav-menu__others-mobile__container"><div class="rp-nav-hamburger__md__hover-group"><div class="rp-nav-screen-appearance"><div class="rp-nav-screen-appearance__left">主题</div><div class="rp-nav-screen-appearance__right"></div></div><div class="rp-nav-screen-divider"></div></div></div></ul></button></div></header><div class="rp-doc-layout__menu"><div class="rp-sidebar-menu"><button type="button" class="rp-sidebar-menu__left"><svg width="1em" height="1em" viewBox="0 0 32 32"><path fill="currentColor" d="M4 6h24v2H4zm0 18h24v2H4zm0-12h24v2H4zm0 6h24v2H4z"></path></svg><span>菜单</span></button><button type="button" class="rp-sidebar-menu__right"><span class="rp-sidebar-menu__right__text">目录</span><svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-sidebar-menu__right__icon" style="transform:rotate(0deg);transition:transform 0.2s ease-out"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></button></div></div><div class="rp-doc-layout__container"><aside class="rp-doc-layout__sidebar rp-scrollbar"><a href="/masterpiece-static-docs/" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">全书首页</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>00 从会用 Agent 到理解系统</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/00-导读/01-如何使用这套教材" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 如何阅读这本书</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/00-导读/02-知识地图与学习门禁" class="rp-sidebar-item rp-sidebar-item--active rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 从一次 Agent 任务看懂全书</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/00-导读/03-术语与边界" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 术语与边界</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/00-导读/04-M0任务契约-Baseline与数据集" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · M0：先保存一组可比较的任务</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/00-导读/05-从学习到转型的完整路线" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · 从学习到转型的完整路线</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>01 随机性从哪里来</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/01-数学与机器学习直觉/01-概率-信息量与采样" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 概率、信息量与采样</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/01-数学与机器学习直觉/02-向量-嵌入与相似度" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 向量、嵌入（Embedding）与相似度</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/01-数学与机器学习直觉/03-训练-泛化与分布偏移" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 训练、泛化与分布偏移</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>02 模型看到什么、生成什么</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/02-LLM工作原理/01-Token与自回归生成" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 词元（Token）与自回归生成</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/02-LLM工作原理/02-Transformer-Attention与KV-Cache" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · Transformer、注意力（Attention）与 KV 缓存（KV Cache）</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/02-LLM工作原理/03-预训练-后训练与推理" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 预训练、后训练与推理</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/02-LLM工作原理/04-上下文窗口-采样与能力边界" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 上下文窗口、采样与能力边界</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>03 怎样证明系统真的变好</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/03-评测与实验科学/01-Grader-Trial与统计" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Grader、Trial 与统计</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/03-评测与实验科学/02-结果-轨迹与Trace" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 结果、轨迹与 Trace</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/03-评测与实验科学/03-Eval驱动迭代" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · Eval 驱动迭代</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>04 打开 Harness，连接产品</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/04-模型接口与Agent内核/01-TypeScript-Node运行时先修" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · TypeScript + Node 运行时先修</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-模型接口与Agent内核/02-指令层级-Prompt与Context" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 指令层级、Prompt 与 Context</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-模型接口与Agent内核/03-模型API-状态与流式事件" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 模型 API、状态与流式事件</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-模型接口与Agent内核/04-JSON-Schema基础" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · JSON Schema 基础</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-模型接口与Agent内核/05-结构化输出与工具调用" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · 结构化输出与工具调用</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-模型接口与Agent内核/06-Agent-Loop与状态机" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">06 · Agent Loop 与状态机</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-模型接口与Agent内核/07-架构模式与多Agent边界" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">07 · Harness Engineering、架构模式与多 Agent 边界</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-模型接口与Agent内核/08-框架与SDK学习优先级" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">08 · 框架与 SDK 学习优先级</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-模型接口与Agent内核/09-Agent-Application-Server与UI事件协议" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">09 · Agent Application Server 与 UI 事件协议</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>05 管理有限的 Context</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/05-上下文-知识与记忆/01-Context-Engineering" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Context Engineering</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-上下文-知识与记忆/02-来源-权限与新鲜度" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 来源、权限与新鲜度</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-上下文-知识与记忆/03-检索-RAG与重排" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 检索、RAG 与重排</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-上下文-知识与记忆/04-状态-记忆与压缩" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 状态、记忆与压缩</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>06 让模型安全地行动</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/06-工具-协议与行动控制/01-工具契约与错误模型" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 工具契约与错误模型</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/06-工具-协议与行动控制/02-身份-授权与审批" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 身份、授权与审批</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/06-工具-协议与行动控制/03-MCP与互操作协议" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · MCP 与互操作协议</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/06-工具-协议与行动控制/04-幂等-补偿与沙箱" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 幂等、补偿与沙箱</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>07 在攻击下守住边界</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/07-安全与治理/01-Agent威胁建模" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Agent 威胁建模</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-安全与治理/02-Prompt-Injection与不可信内容" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · Prompt Injection 与不可信内容</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-安全与治理/03-最小权限-隐私与Confused-Deputy" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 最小权限、隐私与 Confused Deputy</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-安全与治理/04-纵深防御与人类控制" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 纵深防御与人类控制</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-安全与治理/05-Agent-UX与可控交互" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · Agent UX 与可控交互</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>08 让失败收敛并安全发布</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/08-可靠性与可观测/01-失败分类-超时-重试与取消" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 未知效果：失败、超时、重试与取消</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-可靠性与可观测/02-并发-背压与预算" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 并发、背压与预算</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-可靠性与可观测/03-持久执行-Checkpoint与Exactly-Once" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 持久执行、Checkpoint 与 Exactly-Once</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-可靠性与可观测/04-Trace-SLO与成本" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · Trace、SLO 与成本</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-可靠性与可观测/05-发布-模型依赖与生产运营" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · 发布、模型依赖与生产运营</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>09 有证据地迁移 Rust</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/09-Rust迁移理论-L1后/01-Rust迁移所需理论" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Rust 迁移所需理论</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/09-Rust迁移理论-L1后/02-跨语言契约与控制面-执行面" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 跨语言契约与控制面/执行面</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>10 启动验收与全书毕业</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/10-毕业门禁/01-综合系统心智模型" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 综合系统心智模型</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/10-毕业门禁/02-动手前闭卷检查" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 八周综合闭卷检查：从原型走向可连接系统</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/10-毕业门禁/03-参考答案与评分" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 参考答案与评分</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/10-毕业门禁/04-八周理论学习计划" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 八周启动计划：边学边造一个 Agent Workbench</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/10-毕业门禁/05-一手资料索引" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · 一手资料索引</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/10-毕业门禁/06-章节验收矩阵" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">06 · 章节验收矩阵</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/10-毕业门禁/07-Rust迁移门禁" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">07 · Rust 真实迁移门禁（L1 后）</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/10-毕业门禁/08-场景专项与全书毕业" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">08 · 场景专项与全书毕业</span></div><div class="rp-sidebar-item__right"></div></a></aside><div class="rp-doc-layout__doc"><main class="rp-doc-layout__doc-container"><div class="rp-doc rspress-doc"><!--$--><h1 class="rp-toc-include" id="02--从一次-agent-任务看懂全书"><a href="#02--从一次-agent-任务看懂全书" class="rp-header-anchor rp-link" aria-hidden="true">#</a>02 · 从一次 Agent 任务看懂全书<!-- --> </h1><div class="rp-not-doc rp-llms-container"><button class="rp-not-doc rp-llms-button rp-llms-copy-button"><div class="rp-llms-copy-button__icon-wrapper"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-llms-copy-button__icon-success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-llms-copy-button__icon-copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg></div><span>复制 Markdown</span></button><button class="rp-llms-button rp-llms-view-options__trigger "><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-llms-view-options__arrow "><path fill="currentColor" d="M16 22 6 12l1.4-1.4 8.6 8.6 8.6-8.6L26 12z"></path></svg></button></div>
+<p>你让 Claude Code 或 Codex“定位失败测试、修复并验证”。它没有一次性吐出一段代码，而是先读规则和文件，调用搜索或 Shell，拿到结果后继续判断；有时请求许可，有时压缩历史，有时让另一个 Agent 审查。</p>
+<p>这些行为很容易被统称为“模型很聪明”，但它们其实来自不同工程层。先把一次熟悉任务拆开，后面的模型、Runtime、Context、工具与评测才会各自找到位置。</p>
+<h2 class="rp-toc-include" id="1-一次熟悉任务的真实骨架"><a href="#1-一次熟悉任务的真实骨架" class="rp-header-anchor rp-link" aria-hidden="true">#</a>1. 一次熟悉任务的真实骨架</h2>
 <div></div>
-<p>关键不变量：来自用户、网页、文件、数据库、工具和其他 Agent 的自然语言，都可能是不可信数据；它们不能凭文本内容自行提升为高优先级指令或授权。</p>
+<p>这里至少有四个观察镜头：</p>
+<ol>
+<li><strong>Context Engineering</strong>：这一轮模型到底看见了哪些 Token，哪些规则、文件、状态、工具和观察被选择或排除。</li>
+<li><strong>Agent Loop 与 Runtime Control</strong>：模型怎样根据观察提出下一步，Runtime 怎样执行、记录、继续、取消或终止。</li>
+<li><strong>Harness Engineering</strong>：谁把模型、Context、工具、权限、沙箱、Hooks、状态、压缩与 Trace 组合成可工作的环境。</li>
+<li><strong>Agent Application Engineering</strong>：怎样把用户、领域状态、真实 Outcome、评测、安全、UX 和生产运营接到这套 Harness 上。</li>
+</ol>
+<p>模型是核心能力来源，但不是整个应用。</p>
+<h2 class="rp-toc-include" id="2-promptcontextharness-与-loop-不是四代产品"><a href="#2-promptcontextharness-与-loop-不是四代产品" class="rp-header-anchor rp-link" aria-hidden="true">#</a>2. Prompt、Context、Harness 与 Loop 不是四代产品</h2>
+<p>行业里的工程关注点确实在扩展，但不应把几个词写成相互淘汰的口号。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>视角</th><th>主要设计对象</th><th>它没有替代什么</th></tr></thead><tbody><tr><td>Prompt Engineering</td><td>指令、示例与输出要求怎样表达</td><td>仍需要选择数据、工具和状态</td></tr><tr><td>Context Engineering</td><td>每次推理实际可见的最小高信号 Token 集合</td><td>Prompt 仍是 Context 的一部分</td></tr><tr><td>Harness Engineering</td><td>围绕模型的 Context、Loop、工具、环境、权限、状态与观测设施</td><td>不会自动给出业务正确性</td></tr><tr><td>Inner Agent Loop</td><td>单次 Run 内“推理 → 提议 → 执行 → 观察”的反馈循环</td><td>仍需要 Harness 提供执行与边界</td></tr><tr><td>Outer Orchestration Loop</td><td>跨 Run 发现任务、隔离工作区、调用 Agent、独立验证、保存状态并决定下一轮</td><td>不等于无限自治，也不替代 Workflow、Eval 和人类门禁</td></tr></tbody></table></div>
+<p>Anthropic 把 Context Engineering 描述为 Prompt Engineering 的自然扩展，并把 Agent Harness 定义为让模型能够作为 Agent 行动的系统；OpenAI 与 Anthropic 的公开工程材料也都强调 Harness 对性能和长任务稳定性的影响。2026 年中已有部分实践者开始使用“Loop Engineering”描述跨任务、跨 Agent 的外层闭环，但它仍是边界未统一的社区实践术语。</p>
+<p>首次阅读只需掌握 Prompt、Context、Inner Loop 与 Harness；Outer Orchestration Loop 是 L1 之后的进阶预告，可以先跳过。</p>
+<p>因此，本书采用更精确的写法：</p>
+<div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>一次模型调用：Prompt ⊂ Context</span></span>
+<span class="line"><span>一次 Agent 运行：Context Builder + Inner Loop + Tools + Policy</span></span>
+<span class="line"><span>Agent Harness：包裹并支撑上述运行的完整脚手架</span></span>
+<span class="line"><span>外层工作闭环：Trigger + Isolation + Harness Run + Verify + Persist + Human Gate</span></span>
+<span class="line"><span>Agent Application：Harness + Domain + Product + Eval + Operations</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>这不是名词游戏。边界清楚后，你才知道优化失败时该改输入、改 Loop、改工具、改 Harness，还是根本不该继续增加自主性。</p>
+<h2 class="rp-toc-include" id="3-你已经在-claude-code--codex-见过这些层"><a href="#3-你已经在-claude-code--codex-见过这些层" class="rp-header-anchor rp-link" aria-hidden="true">#</a>3. 你已经在 Claude Code / Codex 见过这些层</h2>
+<blockquote>
+<p>产品行为核验日期：2026-07-12。这里只使用公开可观察机制帮助理解，不推断私有系统提示、模型权重或托管基础设施。</p>
+</blockquote>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>可观察表面</th><th>工程归属</th><th>不应误解为</th></tr></thead><tbody><tr><td><code>AGENTS.md</code> / <code>CLAUDE.md</code></td><td>稳定指令来源，进入模型 Context</td><td>权限系统或必然遵守的策略</td></tr><tr><td>按需搜索、打开少量文件</td><td>检索、工具使用与 Context Budget</td><td>模型已经“记住整个仓库”</td></tr><tr><td>Skill / 项目规则</td><td>按需程序性知识或持久指导</td><td>自动执行授权</td></tr><tr><td>Shell、编辑器、MCP 工具</td><td>Harness 暴露的能力与观察通道</td><td>模型可以直接改变外部世界</td></tr><tr><td>Permission、Sandbox、Approval</td><td>Harness 中的执行控制</td><td>Prompt 里的礼貌提醒</td></tr><tr><td>测试失败后继续修改</td><td>Inner Agent Loop</td><td>一次超长生成</td></tr><tr><td>Compaction / 新 Session 交接</td><td>有损 Context 派生或结构化 handoff</td><td>权威领域状态</td></tr><tr><td>Subagent / 独立 Reviewer</td><td>Context 隔离、并行或 maker-checker 分离</td><td>天然更正确的多 Agent 系统</td></tr><tr><td>Thread / Turn / Item / Event</td><td>Codex 的协议与生命周期对象；持久化语义按对象和版本核对</td><td>Event/notification 必然进入应用审计日志、所有 Agent 必须照搬</td></tr></tbody></table></div>
+<p>例如，Codex 公开文档把 Sandbox 与 Approval 分成“技术上能做什么”和“何时必须询问”两层；Claude Code 文档也明确指出 <code>CLAUDE.md</code> 是 Context，而强制阻断应放到设置或 <code>PreToolUse</code> Hook。两者共同说明：<strong>行为指导与确定性执行控制必须分层。</strong></p>
+<h2 class="rp-toc-include" id="4-从-coding-agent-迁移到通用-agent"><a href="#4-从-coding-agent-迁移到通用-agent" class="rp-header-anchor rp-link" aria-hidden="true">#</a>4. 从 Coding Agent 迁移到通用 Agent</h2>
+<p>编码只是最容易观察的入口。把同一骨架换到本书的退款任务：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>Coding Agent</th><th>通用退款 Workbench</th></tr></thead><tbody><tr><td>仓库规则与相关代码</td><td>退款政策、订单状态与用户约束</td></tr><tr><td>搜索、读文件、运行测试</td><td>检索政策、查询订单、生成退款提案</td></tr><tr><td>文件修改</td><td>对外部系统的候选动作</td></tr><tr><td>单元/端到端测试</td><td>领域 Grader 与真实 Outcome 查询</td></tr><tr><td>Git Diff / Review</td><td>退款预览、审批与审计记录</td></tr><tr><td>测试失败后继续</td><td>根据工具结果继续、澄清或收敛失败</td></tr><tr><td>工作区权限与沙箱</td><td>actor/tenant 授权、短期凭证与执行隔离</td></tr></tbody></table></div>
+<p>最大的差异是风险：代码修改通常还有 Diff、测试和 Git；退款、发信或修改业务数据可能立即影响真实用户。因此后半本书会把授权、审批、幂等、未知效果和人工控制逐层加入同一个 Loop。</p>
+<h2 class="rp-toc-include" id="5-现在才需要知识依赖"><a href="#5-现在才需要知识依赖" class="rp-header-anchor rp-link" aria-hidden="true">#</a>5. 现在才需要知识依赖</h2>
+<p>下面的依赖不要求一次学完。每当 Workbench 增加能力时，再补齐对应知识：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>要增加的能力</th><th>必须先理解</th><th>你已经见过的表象</th></tr></thead><tbody><tr><td>原始模型调用（L0）</td><td>Token、自回归生成、Context、stream、Schema</td><td>Agent 输出逐步出现、结构化调用工具</td></tr><tr><td>有界单 Agent（L1）</td><td>Tool Calling、状态、预算、取消、Trace</td><td>搜索—修改—测试—再修改</td></tr><tr><td>Context Engineering（L2）</td><td>上下文窗口、状态分类、来源与压缩</td><td>按需读文件、Compaction、Skill</td></tr><tr><td>RAG / Knowledge（L3）</td><td>embedding、检索指标、ACL、来源与新鲜度</td><td>搜索仓库、读取文档与引用证据</td></tr><tr><td>受控写动作（L3）</td><td>语义校验、授权、审批、幂等、真实 Outcome</td><td>修改文件前预览、危险命令前询问</td></tr><tr><td>Durable Agent（L4）</td><td>checkpoint、事件历史、取消、版本和副作用</td><td>恢复 Session、后台任务、等待人工</td></tr><tr><td>Multi-Agent / Outer Loop（条件性）</td><td>单 Agent baseline、隔离、委派、独立验证与成本</td><td>Subagent、Reviewer、Worktree、自动任务</td></tr><tr><td>Rust 迁移（条件性）</td><td>稳定契约、性能/隔离证据、跨语言对拍</td><td>Coding Harness 的稳定执行核心与客户端解耦</td></tr></tbody></table></div>
+<h2 class="rp-toc-include" id="6-第一圈先获得反馈门禁随后约束结论"><a href="#6-第一圈先获得反馈门禁随后约束结论" class="rp-header-anchor rp-link" aria-hidden="true">#</a>6. 第一圈先获得反馈，门禁随后约束结论</h2>
+<p>你现在只需记住一条实际可执行的路径：</p>
+<ol>
+<li>在 <a href="/masterpiece-static-docs/00-导读/04-M0任务契约-Baseline与数据集" class="rp-link">M0 任务草案</a>中写正常、模糊、应停止 3 个锚点，一个非 Agent baseline，以及一个查询真实结果的 Outcome Grader。</li>
+<li>按 <a href="/masterpiece-static-docs/03-评测与实验科学/01-Grader-Trial与统计" class="rp-link">Grader、Trial 与统计</a>的首读边界，让 baseline 和一个候选结果各接受一次相同判定。</li>
+<li>做一次 L0 前置接口探针：用官方 SDK 进行无工具、无副作用的调用；保存原始请求、完整响应、错误、usage、latency 与 grader 结果。</li>
+<li>根据真实失败扩展并冻结正式 M0，再完成 L0 的 stream/Schema/错误边界和 L1 有界 Loop。</li>
+</ol>
+<p>这次探针是学习反馈，不是比较实验，也不改变 <code>M0 → L0 → L1</code> 的能力里程碑顺序。正式 M0 先扩成 12–20 个平衡 seed cases 并按 Rubric 修订，再冻结 30–50 个版本化案例、Outcome、Grader 与 slice。后续知识源、写工具、持久执行、多 Agent 和 Rust 各有独立风险门禁；完整清单留在对应章节，不在这里重复。</p>
+<h2 class="rp-toc-include" id="7-第一张-agent-application-图"><a href="#7-第一张-agent-application-图" class="rp-header-anchor rp-link" aria-hidden="true">#</a>7. 第一张 Agent Application 图</h2>
+<div></div>
+<p>关键不变量只有一句：模型可以提出候选，但真实读取范围、执行资格、状态变化与完成证据必须由模型之外的系统持有。</p>
+<h2 class="rp-toc-include" id="首小时练习"><a href="#首小时练习" class="rp-header-anchor rp-link" aria-hidden="true">#</a>首小时练习</h2>
+<p>选一条真实 Claude Code / Codex 轨迹，写一页表格：</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>时刻</th><th>模型看见的 Context</th><th>候选动作</th><th>Harness 控制</th><th>Observation</th><th>完成证据</th></tr></thead></table></div>
+<p>再标记：哪一步如果没有权限、预算、测试或独立验证，会让“看起来完成”与真实 Outcome 分离。</p>
+<p>通过证据：你能把至少 6 个可观察行为放回 Context、Inner Loop 或 Harness，并指出真实 Outcome 由什么外部证据确认，而不是全部归因于“模型自己决定”。</p>
 <h2 class="rp-toc-include" id="章末检查"><a href="#章末检查" class="rp-header-anchor rp-link" aria-hidden="true">#</a>章末检查</h2>
 <ol>
-<li>为什么模型层的改进不能替代应用层授权？</li>
-<li>为什么 Tool Result 仍然是不可信输入？</li>
-<li>如果只记录最终回答，不记录轨迹，会失去哪些诊断能力？</li>
+<li>为什么 <code>AGENTS.md</code> / <code>CLAUDE.md</code> 不是整个 Context，更不是授权系统？</li>
+<li>Inner Agent Loop 与 Harness 的边界是什么？</li>
+<li>为什么“Loop Engineering”更适合作为外层闭环的教学简称，而不是线性替代 Harness 的新一代标准？</li>
+<li>为什么完整闭卷检查不应阻塞第一个 L0/L1 skeleton？</li>
 </ol>
+<h2 class="rp-toc-include" id="一手资料与术语来源"><a href="#一手资料与术语来源" class="rp-header-anchor rp-link" aria-hidden="true">#</a>一手资料与术语来源</h2>
+<ul>
+<li><a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" target="_blank" rel="noopener noreferrer" class="rp-link">Anthropic — Effective context engineering for AI agents</a></li>
+<li><a href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents" target="_blank" rel="noopener noreferrer" class="rp-link">Anthropic — Demystifying evals for AI agents</a></li>
+<li><a href="https://www.anthropic.com/engineering/harness-design-long-running-apps" target="_blank" rel="noopener noreferrer" class="rp-link">Anthropic — Harness design for long-running application development</a></li>
+<li><a href="https://openai.com/index/unrolling-the-codex-agent-loop/" target="_blank" rel="noopener noreferrer" class="rp-link">OpenAI — Unrolling the Codex agent loop</a></li>
+<li><a href="https://openai.com/index/unlocking-the-codex-harness/" target="_blank" rel="noopener noreferrer" class="rp-link">OpenAI — Unlocking the Codex harness</a></li>
+<li><a href="https://learn.chatgpt.com/docs/agent-configuration/agents-md" target="_blank" rel="noopener noreferrer" class="rp-link">Codex — Custom instructions with AGENTS.md</a></li>
+<li><a href="https://learn.chatgpt.com/docs/agent-approvals-security" target="_blank" rel="noopener noreferrer" class="rp-link">Codex — Agent approvals and security</a></li>
+<li><a href="https://learn.chatgpt.com/docs/app-server" target="_blank" rel="noopener noreferrer" class="rp-link">Codex — App Server</a></li>
+<li><a href="https://code.claude.com/docs/en/memory" target="_blank" rel="noopener noreferrer" class="rp-link">Claude Code — How Claude remembers your project</a></li>
+<li><a href="https://code.claude.com/docs/en/hooks" target="_blank" rel="noopener noreferrer" class="rp-link">Claude Code — Hooks reference</a></li>
+<li><a href="https://addyosmani.com/blog/loop-engineering/" target="_blank" rel="noopener noreferrer" class="rp-link">Addy Osmani — Loop Engineering</a>（社区术语来源与实践观点，不视为正式标准）</li>
+</ul>
 <h2 class="rp-toc-include" id="本章小结"><a href="#本章小结" class="rp-header-anchor rp-link" aria-hidden="true">#</a>本章小结</h2>
-<p>全书的主线是从概率生成逐层走向可验证的社会技术系统；每一层都要由门禁证明可以进入，而不是由阅读进度决定。下一章先固定全书术语的精确边界，避免后续把模型输出、系统状态和真实效果混为一谈。</p>
-<p><a href="/masterpiece-static-docs/00-导读/03-术语与边界" class="rp-link">下一章：术语与边界</a></p><!--/$--></div><footer class="rp-doc-footer"><div class="rp-doc-footer__edit"><div class="rp-last-updated"><p>最后更新于<!-- -->: <span>2026/7/11 16:52:29</span></p></div></div><div class="rp-doc-footer__divider"></div><div class="rp-prev-next-page"><a href="/masterpiece-static-docs/00-导读/01-如何使用这套教材" class="rp-prev-next-page__item rp-prev-next-page__prev rp-link"><span class="rp-prev-next-page__item__desc">上一页</span><span class="rp-prev-next-page__item__title"><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon rp-prev-next-page__rotate_180"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg><span>01 · 如何阅读这本书</span></span></a><a href="/masterpiece-static-docs/00-导读/03-术语与边界" class="rp-prev-next-page__item rp-prev-next-page__next rp-link"><span class="rp-prev-next-page__item__desc">下一页</span><span class="rp-prev-next-page__item__title"><span>03 · 术语与边界</span><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></span></a></div></footer></main></div><aside class="rp-doc-layout__outline rp-scrollbar"><div class="rp-outline"><div class="rp-outline__title">目录<svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg></div><nav class="rp-outline__toc rp-scrollbar"><a href="#1-四层心智模型" class="rp-toc-item rp-link" title="1. 四层心智模型" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">1. 四层心智模型</span></a><a href="#第一层模型是条件概率生成器" class="rp-toc-item rp-link" title="第一层：模型是条件概率生成器" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">第一层：模型是条件概率生成器</span></a><a href="#第二层agent-是带反馈的控制系统" class="rp-toc-item rp-link" title="第二层：Agent 是带反馈的控制系统" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">第二层：Agent 是带反馈的控制系统</span></a><a href="#第三层agent-application-是社会技术系统" class="rp-toc-item rp-link" title="第三层：Agent Application 是社会技术系统" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">第三层：Agent Application 是社会技术系统</span></a><a href="#第四层生产可靠性来自证据链" class="rp-toc-item rp-link" title="第四层：生产可靠性来自证据链" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">第四层：生产可靠性来自证据链</span></a><a href="#2-依赖关系" class="rp-toc-item rp-link" title="2. 依赖关系" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">2. 依赖关系</span></a><a href="#3-首次手写单-agent-前门禁" class="rp-toc-item rp-link" title="3. 首次手写单 Agent 前门禁" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">3. 首次手写单 Agent 前门禁</span></a><a href="#g0a--m0-草案任何模型探针前" class="rp-toc-item rp-link" title="G0a · M0 草案（任何模型探针前）" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">G0a · M0 草案（任何模型探针前）</span></a><a href="#g0--问题与证据正式-m0" class="rp-toc-item rp-link" title="G0 · 问题与证据（正式 M0）" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">G0 · 问题与证据（正式 M0）</span></a><a href="#g1--模型边界" class="rp-toc-item rp-link" title="G1 · 模型边界" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">G1 · 模型边界</span></a><a href="#g2--接口边界" class="rp-toc-item rp-link" title="G2 · 接口边界" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">G2 · 接口边界</span></a><a href="#g3--agent-边界" class="rp-toc-item rp-link" title="G3 · Agent 边界" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">G3 · Agent 边界</span></a><a href="#g4--行动边界" class="rp-toc-item rp-link" title="G4 · 行动边界" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">G4 · 行动边界</span></a><a href="#g5--证据边界" class="rp-toc-item rp-link" title="G5 · 证据边界" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">G5 · 证据边界</span></a><a href="#4-l1-后门禁" class="rp-toc-item rp-link" title="4. L1 后门禁" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">4. L1 后门禁</span></a><a href="#5-一页架构检查图" class="rp-toc-item rp-link" title="5. 一页架构检查图" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">5. 一页架构检查图</span></a><a href="#章末检查" class="rp-toc-item rp-link" title="章末检查" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">章末检查</span></a><a href="#本章小结" class="rp-toc-item rp-link" title="本章小结" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章小结</span></a></nav><div class="rp-outline__divider"></div><div class="rp-outline__bottom"></div></div></aside></div></div>
+<p>你每天使用的 Coding Agent，已经把 Context、Inner Loop、Harness、工具、权限与验证组合在一起。本书接下来做的不是重新教你点按钮，而是逐层重建这些能力。下一页是随查词典；首次顺读不必停下来背完，可以直接进入 M0。</p>
+<p><a href="/masterpiece-static-docs/00-导读/04-M0任务契约-Baseline与数据集" class="rp-link">继续实作主线：M0 最小任务草案</a> · <a href="/masterpiece-static-docs/00-导读/03-术语与边界" class="rp-link">顺读知识支线：术语与边界</a></p><!--/$--></div><footer class="rp-doc-footer"><div class="rp-doc-footer__edit"><div class="rp-last-updated"><p>最后更新于<!-- -->: <span>2026/7/12 08:59:31</span></p></div></div><div class="rp-doc-footer__divider"></div><div class="rp-prev-next-page"><a href="/masterpiece-static-docs/00-导读/01-如何使用这套教材" class="rp-prev-next-page__item rp-prev-next-page__prev rp-link"><span class="rp-prev-next-page__item__desc">上一页</span><span class="rp-prev-next-page__item__title"><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon rp-prev-next-page__rotate_180"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg><span>01 · 如何阅读这本书</span></span></a><a href="/masterpiece-static-docs/00-导读/03-术语与边界" class="rp-prev-next-page__item rp-prev-next-page__next rp-link"><span class="rp-prev-next-page__item__desc">下一页</span><span class="rp-prev-next-page__item__title"><span>03 · 术语与边界</span><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></span></a></div></footer></main></div><aside class="rp-doc-layout__outline rp-scrollbar"><div class="rp-outline"><div class="rp-outline__title">目录<svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg></div><nav class="rp-outline__toc rp-scrollbar"><a href="#1-一次熟悉任务的真实骨架" class="rp-toc-item rp-link" title="1. 一次熟悉任务的真实骨架" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">1. 一次熟悉任务的真实骨架</span></a><a href="#2-promptcontextharness-与-loop-不是四代产品" class="rp-toc-item rp-link" title="2. Prompt、Context、Harness 与 Loop 不是四代产品" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">2. Prompt、Context、Harness 与 Loop 不是四代产品</span></a><a href="#3-你已经在-claude-code--codex-见过这些层" class="rp-toc-item rp-link" title="3. 你已经在 Claude Code / Codex 见过这些层" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">3. 你已经在 Claude Code / Codex 见过这些层</span></a><a href="#4-从-coding-agent-迁移到通用-agent" class="rp-toc-item rp-link" title="4. 从 Coding Agent 迁移到通用 Agent" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">4. 从 Coding Agent 迁移到通用 Agent</span></a><a href="#5-现在才需要知识依赖" class="rp-toc-item rp-link" title="5. 现在才需要知识依赖" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">5. 现在才需要知识依赖</span></a><a href="#6-第一圈先获得反馈门禁随后约束结论" class="rp-toc-item rp-link" title="6. 第一圈先获得反馈，门禁随后约束结论" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">6. 第一圈先获得反馈，门禁随后约束结论</span></a><a href="#7-第一张-agent-application-图" class="rp-toc-item rp-link" title="7. 第一张 Agent Application 图" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">7. 第一张 Agent Application 图</span></a><a href="#首小时练习" class="rp-toc-item rp-link" title="首小时练习" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">首小时练习</span></a><a href="#章末检查" class="rp-toc-item rp-link" title="章末检查" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">章末检查</span></a><a href="#一手资料与术语来源" class="rp-toc-item rp-link" title="一手资料与术语来源" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">一手资料与术语来源</span></a><a href="#本章小结" class="rp-toc-item rp-link" title="本章小结" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章小结</span></a></nav><div class="rp-outline__divider"></div><div class="rp-outline__bottom"></div></div></aside></div></div>
     <div id="__rspress_modal_container"></div>
   </body>
 </html>
