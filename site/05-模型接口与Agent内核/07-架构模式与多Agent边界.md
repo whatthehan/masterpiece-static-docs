@@ -263,6 +263,8 @@ trace context + sequence/version
 
 接收方必须重新验证身份和衰减后的权限。协调器还要处理重复、迟到、乱序、循环委派和取消传播；迟到结果不能覆盖已经关闭或更新版本的任务。
 
+这份 Envelope 是应用内部的最低语义要求。当协作对象是跨团队、跨进程或跨供应商的独立 Agent 系统时，可以在这些不变量稳定后评估 [A2A 跨 Agent 协作协议](/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议.md)；A2A 提供互操作 Wire Contract，不会自动补齐权限衰减、预算、结果验收和循环检测。
+
 ## 实践：为 Harness 做一次可证伪设计
 
 先建立 Harness Component Map：

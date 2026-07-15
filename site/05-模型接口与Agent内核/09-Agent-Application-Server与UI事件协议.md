@@ -9,7 +9,7 @@ Agent Application Server 位于模型 Runtime 与产品 UI 之间。它把易变
 - 区分 Provider Event、Canonical RunEvent、Transport Frame 与 UI State。
 - 设计 Thread、Run、Item 的公开事件协议。
 - 实现 Snapshot + Delta、SSE 重连、sequence gap 和幂等 reducer。
-- 把 AG-UI、AI SDK UI 等方案放在 adapter 层，而不是领域层。
+- 把 AG-UI、AI SDK UI 等方案放在 Adapter 层，而不是领域层。
 
 > 本章分为两个实现层次。第 1～4 节和第 7 节建立最小闭环：事件分层、Canonical RunEvent、Public Snapshot 与纯 UI Reducer；第 5～6、8～9 节处理生产环境中的原子持久化、断线重放、协议兼容和 UI Adapter。最小闭环稳定后，再加入后一个层次。
 
@@ -354,7 +354,7 @@ Event 协议应独立版本化，并在握手时协商 `supportedSchemaVersions`
 - Server 声明 `minimumClientVersion`，不让旧 UI 猜测关键状态。
 - 保存 v1 wire fixtures，并持续喂给当前和仍受支持的旧 reducer。
 
-## 9. AG-UI 与 AI SDK UI 是 Product Edge Adapter
+## 9. UI 协议位于 Product Edge
 
 AG-UI 提供类型化 Agent↔UI events，AI SDK UI 提供 message、stream 和 transport 能力。它们可以承载产品交互，但不应反向定义领域事实：
 
@@ -365,6 +365,8 @@ Canonical RunEvent ──native SSE─────> custom UI
 ```
 
 更换 UI Runtime 时，proposal hash、approval 绑定、Event Store 和 Run 终态不应随之重写。
+
+本章只建立 Adapter 的位置。AG-UI 的运行输入、事件生命周期、Shared State、用户控制和 Contract Test，将在下一章 [AG-UI：把 Agent Runtime 接入产品前端](/masterpiece-static-docs/05-模型接口与Agent内核/10-AG-UI与前端事件适配.md)中展开。声明式生成界面 A2UI 属于 Renderer Contract，不是另一套 Run Event，后续将在安全与 Agent UX 模块单独讨论。
 
 ## 10. 故障测试矩阵
 
@@ -402,7 +404,7 @@ Canonical RunEvent ──native SSE─────> custom UI
 
 ## 本章小结
 
-Agent Application Server 把 Provider 流转换成持久、稳定、可版本化的应用事件。Snapshot + Delta、sequence、gap detection 和纯 reducer 让前端在刷新与断线后仍能恢复真实状态。下一部分进入 [Context Engineering](/masterpiece-static-docs/06-上下文-知识与记忆/01-Context-Engineering.md)，讨论每一轮模型调用应该看到哪些状态、证据和工具。
+Agent Application Server 把 Provider 流转换成持久、稳定、可版本化的应用事件。Snapshot + Delta、sequence、gap detection 和纯 reducer 让前端在刷新与断线后仍能恢复真实状态。下一章将实现 [AG-UI 前端事件适配](/masterpiece-static-docs/05-模型接口与Agent内核/10-AG-UI与前端事件适配.md)，验证公开领域事实可以稳定投影到标准 UI 协议。
 
 ## 延伸阅读
 

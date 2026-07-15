@@ -136,7 +136,7 @@ function reduceUXProjection(
 
 ## 本章小结
 
-Agent UX 是 Runtime 的诚实投影，而不是对模型输出的装饰。状态、证据、审批和控制项来自服务端事实；前端负责把它们变成用户能理解的任务界面。下一章将进入 [失败、Timeout、Retry 与 Cancellation](/masterpiece-static-docs/09-可靠性与可观测/01-失败分类-超时-重试与取消.md)，解释 `IN_DOUBT` 如何收敛为权威结果。
+Agent UX 是 Runtime 的诚实投影，而不是对模型输出的装饰。状态、证据、审批和控制项来自服务端事实；前端负责把它们变成用户能理解的任务界面。下一章将讨论 [A2UI 声明式生成界面](/masterpiece-static-docs/08-安全与治理/06-A2UI与声明式生成界面.md)：当 Agent 参与组合界面时，如何仍由应用掌握组件、数据和 Action 的解释权。
 
 ## 一手资料
 

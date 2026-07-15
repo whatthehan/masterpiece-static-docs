@@ -20,8 +20,9 @@ Large Language Model（LLM）使应用能够在运行时解释模糊目标、选
 
 ```mermaid
 flowchart TD
-    UI["Web / App / CLI<br/>任务 · 证据 · 审批 · 时间线"] --> S["Agent Application Server<br/>Thread · Run · Item · Event"]
+    UI["Web / App / CLI<br/>任务 · 证据 · 审批 · 时间线"] <-->|"AG-UI Event · A2UI Payload"| S["Agent Application Server<br/>Thread · Run · Item · Event"]
     S --> R["Agent Runtime<br/>Context · Loop · Budget · Cancel"]
+    S <--> A["Remote Agent Systems<br/>A2A Task · Artifact"]
     R --> M["Model Interface"]
     R --> P["Policy / Authorization"]
     R --> T["Tools / Knowledge / MCP"]
@@ -48,10 +49,10 @@ flowchart TD
 | [02 数学与机器学习直觉](/masterpiece-static-docs/02-数学与机器学习直觉/01-概率-信息量与采样.md)                    | 概率、Embedding 和分布变化怎样影响工程判断     | 多 Trial 实验、Retrieval Eval                                        |
 | [03 LLM 工作原理](/masterpiece-static-docs/03-LLM工作原理/01-Token与自回归生成.md)                     | 模型实际接收什么、生成什么，能力边界来自哪里         | Token / Context 实验、流式 Item 重建                                    |
 | [04 评测与实验科学](/masterpiece-static-docs/04-评测与实验科学/01-Grader-Trial与统计.md)                  | 怎样区分流畅回答与真实任务完成                | Dataset、Grader、Trace、回归报告                                        |
-| [05 模型接口与 Agent 内核](/masterpiece-static-docs/05-模型接口与Agent内核/01-TypeScript-Node运行时先修.md) | 怎样把 Model、Tool 和状态组成有界 Runtime | Provider Adapter、手写 Agent Loop、事件协议                              |
+| [05 模型接口与 Agent 内核](/masterpiece-static-docs/05-模型接口与Agent内核/01-TypeScript-Node运行时先修.md) | 怎样把 Model、Tool 和状态组成有界 Runtime | OpenAI SSE Adapter、手写 Agent Loop、Canonical Event 与 AG-UI Adapter |
 | [06 Context、知识与记忆](/masterpiece-static-docs/06-上下文-知识与记忆/01-Context-Engineering.md)      | 有限窗口中应该放入哪些信息                  | Context Snapshot、带来源和权限的检索                                       |
-| [07 Tool、协议与行动控制](/masterpiece-static-docs/07-工具-协议与行动控制/01-工具契约与错误模型.md)                | 候选动作怎样取得执行资格                   | Tool Contract、Model Context Protocol（MCP）、Authorization、Approval |
-| [08 安全与治理](/masterpiece-static-docs/08-安全与治理/01-Agent威胁建模.md)                            | 不可信内容怎样跨模型与 Tool 形成真实风险        | 威胁模型、纵深防御、可控 Agent UX                                            |
+| [07 Tool、协议与行动控制](/masterpiece-static-docs/07-工具-协议与行动控制/01-工具契约与错误模型.md)                | 候选动作怎样取得执行资格，独立 Agent 怎样协作     | Tool Contract、MCP、A2A、Authorization、Approval                     |
+| [08 安全与治理](/masterpiece-static-docs/08-安全与治理/01-Agent威胁建模.md)                            | 不可信内容怎样跨模型、Tool 与生成界面形成真实风险    | 威胁模型、纵深防御、Agent UX 与 A2UI Renderer                               |
 | [09 可靠性与可观测](/masterpiece-static-docs/09-可靠性与可观测/01-失败分类-超时-重试与取消.md)                    | Timeout、Retry、Cancel 和重启后怎样收敛  | 故障矩阵、Durable Execution、SLO                                       |
 | [10 可选专题：Rust 迁移](/masterpiece-static-docs/10-可选专题-Rust迁移/01-Rust迁移所需理论.md)              | 在边界稳定且证据充分时，哪些组件值得迁移           | Rust Sidecar、共享 Contract、迁移证据                                    |
 | [11 综合实践与作品设计](/masterpiece-static-docs/11-综合实践与作品设计/01-综合系统心智模型.md)                     | 怎样把局部机制组合成完整产品                 | 实践路径、综合自测、作品设计                                                   |
@@ -74,6 +75,7 @@ flowchart TD
 - React 或其他 Web UI 用于展示任务、证据、Preview、Approval、进度和恢复动作；聊天气泡不是唯一交互形态。
 - Rust 只在边界稳定、资源敏感或需要独立隔离时承接执行与数据组件。
 - Multi-Agent、长期记忆、Agentic Retrieval-Augmented Generation（Agentic RAG）和 Computer Use 都是条件性能力，必须由任务需求和 Eval 证明收益。
+- AG-UI 是需要理解的 UI Event Model；A2UI 与 A2A 只在声明式生成界面或跨 Agent 系统互操作成为真实需求时引入。
 - 时效性结论以对应章节标注的官方一手资料和核验日期为准；正文不推测私有 Prompt、模型权重或托管基础设施。
 
 [开始阅读：如何阅读这本书](/masterpiece-static-docs/01-导读/01-如何阅读这本书.md)

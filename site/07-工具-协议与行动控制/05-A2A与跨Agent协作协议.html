@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="zh">
+  <head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>05 · A2A：跨 Agent 协作协议 - Agentic Masterpiece</title>
+<script>{;const saved = localStorage.getItem('rspress-theme-appearance');const preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches;const defaultTheme = 'auto';const theme = saved === 'light' || saved === 'dark' || saved === 'auto' ? saved : defaultTheme;const isDark = theme === 'auto' ? preferDark : theme === 'dark';document.documentElement.classList.toggle('dark', isDark);document.documentElement.classList.toggle('rp-dark', isDark);document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';}</script>
+<link href="/masterpiece-static-docs/static/css/styles.7f095e6272.css" rel="stylesheet">
+<script defer src="/masterpiece-static-docs/static/js/styles.97e0519c6b.js"></script>
+<script defer src="/masterpiece-static-docs/static/js/lib-react.153111d74d.js"></script>
+<script defer src="/masterpiece-static-docs/static/js/lib-router.575081ccc8.js"></script>
+<script defer src="/masterpiece-static-docs/static/js/5193.f8417e4998.js"></script>
+<script defer src="/masterpiece-static-docs/static/js/index.ec7c0c4265.js"></script>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Rspress v2.0.17">
+<meta property="og:type" content="website">
+<meta property="og:title" content="05 · A2A：跨 Agent 协作协议 - Agentic Masterpiece">
+<meta name="description" content="代码评审 Agent 已经能够读取 Pull Request、运行测试并生成 Review；安全审计 Agent 则由另一个团队维护，部署在独立网络中，拥有自己的模型、策略与工具。前者需要把一项安全复核工作委派给后者，但不应该知道对方的 Prompt、Memory、Tool 实现或内部执行步骤。 这正是 Agent2Agent Protocol（A2A）处理的边界：让相互独立、实现不透明的 Agent 发现能力、交换消息、管理长任务并交付结果。A2A 不把远端 Agent 降格为一个函数，也不要求双方共享 Runtime；它为跨框架、跨进程和跨组织的协作提供应用层协议。 版本核验日期：2026-07-15。本章以 Linux Foundation A2A 项目的 v1.0.0 为基线，该版本于 2026-03-12 发布，官方定义为首个 stable、production-ready 版本。A2A JavaScript SDK 的稳定通道此时仍实现 v0.3，v1 支持位于 @a2a-js/sdk@next 预发布通道，因此本章使用协议级 TypeScript 与 fetch 伪代码，不引入预发布依赖。">
+<meta property="og:description" content="代码评审 Agent 已经能够读取 Pull Request、运行测试并生成 Review；安全审计 Agent 则由另一个团队维护，部署在独立网络中，拥有自己的模型、策略与工具。前者需要把一项安全复核工作委派给后者，但不应该知道对方的 Prompt、Memory、Tool 实现或内部执行步骤。 这正是 Agent2Agent Protocol（A2A）处理的边界：让相互独立、实现不透明的 Agent 发现能力、交换消息、管理长任务并交付结果。A2A 不把远端 Agent 降格为一个函数，也不要求双方共享 Runtime；它为跨框架、跨进程和跨组织的协作提供应用层协议。 版本核验日期：2026-07-15。本章以 Linux Foundation A2A 项目的 v1.0.0 为基线，该版本于 2026-03-12 发布，官方定义为首个 stable、production-ready 版本。A2A JavaScript SDK 的稳定通道此时仍实现 v0.3，v1 支持位于 @a2a-js/sdk@next 预发布通道，因此本章使用协议级 TypeScript 与 fetch 伪代码，不引入预发布依赖。"></head>
+
+  <body>
+    <div id="__rspress_root"><header class="rp-nav"><div class="rp-nav__left"><div class="rp-nav__title"><a href="/masterpiece-static-docs/" class="rp-nav__title__link rp-link"><span>Agentic Masterpiece</span></a></div></div><div class="rp-nav__right"><button class="rp-search-button"><div class="rp-search-button__content"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="none" viewBox="0 0 20 21" class="rp-search-button__icon"><path fill="currentColor" d="M8.333 1.913A6.667 6.667 0 0 1 15 8.58c0 1.54-.525 2.957-1.402 4.085l4.49 4.492a.834.834 0 0 1-1.177 1.178l-4.491-4.49a6.64 6.64 0 0 1-4.087 1.402 6.667 6.667 0 0 1 0-13.334m0 1.667a5 5 0 1 0 0 10 5 5 0 0 0 0-10"></path></svg><span class="rp-search-button__word">搜索</span></div><div class="rp-search-button__hotkey" style="opacity:0"><span></span><span>K</span></div></button><div class="rp-search-button--mobile"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="none" viewBox="0 0 20 21"><path fill="currentColor" d="M8.333 1.913A6.667 6.667 0 0 1 15 8.58c0 1.54-.525 2.957-1.402 4.085l4.49 4.492a.834.834 0 0 1-1.177 1.178l-4.491-4.49a6.64 6.64 0 0 1-4.087 1.402 6.667 6.667 0 0 1 0-13.334m0 1.667a5 5 0 1 0 0 10 5 5 0 0 0 0-10"></path></svg></div><ul class="rp-nav-menu rp-nav-menu--right"><li class="rp-nav-menu__item rp-nav-menu__item--active"><a href="/masterpiece-static-docs/" class="rp-nav-menu__item__container rp-link">全书</a></li><li class="rp-nav-menu__item"><a href="https://github.com/whatthehan/masterpiece-static-docs" target="_blank" class="rp-nav-menu__item__container rp-link">GitHub</a></li></ul><div class="rp-nav__others"><div class="rp-nav-menu__divider"></div><div class="rp-switch-appearance"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" class="rp-switch-appearance__icon rp-switch-appearance__icon--sun"><path fill="currentColor" d="m7.001 15.848-1.226 1.226a.58.58 0 0 0 0 .818.58.58 0 0 0 .818 0l1.226-1.226a.58.58 0 0 0 0-.818.58.58 0 0 0-.818 0m-.352-8.735a.584.584 0 0 0 .825-.825L6.237 5.051a.584.584 0 0 0-.825.825zM5.011 11.07h-1.75a.584.584 0 0 0 0 1.167h1.75c.324 0 .584-.26.584-.583a.585.585 0 0 0-.584-.584m7.003-5.835c.324 0 .584-.26.584-.584V2.9a.58.58 0 0 0-.584-.584.58.58 0 0 0-.583.583V4.65c0 .323.262.584.583.584m5.616 1.621 1.226-1.225a.58.58 0 0 0 0-.818.58.58 0 0 0-.818 0l-1.226 1.225a.58.58 0 0 0 0 .818.576.576 0 0 0 .818 0m3.138 4.214h-1.75a.58.58 0 0 0-.584.584c0 .324.26.584.583.584h1.751a.584.584 0 1 0 0-1.167m-3.389 5.124a.584.584 0 0 0-.825.825l1.238 1.238a.584.584 0 0 0 .825-.826zm-5.365-9.795a5.256 5.256 0 0 0-5.257 5.258 5.256 5.256 0 0 0 5.257 5.257 5.256 5.256 0 0 0 5.257-5.257 5.256 5.256 0 0 0-5.257-5.258m0 11.675a.58.58 0 0 0-.583.583v1.751a.582.582 0 1 0 1.167 0v-1.75a.584.584 0 0 0-.584-.584"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="currentColor" viewBox="0 0 19 19" class="rp-switch-appearance__icon rp-switch-appearance__icon--moon"><path fill="currentColor" d="M9.166 0a9.2 9.2 0 0 1 1.857.188.834.834 0 0 1 .042 1.623 4.47 4.47 0 1 0 5.457 5.457l.048-.135a.834.834 0 0 1 1.575.177q.186.902.188 1.856A9.168 9.168 0 1 1 9.166 0"></path></svg></div></div><button aria-label="mobile hamburger" class="rp-nav-hamburger rp-nav-hamburger__sm"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" fill="none" viewBox="0 0 21 21"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.667" d="M3.645 5.225h13.333M3.645 10.225h13.333M3.645 15.225h13.333"></path></svg></button><button aria-label="mobile hamburger" class="rp-nav-hamburger rp-nav-hamburger__md"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" fill="none" viewBox="0 0 21 21"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.667" d="M3.645 5.225h13.333M3.645 10.225h13.333M3.645 15.225h13.333"></path></svg><ul class="rp-hover-group rp-hover-group--hidden rp-hover-group--right"><div class="rp-nav-menu__others-mobile__container"><div class="rp-nav-hamburger__md__hover-group"><div class="rp-nav-screen-appearance"><div class="rp-nav-screen-appearance__left">主题</div><div class="rp-nav-screen-appearance__right"></div></div><div class="rp-nav-screen-divider"></div></div></div></ul></button></div></header><div class="rp-doc-layout__menu"><div class="rp-sidebar-menu"><button type="button" class="rp-sidebar-menu__left"><svg width="1em" height="1em" viewBox="0 0 32 32"><path fill="currentColor" d="M4 6h24v2H4zm0 18h24v2H4zm0-12h24v2H4zm0 6h24v2H4z"></path></svg><span>菜单</span></button><button type="button" class="rp-sidebar-menu__right"><span class="rp-sidebar-menu__right__text">目录</span><svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-sidebar-menu__right__icon" style="transform:rotate(0deg);transition:transform 0.2s ease-out"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></button></div></div><div class="rp-doc-layout__container"><aside class="rp-doc-layout__sidebar rp-scrollbar"><a href="/masterpiece-static-docs/" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">全书首页</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>01 导读：从 Coding Agent 到 Agent 应用</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/01-导读/01-如何阅读这本书" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 如何阅读这本书</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/01-导读/02-从一次Agent任务看懂系统分层" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 从一次 Agent 任务看懂系统分层</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/01-导读/03-术语与边界" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 术语与边界</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/01-导读/04-任务契约-Baseline与数据集" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 任务契约、Baseline 与数据集</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/01-导读/05-从学习到转型的完整路线" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · 从前端工程到 Agent 应用工程</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>02 数学与机器学习直觉</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/02-数学与机器学习直觉/01-概率-信息量与采样" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 概率、信息量与采样</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/02-数学与机器学习直觉/02-向量-嵌入与相似度" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 向量、Embedding 与相似度</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/02-数学与机器学习直觉/03-训练-泛化与分布偏移" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 训练、泛化与分布偏移</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>03 LLM 如何工作</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/03-LLM工作原理/01-Token与自回归生成" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Token 与自回归生成</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/03-LLM工作原理/02-Transformer-Attention与KV-Cache" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · Transformer、Attention 与 KV Cache</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/03-LLM工作原理/03-预训练-后训练与推理" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 预训练、后训练与推理</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/03-LLM工作原理/04-上下文窗口-采样与能力边界" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · Context Window、采样与能力边界</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>04 用 Eval 证明系统改进</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/04-评测与实验科学/01-Grader-Trial与统计" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Grader、Trial 与统计</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-评测与实验科学/02-结果-轨迹与Trace" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · Outcome、Trajectory 与 Trace</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-评测与实验科学/03-Eval驱动迭代" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · Eval 驱动迭代</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>05 模型接口与 Agent Runtime</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/05-模型接口与Agent内核/01-TypeScript-Node运行时先修" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · TypeScript + Node：构建 Agent Runtime 前需要补齐的能力</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/02-指令层级-Prompt与Context" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 指令层级、Prompt 与 Context</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/03-模型API-状态与流式事件" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 模型 API、状态与流式事件</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/04-JSON-Schema基础" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · JSON Schema：把模型输出变成可检查的输入</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/05-结构化输出与工具调用" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · Structured Outputs 与 Tool Calling</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/06-Agent-Loop与状态机" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">06 · Agent Loop 与状态机</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/07-架构模式与多Agent边界" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">07 · Harness Engineering、架构模式与 Multi-Agent 边界</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/08-框架与SDK学习优先级" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">08 · 如何学习和选择 Agent SDK</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/09-Agent-Application-Server与UI事件协议" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">09 · Agent Application Server 与 UI 事件协议</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/10-AG-UI与前端事件适配" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">10 · AG-UI：把 Agent Runtime 接入产品前端</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>06 Context、知识与记忆</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/06-上下文-知识与记忆/01-Context-Engineering" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Context Engineering</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/06-上下文-知识与记忆/02-来源-权限与新鲜度" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 来源、权限与新鲜度</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/06-上下文-知识与记忆/03-检索-RAG与重排" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · Retrieval、RAG 与 Reranking</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/06-上下文-知识与记忆/04-状态-记忆与压缩" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · State、Memory 与 Compaction</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>07 Tool、MCP 与行动控制</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/07-工具-协议与行动控制/01-工具契约与错误模型" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Tool Contract 与错误模型</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-工具-协议与行动控制/02-身份-授权与审批" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · Identity、Authorization 与 Approval</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-工具-协议与行动控制/03-MCP与互操作协议" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · MCP：能力发现与互操作边界</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-工具-协议与行动控制/04-幂等-补偿与沙箱" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · Idempotency、Compensation 与 Sandbox</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议" class="rp-sidebar-item rp-sidebar-item--active rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · A2A：跨 Agent 协作协议</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>08 安全与 Agent UX</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/08-安全与治理/01-Agent威胁建模" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 从“会调用工具”到 Agent 威胁模型</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-安全与治理/02-Prompt-Injection与不可信内容" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · Prompt Injection：当数据开始影响控制流</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-安全与治理/03-最小权限-隐私与Confused-Deputy" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 身份委派、最小权限与 Confused Deputy</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-安全与治理/04-纵深防御与人类控制" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 纵深防御与 Human-in-the-Loop</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-安全与治理/05-Agent-UX与可控交互" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · Agent UX：让界面忠实表达 Runtime</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-安全与治理/06-A2UI与声明式生成界面" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">06 · A2UI：用声明式协议生成受控界面</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>09 可靠性、可观测与发布</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/09-可靠性与可观测/01-失败分类-超时-重试与取消" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Timeout 之后：Retry、Cancellation 与未知效果</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/09-可靠性与可观测/02-并发-背压与预算" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 并发、Backpressure 与任务预算</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/09-可靠性与可观测/03-持久执行-Checkpoint与Exactly-Once" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 持久执行：Checkpoint、Replay 与 Exactly-Once 边界</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/09-可靠性与可观测/04-Trace-SLO与成本" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 从一次 Run 到 Trace、SLO 与成本</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/09-可靠性与可观测/05-发布-模型依赖与生产运营" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · 发布 Agent 行为系统</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>10 可选专题：Rust 迁移</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/10-可选专题-Rust迁移/01-Rust迁移所需理论" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 何时把 Agent 组件迁移到 Rust</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/10-可选专题-Rust迁移/02-跨语言契约与控制面-执行面" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 跨语言契约：连接 Node 控制面与 Rust 执行面</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>11 综合实践与作品设计</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/11-综合实践与作品设计/01-综合系统心智模型" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 综合系统心智模型</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/11-综合实践与作品设计/02-综合能力自测" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 综合能力自测：能否独立解释一个 Agent 系统</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/11-综合实践与作品设计/03-自测参考答案" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 自测参考答案与判断要点</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/11-综合实践与作品设计/04-八周学习与实践路径" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 八周学习与实践路径：从熟悉工具走向 Agent Runtime</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/11-综合实践与作品设计/05-一手资料索引" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · 一手资料索引</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/11-综合实践与作品设计/06-能力与实践索引" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">06 · 能力与实践索引：把阅读转化为工程证据</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/11-综合实践与作品设计/07-Rust迁移决策清单" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">07 · Rust 迁移决策清单</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/11-综合实践与作品设计/08-场景专项与作品设计" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">08 · 场景专项与作品设计</span></div><div class="rp-sidebar-item__right"></div></a></aside><div class="rp-doc-layout__doc"><main class="rp-doc-layout__doc-container"><div class="rp-doc rspress-doc"><!--$--><h1 class="rp-toc-include" id="05--a2a跨-agent-协作协议"><a href="#05--a2a跨-agent-协作协议" class="rp-header-anchor rp-link" aria-hidden="true">#</a>05 · A2A：跨 Agent 协作协议<!-- --> </h1><div class="rp-not-doc rp-llms-container"><button class="rp-not-doc rp-llms-button rp-llms-copy-button"><div class="rp-llms-copy-button__icon-wrapper"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-llms-copy-button__icon-success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-llms-copy-button__icon-copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg></div><span>复制 Markdown</span></button><button class="rp-llms-button rp-llms-view-options__trigger "><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-llms-view-options__arrow "><path fill="currentColor" d="M16 22 6 12l1.4-1.4 8.6 8.6 8.6-8.6L26 12z"></path></svg></button></div>
+<p>代码评审 Agent 已经能够读取 Pull Request、运行测试并生成 Review；安全审计 Agent 则由另一个团队维护，部署在独立网络中，拥有自己的模型、策略与工具。前者需要把一项安全复核工作委派给后者，但不应该知道对方的 Prompt、Memory、Tool 实现或内部执行步骤。</p>
+<p>这正是 Agent2Agent Protocol（A2A）处理的边界：让相互独立、实现不透明的 Agent 发现能力、交换消息、管理长任务并交付结果。A2A 不把远端 Agent 降格为一个函数，也不要求双方共享 Runtime；它为跨框架、跨进程和跨组织的协作提供应用层协议。</p>
+<blockquote>
+<p>版本核验日期：2026-07-15。本章以 Linux Foundation A2A 项目的 <code>v1.0.0</code> 为基线，该版本于 2026-03-12 发布，官方定义为首个 stable、production-ready 版本。A2A JavaScript SDK 的稳定通道此时仍实现 v0.3，v1 支持位于 <code>@a2a-js/sdk@next</code> 预发布通道，因此本章使用协议级 TypeScript 与 <code>fetch</code> 伪代码，不引入预发布依赖。</p>
+</blockquote>
+<h2 class="rp-toc-include" id="本章目标"><a href="#本章目标" class="rp-header-anchor rp-link" aria-hidden="true">#</a>本章目标</h2>
+<ul>
+<li>区分 A2A 与 MCP、AG-UI、A2UI 的职责边界。</li>
+<li>理解 AgentCard、AgentInterface、AgentSkill、Message、Part、Task、Artifact 与 <code>contextId</code>。</li>
+<li>掌握 Task 状态机，以及同步、Streaming、Polling 和 Webhook 的组合方式。</li>
+<li>为 SSE 断线、重复事件、Cancel 竞态和终态不可变设计恢复逻辑。</li>
+<li>明确跨 Agent 委派中的身份、授权、数据最小化、SSRF、预算和循环风险。</li>
+<li>识别开放协议生态的版本漂移，并用 Adapter 与 Contract Fixture 隔离差异。</li>
+</ul>
+<h2 class="rp-toc-include" id="1-从代码评审委派开始"><a href="#1-从代码评审委派开始" class="rp-header-anchor rp-link" aria-hidden="true">#</a>1. 从代码评审委派开始</h2>
+<p>设想一个熟悉的工程工作流：</p>
+<ol>
+<li>用户要求代码评审 Orchestrator 检查一个 Pull Request。</li>
+<li>Orchestrator 完成常规 Review，发现认证中间件有高风险改动。</li>
+<li>它发现一个独立 Security Audit Agent，并确认对方支持代码安全审计。</li>
+<li>Orchestrator 只发送经过最小化处理的 Diff、依赖信息和审计目标。</li>
+<li>Security Agent 创建 Task，流式返回进度与审计报告 Artifact。</li>
+<li>若缺少 Threat Model，它进入 <code>INPUT_REQUIRED</code>，等待补充信息。</li>
+<li>Orchestrator 将结果呈现给用户，并把最终报告关联回原始 Review。</li>
+</ol>
+<div></div>
+<p>这张图中有四条不同的协议边界。A2A 只负责 Orchestrator 与独立 Agent 的协作，不负责 Security Agent 如何调用扫描器，也不规定 Review UI 如何渲染结果。</p>
+<h2 class="rp-toc-include" id="2-a2a-与其他协议的边界"><a href="#2-a2a-与其他协议的边界" class="rp-header-anchor rp-link" aria-hidden="true">#</a>2. A2A 与其他协议的边界</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>协议</th><th>主要连接对象</th><th>核心抽象</th><th>不负责</th></tr></thead><tbody><tr><td>MCP</td><td>Agent 与 Tool、Resource、Prompt</td><td>capability、request、result</td><td>跨 Agent 长任务与协作状态</td></tr><tr><td>A2A</td><td>独立 Agent 与独立 Agent</td><td>AgentCard、Message、Task、Artifact</td><td>Agent 内部 Tool、规划与 Memory</td></tr><tr><td>AG-UI</td><td>User App 与 Agent Runtime</td><td>前端事件、共享状态、实时会话</td><td>通用的跨组织 Agent 委派</td></tr><tr><td>A2UI</td><td>Agent 与 Renderer</td><td>Surface、Catalog、Component、Data Model</td><td>网络传输、认证与 Task 生命周期</td></tr></tbody></table></div>
+<p>一个系统可以同时使用四者：Security Agent 内部通过 MCP 访问扫描工具，外部通过 A2A 接受委派；Orchestrator 通过 AG-UI 与前端通信，并把 Security Agent 返回的 A2UI 数据交给受信 Renderer。</p>
+<p>不能因为它们都使用 JSON 或 Streaming 就把它们当成竞争协议。判断边界的关键问题是：当前对端是一个 Tool、一个自主 Agent，还是一个面向用户的 UI Runtime。</p>
+<h2 class="rp-toc-include" id="3-agentcard先发现能力再建立交互"><a href="#3-agentcard先发现能力再建立交互" class="rp-header-anchor rp-link" aria-hidden="true">#</a>3. AgentCard：先发现能力，再建立交互</h2>
+<p>A2A Server 必须提供 AgentCard。公开发现的标准位置是：</p>
+<div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>https://{agent-domain}/.well-known/agent-card.json</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>AgentCard 是可机器读取的服务清单，至少回答以下问题：</p>
+<ul>
+<li>这个 Agent 是谁，由谁提供；</li>
+<li>它有哪些 Skills；</li>
+<li>支持哪些协议 Binding 和版本；</li>
+<li>是否支持 Streaming、Push Notification 或 Extended AgentCard；</li>
+<li>接受和返回哪些 Media Type；</li>
+<li>客户端应使用哪种 Authentication Scheme。</li>
+</ul>
+<h3 class="rp-toc-include" id="agentinterface"><a href="#agentinterface" class="rp-header-anchor rp-link" aria-hidden="true">#</a>AgentInterface</h3>
+<p><code>supportedInterfaces</code> 按服务端偏好顺序声明可用接口。每个 AgentInterface 包含：</p>
+<ul>
+<li><code>url</code>：实际服务地址，生产环境必须是绝对 HTTPS URL；</li>
+<li><code>protocolBinding</code>：核心值包括 <code>HTTP+JSON</code>、<code>JSONRPC</code> 和 <code>GRPC</code>；</li>
+<li><code>protocolVersion</code>：例如 <code>1.0</code>；</li>
+<li><code>tenant</code>：可选的服务端路由值，存在时由 Binding Adapter 作为 Path Parameter 安全编码并带入请求。</li>
+</ul>
+<p>客户端应选择自己支持的第一个 Interface，而不是看到 URL 就猜测协议。<code>protocolVersion</code> 与 Agent 自身的 <code>version</code> 也不是同一概念：前者决定 Wire Contract，后者描述服务实现版本。</p>
+<h3 class="rp-toc-include" id="agentskill"><a href="#agentskill" class="rp-header-anchor rp-link" aria-hidden="true">#</a>AgentSkill</h3>
+<p>AgentSkill 描述 Agent 能完成的一类任务，通常包含稳定 ID、名称、描述、Tags、示例，以及可覆盖全局默认值的 <code>inputModes</code>、<code>outputModes</code> 和安全要求。</p>
+<p>Skill 是路由与能力匹配的依据，不是授权证明。Security Agent 声明 <code>secure-code-review</code>，只说明它声称理解这类工作；Orchestrator 仍需验证 Agent 来源、允许的代码仓库、数据分级和委派范围。</p>
+<div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> AgentInterface</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  url</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  protocolBinding</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;HTTP+JSON&quot;</span><span style="color:var(--shiki-token-keyword)"> |</span><span style="color:var(--shiki-token-string-expression)"> &quot;JSONRPC&quot;</span><span style="color:var(--shiki-token-keyword)"> |</span><span style="color:var(--shiki-token-string-expression)"> &quot;GRPC&quot;</span><span style="color:var(--shiki-token-keyword)"> |</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  protocolVersion</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  tenant</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">};</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> AgentSkill</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  id</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  name</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  description</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  tags</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  examples</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  inputModes</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  outputModes</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  securityRequirements</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> unknown</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">};</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> AgentCard</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  name</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  description</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  version</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  supportedInterfaces</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> AgentInterface</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  skills</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> AgentSkill</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  capabilities</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    streaming</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> boolean</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    pushNotifications</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> boolean</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    extendedAgentCard</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> boolean</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    extensions</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> unknown</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  };</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  defaultInputModes</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  defaultOutputModes</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  securitySchemes</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-function)"> Record</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-constant)">string</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-token-constant)"> unknown</span><span style="color:var(--shiki-foreground)">&gt;;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  securityRequirements</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> unknown</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">};</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">function</span><span style="color:var(--shiki-token-function)"> selectHttpV1</span><span style="color:var(--shiki-foreground)">(card</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> AgentCard</span><span style="color:var(--shiki-foreground)">)</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> AgentInterface</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  const</span><span style="color:var(--shiki-token-constant)"> selected</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-token-constant)"> card</span><span style="color:var(--shiki-token-function)">.</span><span style="color:var(--shiki-token-constant)">supportedInterfaces</span><span style="color:var(--shiki-token-function)">.find</span><span style="color:var(--shiki-foreground)">(</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    item </span><span style="color:var(--shiki-token-keyword)">=&gt;</span></span>
+<span class="line"><span style="color:var(--shiki-token-constant)">      item</span><span style="color:var(--shiki-foreground)">.protocolBinding </span><span style="color:var(--shiki-token-keyword)">===</span><span style="color:var(--shiki-token-string-expression)"> &quot;HTTP+JSON&quot;</span><span style="color:var(--shiki-token-keyword)"> &amp;&amp;</span></span>
+<span class="line"><span style="color:var(--shiki-token-constant)">      item</span><span style="color:var(--shiki-foreground)">.protocolVersion </span><span style="color:var(--shiki-token-keyword)">===</span><span style="color:var(--shiki-token-string-expression)"> &quot;1.0&quot;</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  );</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  if</span><span style="color:var(--shiki-foreground)"> (</span><span style="color:var(--shiki-token-keyword)">!</span><span style="color:var(--shiki-foreground)">selected) </span><span style="color:var(--shiki-token-keyword)">throw</span><span style="color:var(--shiki-token-keyword)"> new</span><span style="color:var(--shiki-token-function)"> Error</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-string-expression)">&quot;A2A_HTTP_JSON_V1_NOT_SUPPORTED&quot;</span><span style="color:var(--shiki-foreground)">);</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  if</span><span style="color:var(--shiki-foreground)"> (</span><span style="color:var(--shiki-token-keyword)">new</span><span style="color:var(--shiki-token-function)"> URL</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-constant)">selected</span><span style="color:var(--shiki-foreground)">.url).protocol </span><span style="color:var(--shiki-token-keyword)">!==</span><span style="color:var(--shiki-token-string-expression)"> &quot;https:&quot;</span><span style="color:var(--shiki-foreground)">) {</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">    throw</span><span style="color:var(--shiki-token-keyword)"> new</span><span style="color:var(--shiki-token-function)"> Error</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-string-expression)">&quot;A2A_PRODUCTION_ENDPOINT_MUST_USE_HTTPS&quot;</span><span style="color:var(--shiki-foreground)">);</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  }</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  return</span><span style="color:var(--shiki-foreground)"> selected;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">}</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>AgentCard 来自网络，也是不可信输入。客户端应验证 Schema、限制大小、检查 Endpoint Host、缓存策略和签名；不能直接把 Card 中的描述注入高优先级 Prompt，也不能自动连接任意 URL。</p>
+<h2 class="rp-toc-include" id="4-messageparttask-与-artifact"><a href="#4-messageparttask-与-artifact" class="rp-header-anchor rp-link" aria-hidden="true">#</a>4. Message、Part、Task 与 Artifact</h2>
+<h3 class="rp-toc-include" id="message-是一次通信-turn"><a href="#message-是一次通信-turn" class="rp-header-anchor rp-link" aria-hidden="true">#</a>Message 是一次通信 Turn</h3>
+<p>Message 表示 Client 或 Agent 的一次通信，核心字段包括：</p>
+<ul>
+<li><code>messageId</code>：由消息创建者生成，可用于重复检测；</li>
+<li><code>role</code>：<code>ROLE_USER</code> 或 <code>ROLE_AGENT</code>；</li>
+<li><code>parts</code>：消息内容；</li>
+<li><code>contextId</code>：可选的上下文分组；</li>
+<li><code>taskId</code>：可选的具体 Task 引用；</li>
+<li><code>referenceTaskIds</code>：引用先前 Task，适合 refinement；</li>
+<li><code>metadata</code> 与 <code>extensions</code>：扩展信息。</li>
+</ul>
+<p><code>ROLE_USER</code> 指 A2A Client 发往 Server 的方向，不等同于“这条消息一定由人类手写”。Orchestrator 代表用户发起委派时，也使用这一角色。</p>
+<h3 class="rp-toc-include" id="part-是内容的最小容器"><a href="#part-是内容的最小容器" class="rp-header-anchor rp-link" aria-hidden="true">#</a>Part 是内容的最小容器</h3>
+<p>A2A v1 的 Part 必须且只能包含下列内容字段之一：</p>
+<ul>
+<li><code>text</code>：文本；</li>
+<li><code>raw</code>：Base64 编码的二进制内容；</li>
+<li><code>url</code>：文件或内容地址；</li>
+<li><code>data</code>：任意 JSON 值。</li>
+</ul>
+<p>Part 还可以携带 <code>mediaType</code>、<code>filename</code> 和 <code>metadata</code>。v1 使用字段本身表达内容类型，不再使用 v0.3 的 <code>kind</code> discriminator。</p>
+<div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> JsonValue</span><span style="color:var(--shiki-token-keyword)"> =</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  |</span><span style="color:var(--shiki-token-constant)"> null</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  |</span><span style="color:var(--shiki-token-constant)"> boolean</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  |</span><span style="color:var(--shiki-token-constant)"> number</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  |</span><span style="color:var(--shiki-token-constant)"> string</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  |</span><span style="color:var(--shiki-token-function)"> JsonValue</span><span style="color:var(--shiki-foreground)">[]</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  |</span><span style="color:var(--shiki-foreground)"> { [key</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">]</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> JsonValue</span><span style="color:var(--shiki-foreground)"> };</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> PartContent</span><span style="color:var(--shiki-token-keyword)"> =</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  |</span><span style="color:var(--shiki-foreground)"> { text</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">; raw</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">; url</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">; data</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)"> }</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  |</span><span style="color:var(--shiki-foreground)"> { raw</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">; text</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">; url</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">; data</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)"> }</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  |</span><span style="color:var(--shiki-foreground)"> { url</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">; text</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">; raw</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">; data</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)"> }</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  |</span><span style="color:var(--shiki-foreground)"> { data</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> JsonValue</span><span style="color:var(--shiki-foreground)">; text</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">; raw</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">; url</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)"> };</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> Part</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-token-function)"> PartContent</span><span style="color:var(--shiki-token-keyword)"> &amp;</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  mediaType</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  filename</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  metadata</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-function)"> Record</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-constant)">string</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-token-function)"> JsonValue</span><span style="color:var(--shiki-foreground)">&gt;;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">};</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>类型只能减少应用内部的误用，Wire Input 仍需运行时 Schema Validation。对于 <code>url</code> Part，还必须在实际下载时重新执行 URL、DNS、Redirect 和响应大小校验。</p>
+<h3 class="rp-toc-include" id="message-或-task-是两种不同响应"><a href="#message-或-task-是两种不同响应" class="rp-header-anchor rp-link" aria-hidden="true">#</a>Message 或 Task 是两种不同响应</h3>
+<p>Agent 可以直接返回 Message，表示一次无需持久状态的即时交互；也可以创建 Task，表示需要跟踪的工作。</p>
+<p>Security Agent 若只回答“该语言不在支持范围内”，可以返回 Message。若要排队、运行扫描器、请求补充信息并生成报告，则应创建 Task。</p>
+<h3 class="rp-toc-include" id="task-是有状态的工作单元"><a href="#task-是有状态的工作单元" class="rp-header-anchor rp-link" aria-hidden="true">#</a>Task 是有状态的工作单元</h3>
+<p>Task 包含：</p>
+<ul>
+<li>服务端生成的唯一 <code>id</code>；</li>
+<li>把多次交互归组的 <code>contextId</code>；</li>
+<li>当前 <code>status</code>；</li>
+<li>输出 <code>artifacts</code>；</li>
+<li>可选的 Message <code>history</code>；</li>
+<li>自定义 <code>metadata</code>。</li>
+</ul>
+<p>客户端不能为新 Task 指定 <code>taskId</code>。如果 Message 同时提供 <code>taskId</code> 与 <code>contextId</code>，两者必须匹配；只提供 <code>taskId</code> 时，Server 从 Task 推导 Context。</p>
+<h3 class="rp-toc-include" id="artifact-是-task-的正式输出"><a href="#artifact-是-task-的正式输出" class="rp-header-anchor rp-link" aria-hidden="true">#</a>Artifact 是 Task 的正式输出</h3>
+<p>Artifact 由 <code>artifactId</code>、可选名称与描述、一个或多个 Parts 组成。扫描进度属于 Status Message；最终 SARIF、Markdown 报告或风险 JSON 才适合作为 Artifact。</p>
+<p>流式生成 Artifact 时，<code>TaskArtifactUpdateEvent</code> 使用相同 <code>artifactId</code>，并通过 <code>append</code> 与 <code>lastChunk</code> 表达追加和结束。客户端必须按 Artifact ID 合并，不能把每个 Chunk 当成独立报告。</p>
+<h2 class="rp-toc-include" id="5-contextid-不是-task-id"><a href="#5-contextid-不是-task-id" class="rp-header-anchor rp-link" aria-hidden="true">#</a>5. <code>contextId</code> 不是 Task ID</h2>
+<p><code>contextId</code> 把多个相关 Message 和 Task 组成同一业务上下文；<code>taskId</code> 只标识一项有明确生命周期的工作。</p>
+<p>例如：</p>
+<div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>context: PR #842 security review</span></span>
+<span class="line"><span>  task A: initial audit                 → COMPLETED</span></span>
+<span class="line"><span>  task B: re-check after remediation   → COMPLETED</span></span>
+<span class="line"><span>  task C: dependency license review    → WORKING</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>终态 Task 不可复活。用户要求“基于刚才的报告检查修复结果”时，应在同一 <code>contextId</code> 下创建新 Task，并通过 <code>referenceTaskIds</code> 引用旧 Task。这样每份 Artifact 都能追溯到确切输入和执行单元。</p>
+<p>不要把 <code>contextId</code> 当成授权边界或数据库租户字段。它是由服务端解释的 opaque identifier，资源访问仍需基于已认证 Actor 和服务端授权模型。</p>
+<h2 class="rp-toc-include" id="6-task-状态机"><a href="#6-task-状态机" class="rp-header-anchor rp-link" aria-hidden="true">#</a>6. Task 状态机</h2>
+<p>下图是本章安全审计场景的典型主路径，用于突出 Interrupted 与 Terminal State 的差别，不穷举服务端可能实现的所有迁移。</p>
+<div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>状态</th><th>语义</th><th>Client 动作</th></tr></thead><tbody><tr><td><code>TASK_STATE_SUBMITTED</code></td><td>已接收，尚未开始或刚进入队列</td><td>展示已接收；允许 Cancel</td></tr><tr><td><code>TASK_STATE_WORKING</code></td><td>正在执行</td><td>消费 Status/Artifact Update；执行预算检查</td></tr><tr><td><code>TASK_STATE_INPUT_REQUIRED</code></td><td>缺少继续执行所需的信息</td><td>以相同 <code>taskId</code> 和 <code>contextId</code> 发送补充 Message</td></tr><tr><td><code>TASK_STATE_AUTH_REQUIRED</code></td><td>需要额外认证或授权</td><td>通过受控的 out-of-band 流程完成，不把凭据写入普通 Message</td></tr><tr><td><code>TASK_STATE_COMPLETED</code></td><td>成功终态</td><td>固化 Artifact 与 Receipt</td></tr><tr><td><code>TASK_STATE_FAILED</code></td><td>失败终态</td><td>保存原因；新需求创建新 Task</td></tr><tr><td><code>TASK_STATE_CANCELED</code></td><td>已取消终态</td><td>核对外部副作用，不自动重启</td></tr><tr><td><code>TASK_STATE_REJECTED</code></td><td>Agent 拒绝执行终态</td><td>记录 Policy/Capability 原因，必要时重新路由</td></tr></tbody></table></div>
+<p>Terminal State 包括 <code>COMPLETED</code>、<code>FAILED</code>、<code>CANCELED</code> 和 <code>REJECTED</code>。对终态 Task 再发送 Message 必须失败；Refinement 使用新 Task。</p>
+<p><code>INPUT_REQUIRED</code> 和 <code>AUTH_REQUIRED</code> 是 Interrupted State，不代表失败。Orchestrator 必须暂停当前自动循环，等待明确输入或授权，而不是让模型猜测缺失信息。</p>
+<h2 class="rp-toc-include" id="7-core-operations-如何组合"><a href="#7-core-operations-如何组合" class="rp-header-anchor rp-link" aria-hidden="true">#</a>7. Core Operations 如何组合</h2>
+<p>A2A v1 定义的主要操作包括：</p>
+<ul>
+<li><code>SendMessage</code>：发送 Message，得到直接 Message 或 Task；</li>
+<li><code>SendStreamingMessage</code>：发送 Message 并订阅实时结果；</li>
+<li><code>GetTask</code>：读取 Task 当前状态、Artifact 和可选 History；</li>
+<li><code>ListTasks</code>：按 Context、状态与时间分页查询可见 Task；</li>
+<li><code>CancelTask</code>：请求取消仍可取消的 Task；</li>
+<li><code>SubscribeToTask</code>：订阅已存在且未终止 Task；</li>
+<li>Push Notification Config 的 Create、Get、List、Delete；</li>
+<li><code>GetExtendedAgentCard</code>：认证后获取更详细的 Card。</li>
+</ul>
+<div></div>
+<p><code>SendMessageConfiguration.returnImmediately</code> 可以要求服务端创建 Task 后尽快返回。默认情况下，非 Streaming 调用会等待 Task 到达 Terminal 或 Interrupted State。交互式应用通常选择 Streaming；后台批处理可以先返回 Task，再 Poll 或 Subscribe。</p>
+<p>A2A v1.0.0 的核心 Operation 与部分 Binding 文本对“Interrupted State 是否结束当前 Stream”的表述并不完全一致。Client 不应依赖原连接必然继续：进入 <code>INPUT_REQUIRED</code> / <code>AUTH_REQUIRED</code> 后先持久化 Task ID，用相同 <code>taskId</code> 发送补充 Message，再通过新流、<code>GetTask</code> 与 <code>SubscribeToTask</code> 恢复。具体 Peer 行为必须用固定版本的 Binding Contract Fixture 锁定。</p>
+<h2 class="rp-toc-include" id="8-httpjson-与-sse"><a href="#8-httpjson-与-sse" class="rp-header-anchor rp-link" aria-hidden="true">#</a>8. HTTP+JSON 与 SSE</h2>
+<p>A2A v1 提供三种标准 Binding：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>Binding</th><th>请求方式</th><th>Streaming</th></tr></thead><tbody><tr><td>HTTP+JSON/REST</td><td>标准 HTTP Verb 与资源路径</td><td>SSE</td></tr><tr><td>JSON-RPC</td><td>JSON-RPC 2.0 over HTTP</td><td>SSE</td></tr><tr><td>gRPC</td><td>Protocol Buffers over HTTP/2 + TLS</td><td>Server Streaming</td></tr></tbody></table></div>
+<p>本章选择 HTTP+JSON，因为它最接近前端工程师熟悉的 API 模型，也能直接看到协议语义。请求和响应建议使用 <code>application/a2a+json</code>；流式响应使用 <code>text/event-stream</code>。</p>
+<h3 class="rp-toc-include" id="发送并订阅-task"><a href="#发送并订阅-task" class="rp-header-anchor rp-link" aria-hidden="true">#</a>发送并订阅 Task</h3>
+<div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> A2AClientOptions</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  token</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  signal</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> AbortSignal</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">};</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">function</span><span style="color:var(--shiki-token-function)"> operationUrl</span><span style="color:var(--shiki-foreground)">(</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  endpoint</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> AgentInterface</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  operation</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;message:stream&quot;</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">)</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> URL</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  const</span><span style="color:var(--shiki-token-constant)"> relativePath</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-token-constant)"> endpoint</span><span style="color:var(--shiki-foreground)">.tenant</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">    ?</span><span style="color:var(--shiki-token-string-expression)"> `</span><span style="color:var(--shiki-token-keyword)">${</span><span style="color:var(--shiki-token-function)">encodeURIComponent</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-constant)">endpoint</span><span style="color:var(--shiki-foreground)">.tenant)</span><span style="color:var(--shiki-token-keyword)">}</span><span style="color:var(--shiki-token-string-expression)">/</span><span style="color:var(--shiki-token-keyword)">${</span><span style="color:var(--shiki-foreground)">operation</span><span style="color:var(--shiki-token-keyword)">}</span><span style="color:var(--shiki-token-string-expression)">`</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">    :</span><span style="color:var(--shiki-foreground)"> operation;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  return</span><span style="color:var(--shiki-token-keyword)"> new</span><span style="color:var(--shiki-token-function)"> URL</span><span style="color:var(--shiki-foreground)">(relativePath</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-token-function)"> withTrailingSlash</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-constant)">endpoint</span><span style="color:var(--shiki-foreground)">.url));</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">async</span><span style="color:var(--shiki-token-keyword)"> function</span><span style="color:var(--shiki-token-function)"> streamSecurityReview</span><span style="color:var(--shiki-foreground)">(</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  endpoint</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> AgentInterface</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  reviewInput</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> JsonValue</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  options</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> A2AClientOptions</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">) {</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  const</span><span style="color:var(--shiki-token-constant)"> response</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-token-keyword)"> await</span><span style="color:var(--shiki-token-function)"> fetch</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-function)">operationUrl</span><span style="color:var(--shiki-foreground)">(endpoint</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-token-string-expression)"> &quot;message:stream&quot;</span><span style="color:var(--shiki-foreground)">)</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    method</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;POST&quot;</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    headers</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      Authorization</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> `Bearer </span><span style="color:var(--shiki-token-keyword)">${</span><span style="color:var(--shiki-token-constant)">options</span><span style="color:var(--shiki-foreground)">.token</span><span style="color:var(--shiki-token-keyword)">}</span><span style="color:var(--shiki-token-string-expression)">`</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-token-string-expression)">      &quot;A2A-Version&quot;</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;1.0&quot;</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-token-string-expression)">      &quot;Content-Type&quot;</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;application/a2a+json&quot;</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      Accept</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;text/event-stream&quot;</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    }</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    body</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> JSON</span><span style="color:var(--shiki-token-function)">.stringify</span><span style="color:var(--shiki-foreground)">({</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      message</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">        messageId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> crypto</span><span style="color:var(--shiki-token-function)">.randomUUID</span><span style="color:var(--shiki-foreground)">()</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">        role</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;ROLE_USER&quot;</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">        parts</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-foreground)"> [</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">          {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">            data</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-foreground)"> reviewInput</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">            mediaType</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;application/json&quot;</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">          }</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">        ]</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      }</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      configuration</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">        acceptedOutputModes</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-foreground)"> [</span><span style="color:var(--shiki-token-string-expression)">&quot;application/json&quot;</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-token-string-expression)"> &quot;text/markdown&quot;</span><span style="color:var(--shiki-foreground)">]</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      }</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    })</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    signal</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> options</span><span style="color:var(--shiki-foreground)">.signal</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  });</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  if</span><span style="color:var(--shiki-foreground)"> (</span><span style="color:var(--shiki-token-keyword)">!</span><span style="color:var(--shiki-token-constant)">response</span><span style="color:var(--shiki-foreground)">.ok </span><span style="color:var(--shiki-token-keyword)">||</span><span style="color:var(--shiki-token-keyword)"> !</span><span style="color:var(--shiki-token-constant)">response</span><span style="color:var(--shiki-foreground)">.body) {</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">    throw</span><span style="color:var(--shiki-token-keyword)"> await</span><span style="color:var(--shiki-token-function)"> toA2AHttpError</span><span style="color:var(--shiki-foreground)">(response);</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  }</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  if</span><span style="color:var(--shiki-foreground)"> (</span><span style="color:var(--shiki-token-keyword)">!</span><span style="color:var(--shiki-token-constant)">response</span><span style="color:var(--shiki-token-function)">.</span><span style="color:var(--shiki-token-constant)">headers</span><span style="color:var(--shiki-token-function)">.get</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-string-expression)">&quot;content-type&quot;</span><span style="color:var(--shiki-foreground)">)</span><span style="color:var(--shiki-token-function)">?.startsWith</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-string-expression)">&quot;text/event-stream&quot;</span><span style="color:var(--shiki-foreground)">)) {</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">    throw</span><span style="color:var(--shiki-token-keyword)"> new</span><span style="color:var(--shiki-token-function)"> Error</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-string-expression)">&quot;A2A_EXPECTED_SSE_RESPONSE&quot;</span><span style="color:var(--shiki-foreground)">);</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  for</span><span style="color:var(--shiki-token-keyword)"> await</span><span style="color:var(--shiki-foreground)"> (</span><span style="color:var(--shiki-token-keyword)">const</span><span style="color:var(--shiki-token-constant)"> frame</span><span style="color:var(--shiki-token-keyword)"> of</span><span style="color:var(--shiki-token-function)"> parseSSE</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-constant)">response</span><span style="color:var(--shiki-foreground)">.body)) {</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">    const</span><span style="color:var(--shiki-token-constant)"> event</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-token-function)"> validateStreamResponse</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-constant)">JSON</span><span style="color:var(--shiki-token-function)">.parse</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-constant)">frame</span><span style="color:var(--shiki-foreground)">.data));</span></span>
+<span class="line"><span style="color:var(--shiki-token-constant)">    taskStore</span><span style="color:var(--shiki-token-function)">.apply</span><span style="color:var(--shiki-foreground)">(event);</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  }</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">}</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>在 HTTP+JSON Binding 中，<code>tenant</code> 是可选的 Path Parameter：无租户 Endpoint 使用 <code>/message:stream</code>，多租户 Endpoint 使用 <code>/{tenant}/message:stream</code>。上层调用方不应手工拼接 URL；Adapter 必须负责路径编码，并防止不受信任的 <code>tenant</code> 逃逸路径边界。</p>
+<p>这里使用 <code>fetch</code> Stream，而不是假设浏览器原生 <code>EventSource</code> 足够。HTTP+JSON 的 Streaming 入口是 POST，并需要 Authorization 与 <code>A2A-Version</code> Header；实际 Web App 通常通过支持流式转发的 Backend-for-Frontend 隔离 Token、CORS 和 Agent Endpoint。</p>
+<h3 class="rp-toc-include" id="streamresponse-是-one-of"><a href="#streamresponse-是-one-of" class="rp-header-anchor rp-link" aria-hidden="true">#</a>StreamResponse 是 One-of</h3>
+<div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> StreamResponse</span><span style="color:var(--shiki-token-keyword)"> =</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  |</span><span style="color:var(--shiki-foreground)"> { task</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> Task</span><span style="color:var(--shiki-foreground)">; message</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">; statusUpdate</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">; artifactUpdate</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)"> }</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  |</span><span style="color:var(--shiki-foreground)"> { message</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> Message</span><span style="color:var(--shiki-foreground)">; task</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">; statusUpdate</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">; artifactUpdate</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)"> }</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  |</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      statusUpdate</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> TaskStatusUpdateEvent</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      task</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      message</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      artifactUpdate</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    }</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  |</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      artifactUpdate</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> TaskArtifactUpdateEvent</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      task</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      message</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      statusUpdate</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> never</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    };</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>Task Lifecycle Stream 的第一个事件必须是当前 Task，随后才是 Status 或 Artifact Update。实现必须保持服务端生成顺序；客户端也应拒绝缺少初始 Task、Task ID 不匹配或 Artifact Chunk 非法的流。</p>
+<h2 class="rp-toc-include" id="9-断线后用-gettask-对账"><a href="#9-断线后用-gettask-对账" class="rp-header-anchor rp-link" aria-hidden="true">#</a>9. 断线后用 GetTask 对账</h2>
+<p>SSE 是实时通知通道，不是持久事件日志。官方规范明确指出，Client 断开后重新连接，可能错过部分 Status Message；关键事实不能只存在于瞬时 Streaming Message 中。</p>
+<p>A2A v1 核心事件也没有提供跨 Binding 通用的单调 Sequence 或 Event ID。若 Peer 没有通过 Extension Metadata 提供稳定游标，Client 只能使用已知字段和内容摘要做尽力去重，并最终以 GetTask 返回的完整 Task 与 Artifact 收敛状态，不能声称实现了无损重放。</p>
+<p>恢复流程应是：</p>
+<div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>stream disconnected</span></span>
+<span class="line"><span>→ preserve last taskId / contextId / artifact cursor</span></span>
+<span class="line"><span>→ GetTask(taskId) from authoritative server state</span></span>
+<span class="line"><span>→ merge status and complete artifacts</span></span>
+<span class="line"><span>→ terminal: finish locally</span></span>
+<span class="line"><span>→ non-terminal: SubscribeToTask or controlled polling</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">async</span><span style="color:var(--shiki-token-keyword)"> function</span><span style="color:var(--shiki-token-function)"> recoverTask</span><span style="color:var(--shiki-foreground)">(</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  endpoint</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> AgentInterface</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  taskId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  token</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">) {</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  const</span><span style="color:var(--shiki-token-constant)"> task</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-token-keyword)"> await</span><span style="color:var(--shiki-token-function)"> getTask</span><span style="color:var(--shiki-foreground)">(endpoint</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-foreground)"> taskId</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-foreground)"> token</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-foreground)"> { historyLength</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> 20</span><span style="color:var(--shiki-foreground)"> });</span></span>
+<span class="line"><span style="color:var(--shiki-token-constant)">  taskStore</span><span style="color:var(--shiki-token-function)">.reconcile</span><span style="color:var(--shiki-foreground)">(task);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  if</span><span style="color:var(--shiki-foreground)"> (</span><span style="color:var(--shiki-token-function)">isTerminal</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-constant)">task</span><span style="color:var(--shiki-foreground)">.</span><span style="color:var(--shiki-token-constant)">status</span><span style="color:var(--shiki-foreground)">.state)) </span><span style="color:var(--shiki-token-keyword)">return</span><span style="color:var(--shiki-foreground)"> task;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  await</span><span style="color:var(--shiki-token-function)"> subscribeToTask</span><span style="color:var(--shiki-foreground)">(endpoint</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-foreground)"> taskId</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-foreground)"> token</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-foreground)"> event </span><span style="color:var(--shiki-token-keyword)">=&gt;</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-token-constant)">    taskStore</span><span style="color:var(--shiki-token-function)">.apply</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-function)">validateStreamResponse</span><span style="color:var(--shiki-foreground)">(event));</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  });</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  return</span><span style="color:var(--shiki-token-constant)"> taskStore</span><span style="color:var(--shiki-token-function)">.require</span><span style="color:var(--shiki-foreground)">(taskId);</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">}</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>Reconciliation 的权威对象是服务端 Task，不是本地“最后收到的第几个 SSE”。如果业务要求无损审计，服务端还需把关键事实持久化到 Task、Artifact 或独立 Audit Log；A2A 本身不提供 Event Store。</p>
+<h2 class="rp-toc-include" id="10-canceltimeout-与结果未知"><a href="#10-canceltimeout-与结果未知" class="rp-header-anchor rp-link" aria-hidden="true">#</a>10. Cancel、Timeout 与结果未知</h2>
+<p><code>CancelTask</code> 是请求服务端尝试取消，不保证取消一定成功。请求到达时 Task 可能已经完成、失败，或进入不可取消阶段。</p>
+<p>A2A 把重复 Cancel 定义为幂等语义，但实现仍需处理 Task 已清理时的 <code>TaskNotFoundError</code>。对于产生外部副作用的 Remote Agent，<code>CANCELED</code> 也不等于所有副作用已经回滚。</p>
+<p>Orchestrator 应把 Timeout 与 Cancel 分开建模：</p>
+<div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>SSE timeout / network loss</span></span>
+<span class="line"><span>  → connection state UNKNOWN</span></span>
+<span class="line"><span>  → GetTask reconcile</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>user requests cancel</span></span>
+<span class="line"><span>  → persist cancel intent</span></span>
+<span class="line"><span>  → CancelTask with same taskId</span></span>
+<span class="line"><span>  → reconcile returned Task</span></span>
+<span class="line"><span>  → inspect Artifact / external receipt</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>如果 Security Agent 已创建外部工单或写入审计系统，仍需上一章的 Idempotency、Receipt 与 Compensation 机制。A2A 统一交互语义，不提供跨 Agent Exactly-once Side Effect。</p>
+<h2 class="rp-toc-include" id="11-webhook-处理断开连接的长任务"><a href="#11-webhook-处理断开连接的长任务" class="rp-header-anchor rp-link" aria-hidden="true">#</a>11. Webhook 处理断开连接的长任务</h2>
+<p>Push Notification 适合持续数分钟或数小时的 Task：Client 注册 Webhook 后可以断开连接，由 Agent 在状态或 Artifact 变化时主动 POST <code>StreamResponse</code>。</p>
+<p>协议只要求 Agent 对每个已配置 Webhook 至少尝试投递一次；失败重试是可选能力，且 Agent 可以在若干次失败后停止。因此通知可能重复，也可能因网络失败而丢失；这不是可靠的 At-least-once Delivery 保证。接收端至少要：</p>
+<ul>
+<li>验证 Agent 使用的认证凭据或签名；</li>
+<li>核对 Payload 中的 <code>taskId</code> 是否属于当前 Actor 可见的已知 Task；</li>
+<li>在字段可用时使用 Task ID、事件类型、状态时间、Artifact ID、Extension Cursor 或内容摘要去重；</li>
+<li>先持久化 Inbox，再异步处理；</li>
+<li>成功接收时快速返回 2xx；</li>
+<li>对 Payload 大小、速率和并发做限制；</li>
+<li>最终调用 GetTask 对账，而不是完全信任通知顺序。</li>
+</ul>
+<p>Agent 作为 Webhook Caller 时也承担安全责任。Client 提供的 URL 是不可信输入，必须阻断 Loopback、Link-local、Cloud Metadata 和 Private Network，校验 DNS 与每次 Redirect，并优先使用静态 Allowlist。否则 Push Notification 会成为 SSRF 通道。</p>
+<h2 class="rp-toc-include" id="12-身份授权与数据边界"><a href="#12-身份授权与数据边界" class="rp-header-anchor rp-link" aria-hidden="true">#</a>12. 身份、授权与数据边界</h2>
+<h3 class="rp-toc-include" id="agentcard-声明认证不签发身份"><a href="#agentcard-声明认证不签发身份" class="rp-header-anchor rp-link" aria-hidden="true">#</a>AgentCard 声明认证，不签发身份</h3>
+<p>AgentCard 可以声明 API Key、HTTP Authentication、OAuth 2.0、OpenID Connect 或 Mutual TLS。实际身份建立在 HTTP/Transport 层，A2A Payload 不应自行携带一套平行的用户身份字段。</p>
+<p>Public AgentCard 不应包含 Secret 或内部实现。需要暴露更详细 Skills 时，可以在认证后通过 Extended AgentCard 返回，并根据 Caller 权限裁剪内容。</p>
+<h3 class="rp-toc-include" id="jws-签名不是业务授权"><a href="#jws-签名不是业务授权" class="rp-header-anchor rp-link" aria-hidden="true">#</a>JWS 签名不是业务授权</h3>
+<p>AgentCard 可以使用 JSON Web Signature（JWS）证明来源与完整性。Client 应在存在签名时验证可信 Key、过期与撤销状态，但签名只说明“这张 Card 来自哪个 Provider 且未被篡改”，不说明当前用户可以把仓库代码交给它。</p>
+<h3 class="rp-toc-include" id="每个-operation-都要重新授权"><a href="#每个-operation-都要重新授权" class="rp-header-anchor rp-link" aria-hidden="true">#</a>每个 Operation 都要重新授权</h3>
+<p>Server 必须在每个 Operation 上执行授权与租户范围检查，包括 <code>GetTask</code>、<code>ListTasks</code>、Cancel、Subscribe 和 Push Notification Config。即使请求给出了合法 <code>contextId</code> 或 <code>taskId</code>，也不能先查询资源再判断权限，否则会泄露资源是否存在。</p>
+<p>Orchestrator 还需保留委派链：</p>
+<div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>human actor</span></span>
+<span class="line"><span>→ review application</span></span>
+<span class="line"><span>→ orchestrator service identity</span></span>
+<span class="line"><span>→ remote security agent</span></span>
+<span class="line"><span>→ downstream tool/resource</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>每一跳都应限制 Audience、Scope、Tenant、Repository、有效期和可执行动作。不要把用户的长期 Token 原样透传给 Remote Agent。</p>
+<h3 class="rp-toc-include" id="auth_required-使用受控流程"><a href="#auth_required-使用受控流程" class="rp-header-anchor rp-link" aria-hidden="true">#</a><code>AUTH_REQUIRED</code> 使用受控流程</h3>
+<p>当 Task 进入 <code>AUTH_REQUIRED</code>，Agent 可以说明需要哪项授权，但 Credential 获取与交换应通过 OAuth、设备码或组织定义的 out-of-band 流程完成。普通 Message、Task History、Artifact 和模型 Context 都不适合承载 Secret。</p>
+<h3 class="rp-toc-include" id="代码与-artifact-最小化"><a href="#代码与-artifact-最小化" class="rp-header-anchor rp-link" aria-hidden="true">#</a>代码与 Artifact 最小化</h3>
+<p>跨组织安全审计不应默认发送整个 Repository。优先发送：</p>
+<ul>
+<li>相关 Diff 与必要上下文；</li>
+<li>已脱敏的配置结构；</li>
+<li>Dependency Manifest，而非本地 Credential；</li>
+<li>明确的数据使用目的、保留期限和输出模式。</li>
+</ul>
+<p>Remote Agent 返回的 Text、URL、Data 与文件同样是不可信内容，进入 UI、Prompt、Shell、SQL 或文件系统前需要对应 Sink Validation。</p>
+<h2 class="rp-toc-include" id="13-预算循环与幂等不属于协议默认能力"><a href="#13-预算循环与幂等不属于协议默认能力" class="rp-header-anchor rp-link" aria-hidden="true">#</a>13. 预算、循环与幂等不属于协议默认能力</h2>
+<p>A2A 支持 Agent 之间协作，但不会自动阻止 Agent A 委派 Agent B、Agent B 又委派回 Agent A。</p>
+<p>Orchestrator 必须维护显式的 Delegation Policy：</p>
+<div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> DelegationBudget</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  rootRunId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  visitedAgentIds</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  maxHops</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  maxParallelTasks</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  maxRemoteTasks</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  maxWallTimeMs</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  maxCostUsd</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">};</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">function</span><span style="color:var(--shiki-token-function)"> authorizeDelegation</span><span style="color:var(--shiki-foreground)">(</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  targetAgentId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  budget</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> DelegationBudget</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">) {</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  if</span><span style="color:var(--shiki-foreground)"> (</span><span style="color:var(--shiki-token-constant)">budget</span><span style="color:var(--shiki-token-function)">.</span><span style="color:var(--shiki-token-constant)">visitedAgentIds</span><span style="color:var(--shiki-token-function)">.includes</span><span style="color:var(--shiki-foreground)">(targetAgentId)) {</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">    throw</span><span style="color:var(--shiki-token-keyword)"> new</span><span style="color:var(--shiki-token-function)"> Error</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-string-expression)">&quot;A2A_DELEGATION_CYCLE_DETECTED&quot;</span><span style="color:var(--shiki-foreground)">);</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  }</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  if</span><span style="color:var(--shiki-foreground)"> (</span><span style="color:var(--shiki-token-constant)">budget</span><span style="color:var(--shiki-foreground)">.</span><span style="color:var(--shiki-token-constant)">visitedAgentIds</span><span style="color:var(--shiki-foreground)">.</span><span style="color:var(--shiki-token-constant)">length</span><span style="color:var(--shiki-token-keyword)"> &gt;=</span><span style="color:var(--shiki-token-constant)"> budget</span><span style="color:var(--shiki-foreground)">.maxHops) {</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">    throw</span><span style="color:var(--shiki-token-keyword)"> new</span><span style="color:var(--shiki-token-function)"> Error</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-string-expression)">&quot;A2A_MAX_HOPS_EXCEEDED&quot;</span><span style="color:var(--shiki-foreground)">);</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  }</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  if</span><span style="color:var(--shiki-foreground)"> (</span><span style="color:var(--shiki-token-constant)">budget</span><span style="color:var(--shiki-foreground)">.maxRemoteTasks </span><span style="color:var(--shiki-token-keyword)">&lt;=</span><span style="color:var(--shiki-token-constant)"> 0</span><span style="color:var(--shiki-token-keyword)"> ||</span><span style="color:var(--shiki-token-constant)"> budget</span><span style="color:var(--shiki-foreground)">.maxWallTimeMs </span><span style="color:var(--shiki-token-keyword)">&lt;=</span><span style="color:var(--shiki-token-constant)"> 0</span><span style="color:var(--shiki-foreground)">) {</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">    throw</span><span style="color:var(--shiki-token-keyword)"> new</span><span style="color:var(--shiki-token-function)"> Error</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-string-expression)">&quot;A2A_BUDGET_EXHAUSTED&quot;</span><span style="color:var(--shiki-foreground)">);</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  }</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">}</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>可靠性还需要：</p>
+<ul>
+<li>相同业务意图复用稳定 <code>messageId</code> 或应用级 Idempotency Key；</li>
+<li>对重复 Status 和 Artifact Chunk 做 Deduplication；</li>
+<li>限制每个 Context 的并行 Task 数；</li>
+<li>在 Trace 中记录 Source Agent、Target Agent、Task、Context、Hop 与预算消耗；</li>
+<li>对终态后的迟到事件丢弃并告警；</li>
+<li>对未知结果优先 GetTask/Reconcile，不创建“看起来一样”的新 Task。</li>
+</ul>
+<p>协议允许 Server 使用 <code>messageId</code> 检测重复 Message，但是否实现幂等由 Agent 决定。涉及外部副作用时，仍需应用级 Intent Key 与 Receipt。</p>
+<h2 class="rp-toc-include" id="14-生态版本漂移不要混用-a2a-v03-与-v1"><a href="#14-生态版本漂移不要混用-a2a-v03-与-v1" class="rp-header-anchor rp-link" aria-hidden="true">#</a>14. 生态版本漂移：不要混用 A2A v0.3 与 v1</h2>
+<p>开放协议的规范、Extension 和 SDK 不会总在同一天完成迁移。2026-07-15 核验时，A2UI 的 A2A Extension 页面仍有若干旧式示例，与 A2A v1.0.0 的权威定义不一致：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>关注点</th><th>A2UI Extension 页面中的旧式示例</th><th>A2A v1.0.0 权威定义</th></tr></thead><tbody><tr><td>Extension Header</td><td><code>X-A2A-Extensions</code></td><td><code>A2A-Extensions</code></td></tr><tr><td>Part 类型判别</td><td><code>kind: &quot;data&quot;</code></td><td>v1 移除 <code>kind</code>，由 <code>data</code> 字段判别</td></tr><tr><td>Media Type</td><td><code>metadata.mimeType</code></td><td>Part 顶层 <code>mediaType</code></td></tr></tbody></table></div>
+<p>A2A v1 规定 <a href="https://github.com/a2aproject/A2A/blob/v1.0.0/specification/a2a.proto" target="_blank" rel="noopener noreferrer" class="rp-link"><code>specification/a2a.proto</code></a> 是所有数据对象与请求/响应的单一规范性定义。因此本书采用以下优先级：</p>
+<ol>
+<li>固定 Tag 的 <code>v1.0.0 a2a.proto</code>；</li>
+<li>固定版本的 A2A Specification；</li>
+<li>经验证的官方 SDK 类型；</li>
+<li>Extension 文档与博客示例。</li>
+</ol>
+<p>对 A2UI over A2A，领域层只保留 A2UI Message；Wire 差异由 Adapter 处理：</p>
+<div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">const</span><span style="color:var(--shiki-token-constant)"> A2UI_EXTENSION_URI</span><span style="color:var(--shiki-token-keyword)"> =</span></span>
+<span class="line"><span style="color:var(--shiki-token-string-expression)">  &quot;https://a2ui.org/a2a-extension/a2ui/v0.9.1&quot;</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> A2AV1A2UIDataPart</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  data</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> JsonValue</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  mediaType</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;application/a2ui+json&quot;</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">};</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">function</span><span style="color:var(--shiki-token-function)"> encodeA2UIForA2AV1</span><span style="color:var(--shiki-foreground)">(messages</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> JsonValue</span><span style="color:var(--shiki-foreground)">[])</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> A2AV1A2UIDataPart</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  return</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    data</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-foreground)"> messages</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    mediaType</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;application/a2ui+json&quot;</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  };</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">const</span><span style="color:var(--shiki-token-constant)"> requestHeaders</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-token-string-expression)">  &quot;A2A-Version&quot;</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;1.0&quot;</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-token-string-expression)">  &quot;A2A-Extensions&quot;</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> A2UI_EXTENSION_URI</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">};</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> A2AV1A2UIMessage</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  messageId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  role</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;ROLE_AGENT&quot;</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  extensions</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  parts</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> A2AV1A2UIDataPart</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">};</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">function</span><span style="color:var(--shiki-token-function)"> buildA2UIMessage</span><span style="color:var(--shiki-foreground)">(messages</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> JsonValue</span><span style="color:var(--shiki-foreground)">[])</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> A2AV1A2UIMessage</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  return</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    messageId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> crypto</span><span style="color:var(--shiki-token-function)">.randomUUID</span><span style="color:var(--shiki-foreground)">()</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    role</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;ROLE_AGENT&quot;</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    extensions</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-foreground)"> [</span><span style="color:var(--shiki-token-constant)">A2UI_EXTENSION_URI</span><span style="color:var(--shiki-foreground)">]</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    parts</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-foreground)"> [</span><span style="color:var(--shiki-token-function)">encodeA2UIForA2AV1</span><span style="color:var(--shiki-foreground)">(messages)]</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  };</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">}</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p><code>A2A-Extensions</code> Service Parameter 表示 Client 在该请求中选择使用哪些 Extension；Message 自身的 <code>extensions</code> 列表则声明该 Message 实际贡献了哪些 Extension 语义。两者不应被合并成一个业务字段。</p>
+<p>兼容旧 Peer 时，不要在业务代码中散落条件分支，也不要默认同时发送新旧 Header。应为已知 Peer 配置明确 Adapter，并维护 Contract Fixtures：</p>
+<div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>fixtures/</span></span>
+<span class="line"><span>  a2a-v1/</span></span>
+<span class="line"><span>    agent-card.json</span></span>
+<span class="line"><span>    message-data-part.json</span></span>
+<span class="line"><span>    stream-task-lifecycle.ndjson</span></span>
+<span class="line"><span>    a2ui-extension-part.json</span></span>
+<span class="line"><span>  legacy-peer-x/</span></span>
+<span class="line"><span>    negotiated-wire-shape.json</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>Contract Test 至少验证：Header 名称、协议版本、Part One-of、<code>mediaType</code> 位置、枚举值、Task 首事件、Artifact 合并和未知字段处理。这样 Extension 更新时，只需修改 Adapter 与 Fixture，不会污染 Task 领域模型。</p>
+<h2 class="rp-toc-include" id="15-一个可维护的-typescript-分层"><a href="#15-一个可维护的-typescript-分层" class="rp-header-anchor rp-link" aria-hidden="true">#</a>15. 一个可维护的 TypeScript 分层</h2>
+<div></div>
+<p>建议保持以下边界：</p>
+<ul>
+<li>Domain 只表达委派意图、允许的 Agent、输入数据级别和预算；</li>
+<li>A2A Adapter 负责 AgentCard、Operation、Header 与 Wire Shape；</li>
+<li>Validator 负责 v1 Runtime Schema，不使用 Type Assertion 代替验证；</li>
+<li>Transport 负责 HTTP、SSE、Deadline、Retry 与 Backpressure；</li>
+<li>Task Store 负责事件合并、终态约束和 GetTask Reconciliation；</li>
+<li>Presentation Adapter 决定如何把 Task/Artifact 映射到 AG-UI 或受信 A2UI Renderer。</li>
+</ul>
+<p>远端 Agent 不应直接控制本地路由、授权或高风险 UI。它只能返回协议数据，由 Host 在自己的 Policy 与 Renderer 边界内解释。</p>
+<h2 class="rp-toc-include" id="16-故障矩阵"><a href="#16-故障矩阵" class="rp-header-anchor rp-link" aria-hidden="true">#</a>16. 故障矩阵</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>故障</th><th>错误处理</th><th>禁止动作</th></tr></thead><tbody><tr><td>AgentCard 不支持 v1</td><td>显式版本不兼容；选择已测试 Adapter 或停止</td><td>静默按 v0.3 猜测字段</td></tr><tr><td>AgentCard Endpoint 指向未授权 Host</td><td>拒绝并审计</td><td>自动跟随到内网或 Metadata 地址</td></tr><tr><td>SSE 在 WORKING 时断开</td><td>GetTask 对账，再 Subscribe/Poll</td><td>直接创建同一工作的第二个 Task</td></tr><tr><td>首个 Stream Event 不是 Task</td><td>协议错误，关闭 Stream</td><td>猜测 Task ID 后继续</td></tr><tr><td>重复 Status Event</td><td>按 Task、状态时间和已应用版本去重</td><td>重复触发业务副作用</td></tr><tr><td>重复 Artifact Chunk</td><td>用 Artifact ID、Extension Cursor 或内容摘要去重，并以 GetTask 对账</td><td>生成两份最终报告</td></tr><tr><td><code>INPUT_REQUIRED</code></td><td>暂停自动执行，向授权用户收集输入</td><td>让模型虚构答案</td></tr><tr><td><code>AUTH_REQUIRED</code></td><td>进入受控认证流程</td><td>把 Token 写进 Message 或 Artifact</td></tr><tr><td>Cancel 与 Complete 竞态</td><td>接受服务端最终 Task 并对账副作用</td><td>本地强制改成 CANCELED</td></tr><tr><td>Webhook 重复或乱序</td><td>Inbox、Dedup、GetTask Reconcile</td><td>把 Webhook 当 Exactly-once</td></tr><tr><td>Webhook URL 指向私网</td><td>SSRF 防护并拒绝配置</td><td>仅做字符串前缀检查</td></tr><tr><td>收到终态后的更新</td><td>丢弃、告警并记录 Peer 违约</td><td>重新打开终态 Task</td></tr><tr><td>Agent 委派形成环</td><td>visited set、hop limit、budget gate</td><td>继续递归等待自然结束</td></tr><tr><td>A2UI Part 使用旧 Wire Shape</td><td>Adapter/Fixture 显式兼容或拒绝</td><td>在领域层混用 v0.3 与 v1 类型</td></tr></tbody></table></div>
+<h2 class="rp-toc-include" id="实践实现跨-agent-安全审计委派"><a href="#实践实现跨-agent-安全审计委派" class="rp-header-anchor rp-link" aria-hidden="true">#</a>实践：实现跨 Agent 安全审计委派</h2>
+<p>建立一个不依赖预发布 SDK 的最小实验：</p>
+<ol>
+<li>创建本地 Mock Security Agent，提供 v1 AgentCard 与 <code>secure-code-review</code> Skill。</li>
+<li>实现 <code>POST /message:stream</code>，依次输出 Task、WORKING、Artifact Chunk 和 COMPLETED。</li>
+<li>实现 <code>GET /tasks/{id}</code> 与 <code>GET /tasks/{id}:subscribe</code>。</li>
+<li>在 Orchestrator 中验证 AgentCard、选择 HTTP+JSON v1 Interface，并发送最小化 Diff。</li>
+<li>模拟 <code>INPUT_REQUIRED</code>，用相同 <code>taskId</code> 与 <code>contextId</code> 补充 Threat Model。</li>
+<li>在 Artifact 生成一半时断开 SSE，通过 GetTask 恢复并去重 Chunk。</li>
+<li>模拟 Cancel/Complete 竞态，以服务端 Task 为最终事实。</li>
+<li>增加 Webhook Receiver，验证重复投递、认证失败与 SSRF URL 拒绝。</li>
+<li>增加 Delegation Budget，验证 Agent 环路与 Hop Limit。</li>
+<li>为 A2A v1 与 A2UI Extension 建立固定 Contract Fixtures。</li>
+</ol>
+<p>验收时应能够证明：</p>
+<ul>
+<li>Wire Payload 不包含 v0.3 的 <code>kind</code>；</li>
+<li>每个请求发送 <code>A2A-Version: 1.0</code>；</li>
+<li><code>messageId</code>、<code>taskId</code>、<code>contextId</code> 的职责没有混用；</li>
+<li>断线不会创建重复 Task；</li>
+<li>终态 Task 不会被本地事件重新打开；</li>
+<li>Remote Agent 只能获得已授权且最小化的数据；</li>
+<li>所有外部 URL 都经过 SSRF 与大小限制；</li>
+<li>未经测试的 Extension Shape 无法穿过 Adapter。</li>
+</ul>
+<h2 class="rp-toc-include" id="常见误区"><a href="#常见误区" class="rp-header-anchor rp-link" aria-hidden="true">#</a>常见误区</h2>
+<ul>
+<li>A2A 是把所有 Tool Call 再包装一层 HTTP。</li>
+<li>AgentCard 声明某个 Skill，就证明该 Agent 可信且获准接收数据。</li>
+<li><code>contextId</code> 等于 Conversation、Tenant 或 Authorization Scope。</li>
+<li>SSE 重新连接后一定能补回所有遗漏事件。</li>
+<li>CancelTask 可以回滚 Remote Agent 已经产生的副作用。</li>
+<li>Task 失败后可以复用原 <code>taskId</code> 重启。</li>
+<li>A2A 自动防止 Multi-Agent 循环和无限预算消耗。</li>
+<li>A2A 与 MCP 二选一。</li>
+<li>A2UI 是 A2A 的默认 UI 层，Remote Agent 可以直接控制本地组件。</li>
+<li>官方 Extension 示例一定与当前核心规范同步。</li>
+</ul>
+<h2 class="rp-toc-include" id="本章小结"><a href="#本章小结" class="rp-header-anchor rp-link" aria-hidden="true">#</a>本章小结</h2>
+<p>A2A v1.0 把独立 Agent 之间的能力发现、消息交换、长任务状态和 Artifact 交付统一为可协商协议。AgentCard 让 Client 知道对端能做什么，Task 与 <code>contextId</code> 则让长任务、补充输入和后续 Refinement 可追踪。</p>
+<p>协议标准化不会消除分布式系统风险。生产实现仍需对 SSE 断线执行 GetTask Reconciliation，对可能重复或丢失的 Webhook 使用 Inbox、去重与 GetTask 对账，同时实施 SSRF 防护；每个 Operation 都需重新授权，Orchestrator 也必须限制委派循环、预算和数据披露。开放生态还会发生 SDK 与 Extension 的版本漂移，因此固定权威 Proto、隔离 Adapter 并维护 Contract Fixtures，是实现互操作性的必要部分。</p>
+<p>下一部分进入 <a href="/masterpiece-static-docs/08-安全与治理/01-Agent威胁建模" class="rp-link">Agent 威胁建模</a>，将这些跨系统风险收敛为可维护的 Trust Boundary 与 Abuse Case。</p>
+<h2 class="rp-toc-include" id="官方资料"><a href="#官方资料" class="rp-header-anchor rp-link" aria-hidden="true">#</a>官方资料</h2>
+<ul>
+<li><a href="https://a2a-protocol.org/v1.0.0/specification/" target="_blank" rel="noopener noreferrer" class="rp-link">A2A Protocol v1.0.0 Specification</a></li>
+<li><a href="https://github.com/a2aproject/A2A/blob/v1.0.0/specification/a2a.proto" target="_blank" rel="noopener noreferrer" class="rp-link">A2A v1.0.0 authoritative a2a.proto</a></li>
+<li><a href="https://github.com/a2aproject/A2A/releases/tag/v1.0.0" target="_blank" rel="noopener noreferrer" class="rp-link">A2A v1.0.0 Release</a></li>
+<li><a href="https://a2a-protocol.org/latest/announcing-1.0/" target="_blank" rel="noopener noreferrer" class="rp-link">A2A Protocol Ships v1.0</a></li>
+<li><a href="https://a2a-protocol.org/latest/topics/key-concepts/" target="_blank" rel="noopener noreferrer" class="rp-link">Core Concepts</a></li>
+<li><a href="https://a2a-protocol.org/latest/topics/life-of-a-task/" target="_blank" rel="noopener noreferrer" class="rp-link">Life of a Task</a></li>
+<li><a href="https://a2a-protocol.org/latest/topics/agent-discovery/" target="_blank" rel="noopener noreferrer" class="rp-link">Agent Discovery</a></li>
+<li><a href="https://a2a-protocol.org/latest/topics/streaming-and-async/" target="_blank" rel="noopener noreferrer" class="rp-link">Streaming and Asynchronous Operations</a></li>
+<li><a href="https://a2a-protocol.org/latest/topics/enterprise-ready/" target="_blank" rel="noopener noreferrer" class="rp-link">Enterprise Features and Security</a></li>
+<li><a href="https://a2a-protocol.org/latest/topics/a2a-and-mcp/" target="_blank" rel="noopener noreferrer" class="rp-link">A2A and MCP</a></li>
+<li><a href="https://github.com/a2aproject/a2a-js" target="_blank" rel="noopener noreferrer" class="rp-link">Official A2A JavaScript SDK</a></li>
+<li><a href="https://a2ui.org/specification/v0.9.1-a2ui-extension-specification/" target="_blank" rel="noopener noreferrer" class="rp-link">A2UI v0.9.1 Extension for A2A</a></li>
+<li><a href="https://developers.googleblog.com/en/google-cloud-donates-a2a-to-linux-foundation/" target="_blank" rel="noopener noreferrer" class="rp-link">Google Cloud donates A2A to Linux Foundation</a></li>
+</ul><!--/$--></div><footer class="rp-doc-footer"><div class="rp-doc-footer__edit"><div class="rp-last-updated"><p>最后更新于<!-- -->: <span>2026/7/15 07:10:26</span></p></div></div><div class="rp-doc-footer__divider"></div><div class="rp-prev-next-page"><a href="/masterpiece-static-docs/07-工具-协议与行动控制/04-幂等-补偿与沙箱" class="rp-prev-next-page__item rp-prev-next-page__prev rp-link"><span class="rp-prev-next-page__item__desc">上一页</span><span class="rp-prev-next-page__item__title"><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon rp-prev-next-page__rotate_180"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg><span>04 · Idempotency、Compensation 与 Sandbox</span></span></a><a href="/masterpiece-static-docs/08-安全与治理/01-Agent威胁建模" class="rp-prev-next-page__item rp-prev-next-page__next rp-link"><span class="rp-prev-next-page__item__desc">下一页</span><span class="rp-prev-next-page__item__title"><span>01 · 从“会调用工具”到 Agent 威胁模型</span><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></span></a></div></footer></main></div><aside class="rp-doc-layout__outline rp-scrollbar"><div class="rp-outline"><div class="rp-outline__title">目录<svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg></div><nav class="rp-outline__toc rp-scrollbar"><a href="#本章目标" class="rp-toc-item rp-link" title="本章目标" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章目标</span></a><a href="#1-从代码评审委派开始" class="rp-toc-item rp-link" title="1. 从代码评审委派开始" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">1. 从代码评审委派开始</span></a><a href="#2-a2a-与其他协议的边界" class="rp-toc-item rp-link" title="2. A2A 与其他协议的边界" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">2. A2A 与其他协议的边界</span></a><a href="#3-agentcard先发现能力再建立交互" class="rp-toc-item rp-link" title="3. AgentCard：先发现能力，再建立交互" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">3. AgentCard：先发现能力，再建立交互</span></a><a href="#agentinterface" class="rp-toc-item rp-link" title="AgentInterface" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">AgentInterface</span></a><a href="#agentskill" class="rp-toc-item rp-link" title="AgentSkill" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">AgentSkill</span></a><a href="#4-messageparttask-与-artifact" class="rp-toc-item rp-link" title="4. Message、Part、Task 与 Artifact" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">4. Message、Part、Task 与 Artifact</span></a><a href="#message-是一次通信-turn" class="rp-toc-item rp-link" title="Message 是一次通信 Turn" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">Message 是一次通信 Turn</span></a><a href="#part-是内容的最小容器" class="rp-toc-item rp-link" title="Part 是内容的最小容器" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">Part 是内容的最小容器</span></a><a href="#message-或-task-是两种不同响应" class="rp-toc-item rp-link" title="Message 或 Task 是两种不同响应" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">Message 或 Task 是两种不同响应</span></a><a href="#task-是有状态的工作单元" class="rp-toc-item rp-link" title="Task 是有状态的工作单元" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">Task 是有状态的工作单元</span></a><a href="#artifact-是-task-的正式输出" class="rp-toc-item rp-link" title="Artifact 是 Task 的正式输出" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">Artifact 是 Task 的正式输出</span></a><a href="#5-contextid-不是-task-id" class="rp-toc-item rp-link" title="5. contextId 不是 Task ID" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">5. <code>contextId</code> 不是 Task ID</span></a><a href="#6-task-状态机" class="rp-toc-item rp-link" title="6. Task 状态机" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">6. Task 状态机</span></a><a href="#7-core-operations-如何组合" class="rp-toc-item rp-link" title="7. Core Operations 如何组合" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">7. Core Operations 如何组合</span></a><a href="#8-httpjson-与-sse" class="rp-toc-item rp-link" title="8. HTTP+JSON 与 SSE" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">8. HTTP+JSON 与 SSE</span></a><a href="#发送并订阅-task" class="rp-toc-item rp-link" title="发送并订阅 Task" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">发送并订阅 Task</span></a><a href="#streamresponse-是-one-of" class="rp-toc-item rp-link" title="StreamResponse 是 One-of" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">StreamResponse 是 One-of</span></a><a href="#9-断线后用-gettask-对账" class="rp-toc-item rp-link" title="9. 断线后用 GetTask 对账" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">9. 断线后用 GetTask 对账</span></a><a href="#10-canceltimeout-与结果未知" class="rp-toc-item rp-link" title="10. Cancel、Timeout 与结果未知" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">10. Cancel、Timeout 与结果未知</span></a><a href="#11-webhook-处理断开连接的长任务" class="rp-toc-item rp-link" title="11. Webhook 处理断开连接的长任务" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">11. Webhook 处理断开连接的长任务</span></a><a href="#12-身份授权与数据边界" class="rp-toc-item rp-link" title="12. 身份、授权与数据边界" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">12. 身份、授权与数据边界</span></a><a href="#agentcard-声明认证不签发身份" class="rp-toc-item rp-link" title="AgentCard 声明认证，不签发身份" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">AgentCard 声明认证，不签发身份</span></a><a href="#jws-签名不是业务授权" class="rp-toc-item rp-link" title="JWS 签名不是业务授权" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">JWS 签名不是业务授权</span></a><a href="#每个-operation-都要重新授权" class="rp-toc-item rp-link" title="每个 Operation 都要重新授权" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">每个 Operation 都要重新授权</span></a><a href="#auth_required-使用受控流程" class="rp-toc-item rp-link" title="AUTH_REQUIRED 使用受控流程" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc"><code>AUTH_REQUIRED</code> 使用受控流程</span></a><a href="#代码与-artifact-最小化" class="rp-toc-item rp-link" title="代码与 Artifact 最小化" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">代码与 Artifact 最小化</span></a><a href="#13-预算循环与幂等不属于协议默认能力" class="rp-toc-item rp-link" title="13. 预算、循环与幂等不属于协议默认能力" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">13. 预算、循环与幂等不属于协议默认能力</span></a><a href="#14-生态版本漂移不要混用-a2a-v03-与-v1" class="rp-toc-item rp-link" title="14. 生态版本漂移：不要混用 A2A v0.3 与 v1" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">14. 生态版本漂移：不要混用 A2A v0.3 与 v1</span></a><a href="#15-一个可维护的-typescript-分层" class="rp-toc-item rp-link" title="15. 一个可维护的 TypeScript 分层" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">15. 一个可维护的 TypeScript 分层</span></a><a href="#16-故障矩阵" class="rp-toc-item rp-link" title="16. 故障矩阵" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">16. 故障矩阵</span></a><a href="#实践实现跨-agent-安全审计委派" class="rp-toc-item rp-link" title="实践：实现跨 Agent 安全审计委派" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">实践：实现跨 Agent 安全审计委派</span></a><a href="#常见误区" class="rp-toc-item rp-link" title="常见误区" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">常见误区</span></a><a href="#本章小结" class="rp-toc-item rp-link" title="本章小结" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章小结</span></a><a href="#官方资料" class="rp-toc-item rp-link" title="官方资料" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">官方资料</span></a></nav><div class="rp-outline__divider"></div><div class="rp-outline__bottom"></div></div></aside></div></div>
+    <div id="__rspress_modal_container"></div>
+  </body>
+</html>

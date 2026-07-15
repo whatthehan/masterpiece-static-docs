@@ -174,6 +174,8 @@ MCP 不是：
 
 它标准化的是能力如何被发现和调用。使用 MCP 不会降低 Tool Contract、authorization、idempotency 和 isolation 的必要性。
 
+如果远端对象拥有自己的 Runtime、Task 生命周期和 Artifact，需要在不暴露其内部 Tool / Memory 的情况下协作，它已经不是普通 MCP Tool。完成本模块的可靠行动基础后，再评估 [A2A 跨 Agent 协作协议](/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议.md)。
+
 ## 10. Host 的安全检查表
 
 - 固定并验证 Server 来源、版本和 digest。

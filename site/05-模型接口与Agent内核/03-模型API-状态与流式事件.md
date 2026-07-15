@@ -119,7 +119,102 @@ function reduceProviderEvent(
 
 Assembler 只负责重建协议对象。`item.completed` 之后，Runtime 还需要解析 JSON、执行 Schema 校验和领域校验。收到第一段工具参数时绝不能提前执行。
 
-## 5. Provider Event 不能直接成为产品事件
+## 5. OpenAI Responses Streaming：SSE 只是承载层
+
+> 协议核验日期：2026-07-15。本节以 OpenAI Responses API 的 HTTP Streaming 为例。官方接口通过 Server-Sent Events（SSE）传输带 `type` 的语义事件；事件集合仍会演进，生产实现应固定 SDK 版本并保留 Wire Fixture。
+
+“OpenAI SSE”不是独立于 Web 标准的通用 Agent 协议。这里至少有四层对象：
+
+```text
+HTTP byte chunk
+→ SSE frame
+→ OpenAI Responses event
+→ Application Item / Canonical RunEvent
+```
+
+OpenAI 官方 TypeScript SDK 已经完成前两层解析。`for await` 取得的是类型化 Provider Event，不是任意网络分片：
+
+```ts
+import OpenAI from "openai";
+
+const client = new OpenAI();
+const stream = await client.responses.create({
+  model: process.env.OPENAI_MODEL!,
+  input: "检查订单退款资格；需要执行时只生成工具提议。",
+  tools: [refundPreviewTool],
+  stream: true,
+});
+
+for await (const event of stream) {
+  providerAssembler.accept(event);
+}
+```
+
+真正重要的不是把所有事件打印出来，而是按生命周期归并：
+
+| Provider Event                                      | Adapter 中的含义              | 此时不能做什么                          |
+| --------------------------------------------------- | ------------------------- | -------------------------------- |
+| `response.created`                                  | Provider 已创建本次 Response   | 宣布业务 Run 已开始执行副作用                |
+| `response.output_item.added`                        | 新 Output Item 出现          | 假设 Item 内容完整                     |
+| `response.output_text.delta`                        | 向指定 Text Part 追加显示文本      | 把部分文本当最终答案或审计事实                  |
+| `response.function_call_arguments.delta`            | 追加 Function Call 参数片段     | 解析后立即执行 Tool                     |
+| `response.function_call_arguments.done`             | 参数文本已闭合                   | 跳过 JSON Schema、语义、授权与审批校验        |
+| `response.output_item.done`                         | 对应 Item 已闭合               | 把 Provider Item 原样暴露为领域事件        |
+| `response.completed`                                | 本次 Provider Response 已结束  | 把仍在等待 Tool、Approval 的业务 Run 标记完成 |
+| `response.failed` / `response.incomplete` / `error` | Provider 失败、输出未完整结束或流处理出错 | 对可能产生副作用的操作盲目重试                  |
+
+Chat Completions Streaming 与 Responses Streaming 也不能共用一个“拼 delta”分支。前者主要返回带 `delta` 的增量 Chunk；后者返回类型化 SSE Event。迁移时应重新建立 Event Dispatcher，而不是只替换 Endpoint。
+
+Streaming 也会改变 Content Safety 边界：Partial Output 在终稿完整之前更难进行内容分类与 Moderation，“完整生成后通过”的结果不能反向成为已展示 Delta 的门禁。高安全场景应在展示前分段 Buffer 并执行 Guard / Moderation，或改用完整输出后展示；低延迟与展示前审查无法同时零成本获得。
+
+一个最小 Provider Adapter 可以把文本和 Function Call 分开归并：
+
+```ts
+function acceptOpenAIEvent(state: ProviderState, event: OpenAIEvent): void {
+  switch (event.type) {
+    case "response.output_text.delta":
+      state.textByItem.append(event.item_id, event.delta);
+      return;
+    case "response.function_call_arguments.delta":
+      state.argumentsByItem.append(event.item_id, event.delta);
+      return;
+    case "response.function_call_arguments.done":
+      state.argumentsByItem.close(event.item_id, event.arguments);
+      return;
+    case "response.output_item.done":
+      state.items.close(event.item.id);
+      return;
+    case "response.completed":
+      state.providerResponseClosed = true;
+      return;
+    case "response.failed":
+    case "response.incomplete":
+    case "error":
+      state.fail(classifyProviderError(event));
+      return;
+    default:
+      state.recordUnhandled(event);
+  }
+}
+```
+
+示例省略了不同 Output Item 类型的完整联合类型，不能直接复制成生产 Parser。生产实现还应记录本次流所属的 `response.id`，并校验事件中 `item_id`、`output_index`、`content_index`、`call_id` 和 `sequence_number` 等字段在出现时的关联关系。Provider 的 `sequence_number` 用于解释本次 Response 内的顺序，不等于应用为持久化重放定义的 `RunEvent.seq`。
+
+HTTP SSE 断开后，也不能默认 Provider 支持浏览器 `Last-Event-ID` 语义。OpenAI 对 Background Response 另有基于 `sequence_number` 与 `starting_after` 的续流机制，但它属于特定 Provider 模式，不能替代应用的持久事件协议。Application Server 应保存已经提交的 Canonical Event，并用自己的 Snapshot + Replay 协议恢复 UI；是否重新请求模型，则由 Runtime 根据 Response、Item 和副作用状态决定。
+
+### 用 Fixture 锁住 Provider Adapter
+
+至少录制并脱敏以下 Wire / SDK Event Fixture：
+
+1. 正常文本：`created → item added → text delta* → item done → completed`。
+2. Function Call 参数跨多个 delta，并在闭合前断流。
+3. 已闭合 Function Call 通过结构校验，但领域参数或权限不合法。
+4. `response.completed` 后，业务 Run 仍处于 `waiting_approval`。
+5. 重复事件、未知可选事件、关联 ID 错误与 `sequence_number` 缺口。
+
+Adapter 升级 SDK 后先重放这些 Fixture。展示类未知事件可以记录并忽略；可能改变 Tool、状态或权限语义的未知事件应 Fail Closed，不能静默降级为普通文本。
+
+## 6. Provider Event 不能直接成为产品事件
 
 让浏览器直接消费供应商原始流看似简单，却会产生三类耦合：
 
@@ -146,7 +241,7 @@ flowchart LR
 
 完整的 Canonical Event、Snapshot 与重连协议将在[Agent Application Server 与 UI 事件协议](/masterpiece-static-docs/05-模型接口与Agent内核/09-Agent-Application-Server与UI事件协议.md)中实现。
 
-## 6. 完成、截断与断流
+## 7. 完成、截断与断流
 
 应用只有在满足以下条件时才能把一个模型 item 视为完整：
 
@@ -157,7 +252,7 @@ flowchart LR
 
 连接断开、内容截断或 provider 标记 incomplete 时，应保留已接收内容用于诊断，但不能把它升级为可执行动作。用户已经看到一段文本，与 Runtime 已经提交结果，是两个不同事实。
 
-## 7. 错误按发生层分类
+## 8. 错误按发生层分类
 
 | 层               | 示例                    | 主要处理位置                        |
 | --------------- | --------------------- | ----------------------------- |
@@ -200,6 +295,10 @@ flowchart LR
 
 ## 延伸阅读
 
+- [OpenAI: Streaming API responses](https://developers.openai.com/api/docs/guides/streaming-responses)
+- [OpenAI: Responses streaming events](https://developers.openai.com/api/reference/resources/responses/streaming-events)
+- [OpenAI: Background mode and streaming resume](https://developers.openai.com/api/docs/guides/background#streaming-a-background-response)
+- [OpenAI: Migrate streaming consumers to Responses](https://developers.openai.com/api/docs/guides/migrate-to-responses#7-update-streaming-consumers)
 - [OpenAI: Conversation state](https://developers.openai.com/api/docs/guides/conversation-state)
 - [OpenAI: Function calling](https://developers.openai.com/api/docs/guides/function-calling)
 - [WHATWG: Server-sent events](https://html.spec.whatwg.org/multipage/server-sent-events.html)
