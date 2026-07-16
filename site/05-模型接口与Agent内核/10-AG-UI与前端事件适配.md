@@ -1,10 +1,10 @@
 # 10 · AG-UI：把 Agent Runtime 接入产品前端
 
-上一章已经让浏览器通过 `RunSnapshot + RunEvent` 恢复任务状态。如果同一个 Agent 后端还要接入 React Workbench、移动端、客服工作台或第三方 Agent UI，每个客户端都重新设计一套消息、Tool Call 和状态事件，很快会产生多套不兼容的 Edge Contract。
+上一章已经让 Resolution Desk 浏览器端通过 `RunSnapshot + RunEvent` 恢复任务状态。如果同一个后端还要接入另一套客服前端或标准 Agent UI，而每个客户端都重新设计消息、Tool Call 和状态事件，很快会产生多套不兼容的 Edge Contract。
 
 Agent–User Interaction Protocol（AG-UI）解决的是这条边上的互操作问题：Agent 后端接收结构化运行输入，并持续向用户界面发送生命周期、文本、Tool Call 和共享状态事件。它不是 Agent Runtime，也不替代应用的 Event Store、Authorization 或 Durable Workflow。
 
-> 资料核验日期：2026-07-15。AG-UI 的事件和 SDK 仍在持续演进，本章以官方 Concepts 与 TypeScript SDK 文档中的当前事件模型为准，不把某个 SDK Release 当成永久 Wire Contract。实现时应固定依赖版本并保存 Contract Fixture。
+> 资料核验日期：2026-07-15。AG-UI 的事件和 SDK 仍在持续演进：稳定 TypeScript SDK 文档把 `RUN_FINISHED` 定义为成功结束，官方 Interrupts 概念文档则描述了带 `outcome.type = "interrupt"` 的中断感知扩展。两条基线不能混用；实现时应明确选择并固定协议与 SDK 版本，同时保存 Contract Fixture。
 
 ## 本章目标
 
@@ -63,27 +63,27 @@ sequenceDiagram
     AS-->>UI: RUN_STARTED
     RT-->>AS: committed Canonical RunEvents
     AS-->>UI: TEXT / TOOL / STATE events
-    RT-->>AS: terminal transition
-    AS-->>UI: RUN_FINISHED or RUN_ERROR
+    RT-->>AS: terminal transition / approval interrupt
+    AS-->>UI: RUN_FINISHED (stable success / Interrupts extension) or RUN_ERROR
 ```
 
-`RUN_STARTED` 表示 AG-UI 运行流已经开始；`RUN_FINISHED` 表示该 Adapter 所表示的运行成功结束。应用仍需明确它映射的是一次模型 Response、一个 Runtime Run，还是一个更长的 Workflow。映射不清时，不得用它推断真实业务 Outcome。
+`RUN_STARTED` 表示 AG-UI 运行流已经开始。稳定 TypeScript SDK 基线中的 `RUN_FINISHED` 只表示该 Adapter 所代表的运行成功结束；Interrupts 扩展只属于官方概念文档描述的中断感知语义。扩展中带 `outcome.type = "interrupt"` 的 `RUN_FINISHED` 会结束当前 AG-UI Run，但领域 Workflow 仍可停在等待审批或补充输入的状态。应用必须明确一个 AG-UI Run 映射的是一次模型 Response、一个 Runtime Run，还是 Workflow 的一个可恢复片段，不能仅凭流已闭合推断业务 Outcome。
 
-在典型 Tool Loop 中，一个 AG-UI Run 会包含多次 Provider Response：模型先产生 Function Call，Runtime 执行 Tool，再发起下一次模型请求。此时第一段 Provider `response.completed` 不能投影为 AG-UI `RUN_FINISHED`；只有外层 Runtime 真正进入终态后才能闭合 Run。
+在典型 Tool Loop 中，一个 AG-UI Run 会包含多次 Provider Response：模型先产生 Function Call，Runtime 执行 Tool，再发起下一次模型请求。第一段 Provider `response.completed` 不能投影为 AG-UI `RUN_FINISHED`。稳定基线必须等外层 Runtime 成功结束；中断感知扩展则只允许在满足 Snapshot 与 Resume Contract 后，以 `outcome.type = "interrupt"` 闭合当前 AG-UI Run。
 
 ## 3. 事件族与闭合边界
 
 当前 AG-UI SDK 文档包含以下主要事件族：
 
-| 事件族                  | 典型事件                                                                  | 前端用途              | 工程边界                           |
-| -------------------- | --------------------------------------------------------------------- | ----------------- | ------------------------------ |
-| Run Lifecycle        | `RUN_STARTED`、`RUN_FINISHED`、`RUN_ERROR`                              | 初始化与结束运行视图        | 不替代业务 Outcome Grader           |
-| Step Lifecycle       | `STEP_STARTED`、`STEP_FINISHED`                                        | 展示可公开的步骤进度        | 不暴露原始 Chain-of-Thought         |
-| Text Message         | `TEXT_MESSAGE_START`、`TEXT_MESSAGE_CONTENT`、`TEXT_MESSAGE_END`        | 增量渲染消息            | Start/End 必须与同一 Message ID 关联  |
-| Tool Call            | `TOOL_CALL_START`、`TOOL_CALL_ARGS`、`TOOL_CALL_END`、`TOOL_CALL_RESULT` | 展示调用参数、状态和结果      | 参数 Delta 不等于可执行 Command        |
-| State                | `STATE_SNAPSHOT`、`STATE_DELTA`、`MESSAGES_SNAPSHOT`                    | 同步共享状态与消息基线       | Snapshot 不是 Runtime Checkpoint |
-| Activity / Reasoning | Activity 与受控 Reasoning Event                                          | 展示进度、摘要与可解释线索     | 不应发送隐藏推理或敏感 Context            |
-| Special              | `RAW`、`CUSTOM`                                                        | 兼容 Provider 或业务扩展 | 必须定义 Namespace、Schema 与兼容策略    |
+| 事件族                  | 典型事件                                                                  | 前端用途              | 工程边界                                   |
+| -------------------- | --------------------------------------------------------------------- | ----------------- | -------------------------------------- |
+| Run Lifecycle        | `RUN_STARTED`、`RUN_FINISHED`、`RUN_ERROR`                              | 初始化与结束当前运行视图      | 稳定基线只表达成功/错误；中断扩展也不替代业务 Outcome Grader |
+| Step Lifecycle       | `STEP_STARTED`、`STEP_FINISHED`                                        | 展示可公开的步骤进度        | 不暴露原始 Chain-of-Thought                 |
+| Text Message         | `TEXT_MESSAGE_START`、`TEXT_MESSAGE_CONTENT`、`TEXT_MESSAGE_END`        | 增量渲染消息            | Start/End 必须与同一 Message ID 关联          |
+| Tool Call            | `TOOL_CALL_START`、`TOOL_CALL_ARGS`、`TOOL_CALL_END`、`TOOL_CALL_RESULT` | 展示调用参数、状态和结果      | 参数 Delta 不等于可执行 Command                |
+| State                | `STATE_SNAPSHOT`、`STATE_DELTA`、`MESSAGES_SNAPSHOT`                    | 同步共享状态与消息基线       | Snapshot 不是 Runtime Checkpoint         |
+| Activity / Reasoning | Activity 与受控 Reasoning Event                                          | 展示进度、摘要与可解释线索     | 不应发送隐藏推理或敏感 Context                    |
+| Special              | `RAW`、`CUSTOM`                                                        | 兼容 Provider 或业务扩展 | 必须定义 Namespace、Schema 与兼容策略            |
 
 Text 与 Tool Event 都是有生命周期的对象，而不是无归属的 Token：
 
@@ -104,17 +104,28 @@ TOOL_CALL_START(toolCallId, toolCallName)
 
 Adapter 应只读取已经提交的公共领域事件：
 
-| Canonical RunEvent                       | AG-UI 投影                               | 说明                                  |
-| ---------------------------------------- | -------------------------------------- | ----------------------------------- |
-| `run.started`                            | `RUN_STARTED`                          | 保留 `threadId`、`runId` 关联            |
-| `item.started(kind=assistant_message)`   | `TEXT_MESSAGE_START`                   | `itemId` 映射为稳定 `messageId`          |
-| 活动 Assistant Message 的 `item.text_delta` | `TEXT_MESSAGE_CONTENT`                 | 只发送已脱敏的显示内容                         |
-| 活动 Assistant Message 的 `item.completed`  | `TEXT_MESSAGE_END`                     | 只闭合已经存在的 Message                    |
-| `tool.proposed`                          | `TOOL_CALL_START/ARGS/END`             | 对高风险 Tool 只投影已校验的 Proposal          |
-| `tool.state_changed(succeeded)`          | `TOOL_CALL_RESULT`                     | 发送公开摘要或引用，不发送 Secret                |
-| Public Snapshot                          | `STATE_SNAPSHOT` / `MESSAGES_SNAPSHOT` | 建立前端基线，不替代执行恢复状态                    |
-| 可公开状态变化                                  | `STATE_DELTA` 或 `CUSTOM`               | Delta 使用 RFC 6902 JSON Patch 时需限制路径 |
-| `run.error_recorded`                     | `RUN_ERROR` 或可恢复状态事件                   | 可恢复错误不能被误投影为永久终态                    |
+| Canonical RunEvent                       | AG-UI 投影                                                                              | 说明                                  |
+| ---------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------- |
+| `run.started`                            | `RUN_STARTED`                                                                         | 保留 `threadId`、`runId` 关联            |
+| `item.started(kind=assistant_message)`   | `TEXT_MESSAGE_START`                                                                  | `itemId` 映射为稳定 `messageId`          |
+| 活动 Assistant Message 的 `item.text_delta` | `TEXT_MESSAGE_CONTENT`                                                                | 只发送已脱敏的显示内容                         |
+| 活动 Assistant Message 的 `item.completed`  | `TEXT_MESSAGE_END`                                                                    | 只闭合已经存在的 Message                    |
+| `tool.proposed`                          | `TOOL_CALL_START/ARGS/END`                                                            | 对高风险 Tool 只投影已校验的 Proposal          |
+| `tool.state_changed(succeeded)`          | `TOOL_CALL_RESULT`                                                                    | 发送公开摘要或引用，不发送 Secret                |
+| Public Snapshot                          | `STATE_SNAPSHOT` / `MESSAGES_SNAPSHOT`                                                | 建立前端基线，不替代执行恢复状态                    |
+| 可公开状态变化                                  | `STATE_DELTA` 或 `CUSTOM`                                                              | Delta 使用 RFC 6902 JSON Patch 时需限制路径 |
+| `run.state_changed(waiting_approval)`    | 稳定基线：`STATE_*` / `CUSTOM`；中断扩展：Snapshots + `RUN_FINISHED(outcome.type = "interrupt")` | 关闭 UI Run 不等于关闭领域 Workflow          |
+| `run.completed`                          | `RUN_FINISHED` 或 `RUN_FINISHED(outcome.type = "success")`                             | 只映射已经确认的成功终态                        |
+| `run.error_recorded`                     | `RUN_ERROR` 或可恢复状态事件                                                                  | 可恢复错误不能被误投影为永久终态                    |
+
+### 4.1 稳定终态与中断扩展不能混用
+
+| 基线                | 等待审批时怎样结束当前交互                                                                                               | 怎样恢复                                                           | 必须锁定的 Contract                                    |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------- |
+| 稳定 TypeScript SDK | 不发送成功语义的 `RUN_FINISHED`；用公开 State / Custom Event 表达等待状态，继续方式由应用定义                                           | 通过应用 Command 恢复现有 Run，或由应用显式建立新 Run                            | `RUN_FINISHED` 只对应领域成功终态                          |
+| Interrupts 扩展     | 先发送 `STATE_SNAPSHOT` 与 `MESSAGES_SNAPSHOT`，再发送带 `outcome.type = "interrupt"` 和 Interrupt 列表的 `RUN_FINISHED` | Client 用新的 `runId` 发起新 Run，并在 `resume` 数组中按 `interruptId` 提交结果 | Snapshot 顺序、Interrupt ID、Resume Payload 与新 Run ID |
+
+中断扩展闭合的是本次 AG-UI 交互，而不是等待中的领域 Workflow。若 `outcome` 被省略，扩展文档仍按兼容规则把它解释为成功；因此 Adapter 不能用“缺少字段”暗示等待审批。稳定 SDK 的 Event Union 又不包含这组字段，生产代码必须以固定版本导出的类型和录制 Fixture 为准，不能把 Concepts 示例直接强制转换进 SDK 类型。
 
 一个窄接口比在领域层导入 AG-UI SDK 类型更容易测试：
 
@@ -270,36 +281,48 @@ flowchart TD
 
 ## 9. Contract Test 与故障矩阵
 
-| Fixture                     | 期望结果                                  |
-| --------------------------- | ------------------------------------- |
-| Text Content 在 Start 前到达    | Adapter 或 Client 明确拒绝，不创建无主 Message   |
-| 同一 Text End 重复投递            | UI 幂等归并，不产生第二条消息                      |
-| Tool Args 中途断流              | 不产生可执行 Proposal 或 Approval            |
-| JSON Patch 修改未公开路径          | Patch Gate 拒绝并记录协议错误                  |
-| Patch 基线版本不匹配               | 停止应用 Delta，获取新 Snapshot               |
-| `RUN_FINISHED` 时领域 Run 等待审批 | Contract Test 失败，修正终态映射               |
-| Client 回传伪造 `proposalHash`  | 服务端读取 Canonical Proposal 后拒绝          |
-| Adapter 升级后新增 Event 字段      | 旧 Fixture 仍通过；未知 Optional Field 被安全忽略 |
-| 慢客户端错过保留期                   | 返回 Resync，不能重新调用模型伪造历史                |
+| Fixture                                                            | 期望结果                                  |
+| ------------------------------------------------------------------ | ------------------------------------- |
+| Text Content 在 Start 前到达                                           | Adapter 或 Client 明确拒绝，不创建无主 Message   |
+| 同一 Text End 重复投递                                                   | UI 幂等归并，不产生第二条消息                      |
+| Tool Args 中途断流                                                     | 不产生可执行 Proposal 或 Approval            |
+| JSON Patch 修改未公开路径                                                 | Patch Gate 拒绝并记录协议错误                  |
+| Patch 基线版本不匹配                                                      | 停止应用 Delta，获取新 Snapshot               |
+| 稳定基线发送 `RUN_FINISHED` 时领域 Run 仍等待审批                                | Contract Test 失败，改用公开等待状态或应用定义的恢复流程   |
+| 中断扩展未先发送两个 Snapshot 就发送 `RUN_FINISHED(outcome.type = "interrupt")` | 拒绝该序列并重新获取基线，修正 Adapter 的事件顺序         |
+| Resume 使用旧 `runId` 或未知 `interruptId`                               | 服务端拒绝 Command，不猜测待恢复节点                |
+| Client 回传伪造 `proposalHash`                                         | 服务端读取 Canonical Proposal 后拒绝          |
+| Adapter 升级后新增 Event 字段                                             | 旧 Fixture 仍通过；未知 Optional Field 被安全忽略 |
+| 慢客户端错过保留期                                                          | 返回 Resync，不能重新调用模型伪造历史                |
 
 测试时用同一组 Canonical Fixture 同时驱动 Native SSE Adapter 与 AG-UI Adapter。两种客户端最终得到的公开 Run State 应一致，Tool、Approval 和 Outcome 语义不得因协议不同而变化。
 
-## 实践：给 Agent Workbench 增加 AG-UI Adapter
+## 实践：给 Resolution Desk 增加 AG-UI Adapter
+
+### 进入本章时已有能力
+
+Resolution Desk 已有 Canonical `RunSnapshot + RunEvent`、Event Store 和可恢复的 Native UI；领域状态不依赖任何标准 UI 协议。
+
+### 本章增加的能力
 
 1. 从上一章已有的 `RunSnapshot` 和 `RunEvent` 开始，不修改领域类型。
 2. 先只映射 Run Lifecycle 与 Text Message Event。
 3. 加入 Tool Proposal / Result，但只投影已经闭合和脱敏的参数。
 4. 用 `STATE_SNAPSHOT` 发布最小 `PublicAgentState`，再增加受限 Delta。
-5. 把 Approve、Reject、Cancel 转成服务端 Command，并重新校验当前状态。
-6. 注入重复、Gap、断流、乱序、未知 Event 与 Patch 失败。
-7. 用同一 Snapshot + Event 序列对拍 Native UI Reducer 与 AG-UI Client。
+5. 明确选择稳定基线或中断扩展；若选择扩展，为 Snapshot 顺序、Interrupt ID 和新 `runId` Resume 建立 Fixture。
+6. 把 Approve、Reject、Cancel 转成服务端 Command，并重新校验当前状态。
+7. 注入重复、Gap、断流、乱序、未知 Event 与 Patch 失败。
+8. 用同一 Snapshot + Event 序列对拍 Native UI Reducer 与 AG-UI Client。
 
-验收标准不是“Copilot UI 能显示文字”，而是协议替换前后，刷新恢复、审批绑定、终态、脱敏和故障处理保持一致。
+### 验收证据
+
+用同一条“订单查询—政策检索—退款 Proposal—等待审批”Event 序列对拍 Native UI Reducer 与 AG-UI Client。协议替换前后，刷新恢复、Proposal 身份、终态、脱敏和故障处理保持一致；AG-UI 客户端不能直接执行退款或伪造审批成功。
 
 ## 常见误区
 
 - AG-UI 是一个完整 Agent Framework。
 - 使用 SSE 就自然拥有 Replay 与 Exactly-Once。
+- `RUN_FINISHED` 总是意味着领域 Workflow 已经进入业务终态。
 - `STATE_SNAPSHOT` 可以直接保存为 Runtime Checkpoint。
 - Tool Args 已经显示在 UI，说明 Tool 可以执行。
 - 前端发送 `approve` 后可以直接调用外部系统。
@@ -309,13 +332,14 @@ flowchart TD
 
 AG-UI 标准化的是 Agent Backend 与用户界面之间的运行输入和事件流。稳定的应用仍应先拥有 Canonical RunEvent、Public Snapshot、Authorization 与 Event Store，再通过 Adapter 投影 AG-UI。这样既能利用生态客户端，也不会把领域状态、审批和恢复能力绑定到某个 UI Runtime。
 
-下一部分进入 [Context Engineering](/masterpiece-static-docs/06-上下文-知识与记忆/01-Context-Engineering.md)，讨论 Runtime 应如何从完整应用状态中选择本轮模型真正需要的信息。
+单 Agent 主线下一部分进入 [Context Engineering](/masterpiece-static-docs/06-上下文-知识与记忆/01-Context-Engineering.md)，讨论 Runtime 应如何选择本轮真正需要的知识与状态。完成 06–09 的知识、行动、安全和恢复语义后，再回到本模块的 [Multi-Agent 进阶实验](/masterpiece-static-docs/05-模型接口与Agent内核/11-Multi-Agent协作状态与验证.md)。
 
 ## 官方资料
 
 - [AG-UI Overview](https://docs.ag-ui.com/)
 - [AG-UI Core architecture](https://docs.ag-ui.com/concepts/architecture)
 - [AG-UI Events](https://docs.ag-ui.com/concepts/events)
+- [AG-UI Interrupts](https://docs.ag-ui.com/concepts/interrupts)
 - [AG-UI TypeScript SDK Events](https://docs.ag-ui.com/sdk/js/core/events)
 - [AG-UI State Management](https://docs.ag-ui.com/concepts/state)
 - [AG-UI 与 Generative UI Specs](https://docs.ag-ui.com/concepts/generative-ui-specs)

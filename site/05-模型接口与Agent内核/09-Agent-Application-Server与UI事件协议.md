@@ -383,7 +383,13 @@ Canonical RunEvent ──native SSE─────> custom UI
 | Tool Result 含密钥                 | Event 与 Snapshot 中均不存在密钥                |
 | Provider completed，Runtime 等待审批 | UI 保持 `waiting_approval`                |
 
-## 实践：把 CLI Runtime 接入可恢复的 Web UI
+## 实践：把 Resolution Desk Runtime 接入可恢复的 Web UI
+
+### 进入本章时已有能力
+
+Resolution Desk 可以在服务端完成只读 Agent Loop 并生成退款 Proposal，但浏览器还不能在刷新、断线或重复事件后恢复权威状态。
+
+### 本章增加的能力
 
 1. 为现有 Runtime 定义 `RunEvent`、`RunSnapshot` 和 JSON Schema。
 2. 用录制的 Provider fixture 实现 adapter，覆盖文本 delta、完整 Tool Item、截断和失败。
@@ -392,7 +398,9 @@ Canonical RunEvent ──native SSE─────> custom UI
 5. 用 native SSE 接入纯 UI Reducer，跑完故障矩阵。
 6. 最后再实现一个 AG-UI 或 AI SDK UI adapter，验证领域层没有变化。
 
-验收标准不是“页面可以流式显示文字”，而是任意断点刷新后 UI 与 Event Store 一致，重复、缺口、脱敏和旧客户端都有确定结果。
+### 验收证据
+
+从订单读取、政策检索、Proposal 生成到 `waiting_approval` 的任意断点刷新页面，UI 都与 Event Store 一致。重复 Event 不生成第二张 Proposal 卡，sequence gap 会触发 Snapshot 恢复，未闭合参数和服务端私有字段不会进入公开事件。验收标准不是“页面可以流式显示文字”，而是状态语义在连接变化后保持一致。
 
 ## 常见误区
 

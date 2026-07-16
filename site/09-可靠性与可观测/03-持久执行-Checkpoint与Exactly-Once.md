@@ -1,6 +1,8 @@
 # 03 · 持久执行：Checkpoint、Replay 与 Exactly-Once 边界
 
-一个任务等待人工审批两小时，期间系统发生了一次部署；另一个任务正在核对一笔效果未知的退款，Worker 突然退出。若所有状态只存在于进程内存或聊天历史中，新 Worker 既不知道已经发生了什么，也无法判断哪些步骤可以安全重跑。
+Resolution Desk 已能在单进程内对同一笔退款做有界核对，并为 Reconciliation 保留容量。下一项缺口是进程生命周期：一个 Run 可能等待原生审批两小时，也可能正在核对效果未知的退款时遇到 Worker 退出或部署。
+
+若所有状态只存在于进程内存或聊天历史中，新 Worker 既不知道已经发生了什么，也无法判断哪些步骤可以安全重跑。
 
 持久执行（Durable Execution）的目标不是让进程永不失败，而是让任意兼容 Worker 都能根据持久事实继续，并且不把 Replay 变成重复副作用。
 
@@ -137,16 +139,26 @@ at-least-once delivery / attempt
 
 优先让旧 Run 路由到兼容 Worker。确需迁移时，使用显式 Migration、Replay Test、Shadow Replay 和可回滚发布。新代码不能静默重新解释旧审批，无法安全迁移的 Run 应留在旧执行器或转人工。
 
-## 8. 故障实验：在四个边界强杀 Worker
+## 实践：让 Resolution Desk 跨 Worker 恢复同一条 Run
 
-依次在以下位置停止进程：
+### 进入本章时已有能力
+
+Resolution Desk 已有稳定 Intent、Effect Status、Reconciliation、独立容量和可信 UI，但 Runtime State 主要依赖当前 Worker。
+
+### 本章增加的能力
+
+持久化 Event History、Durable Checkpoint、Outbox、Lease、Ownership Epoch 与 Fencing/CAS；Workflow Reducer 只消费已记录 Event，模型调用与支付操作都作为 Activity。沿同一条退款 Run，依次在以下位置停止进程：
 
 1. 外部 Command 提交前；
 2. Commit 后、ACK 前；
 3. ACK 到达后、Checkpoint 前；
 4. Reconciliation 查询完成后、状态写入前。
 
-随后让新 Worker 以更高 Epoch 接管，并验证：
+随后让新 Worker 以更高 Epoch 接管。
+
+### 验收证据
+
+验证：
 
 - 恢复字段足以决定下一步，不依赖聊天文本猜测；
 - Replay 不重复调用模型或外部 Command；

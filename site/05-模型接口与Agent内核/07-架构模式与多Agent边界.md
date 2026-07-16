@@ -1,6 +1,6 @@
 # 07 · Harness Engineering、架构模式与 Multi-Agent 边界
 
-一个裸模型无法解释 Claude Code 或 Codex 的完整行为。模型并不知道工作区规则存在哪里，也不能自行获得文件、终端、网络、审批或隔离环境。真正把模型变成可工作的 Agent 的，是围绕它建立的 Agent Harness：Context Builder、Loop、工具、策略、状态、沙箱、扩展和 Trace。
+Resolution Desk 的模型并不知道订单从哪里读取、哪份政策正在生效，也不能自行获得退款权限。真正把模型变成可工作的 Agent 的，是围绕它建立的 Agent Harness：Context Builder、Loop、工具、策略、状态、沙箱、扩展和 Trace。Claude Code 或 Codex 的规则文件、工具、权限与测试反馈可以作为理解 Harness 的类比，但不替代业务应用自己的领域边界。
 
 理解 Harness 后，许多流行概念会回到清晰的工程位置。Skill 是按需加载的程序性知识，Hook 是生命周期扩展点，Workflow 与 Agent 的差异在控制权，Multi-Agent 的价值来自可测的隔离或并行收益，而不是角色数量。
 
@@ -265,9 +265,15 @@ trace context + sequence/version
 
 这份 Envelope 是应用内部的最低语义要求。当协作对象是跨团队、跨进程或跨供应商的独立 Agent 系统时，可以在这些不变量稳定后评估 [A2A 跨 Agent 协作协议](/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议.md)；A2A 提供互操作 Wire Contract，不会自动补齐权限衰减、预算、结果验收和循环检测。
 
-## 实践：为 Harness 做一次可证伪设计
+## 实践：为 Resolution Desk 组装最小 Harness
 
-先建立 Harness Component Map：
+### 进入本章时已有能力
+
+Resolution Desk 已有 Provider Adapter、Tool Gate 和有界只读 Loop，但这些组件尚未作为一套可独立评测的运行环境组织起来。
+
+### 本章增加的能力
+
+为当前系统建立 Harness Component Map：
 
 | 组件                   | 它补偿的风险         | 收益指标           | 成本        | 删除条件          |
 | -------------------- | -------------- | -------------- | --------- | ------------- |
@@ -279,7 +285,11 @@ trace context + sequence/version
 
 1. Skill 超出 Context budget 或 digest 变化时，Harness 拒绝静默加载。
 2. Blocking Hook timeout 时，高风险 command 没有进入 Executor；Observation Hook timeout 不回滚业务结果。
-3. 对同一任务比较固定 Workflow、单 Agent 和 Subagent，只有隔离、质量或延迟收益显著时才保留更复杂方案。
+3. 对同一批退款工单比较固定 Workflow、单 Agent 和本地 Reviewer；本章不引入跨系统 Agent，风险复核的 A2A 路径留到 07 模块。
+
+### 验收证据
+
+保存三组消融测试结果：Skill 超预算被拒绝、阻断型 Hook 失败时退款 Proposal 不进入后续执行路径、观察型 Hook 失败时既有结果不被回滚。固定 Workflow 与单 Agent 使用同一 Dataset 和预算；没有可测收益的 Reviewer 不进入默认路径。
 
 ## 常见误区
 

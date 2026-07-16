@@ -88,21 +88,22 @@ LangGraph 的价值出现在显式状态图、checkpoint、interrupt/resume、hu
 
 Checkpoint 解决图状态恢复，不会让外部副作用自动 exactly-once。恢复时 node 可能重跑，command 必须放在有幂等和回执语义的执行边界中。
 
+如果要进入实现，不应另起一套业务模型。先定义框架无关的 `AgentRuntimePort`，再用相同 Domain Types、Canonical Event、Dataset 和故障 Fixture 做对照；完整方法见 [AI SDK 与 LangGraph 对照实践](/masterpiece-static-docs/05-模型接口与Agent内核/12-AI-SDK与LangGraph对照实践.md)。
+
 ## 6. AI SDK 7：按切片采用
 
 截至核验基准，AI SDK 7 已覆盖多步 Agent、类型化 runtime/tool context、工具审批、timeout、telemetry、UI transport，以及 `WorkflowAgent` 和 `HarnessAgent` 等能力。它不再只是 React 流式 UI 封装，但也不应作为需要一次性全部采用的平台。
 
 适合按真实需求选择切片：
 
-| 需求                                 | 可评估的切片                   | 应用仍负责                        |
-| ---------------------------------- | ------------------------ | ---------------------------- |
-| 多 Provider 与有界 Tool Loop           | Core + `ToolLoopAgent`   | 领域 State/Event、Policy、Eval   |
-| 将 Claude Code/Codex 等 Harness 接入产品 | `HarnessAgent` + adapter | 工作区授权、隔离、审计、结果验收             |
-| 工具审批 UI                            | approval API             | proposal hash、actor、资源版本、有效期 |
-| 跨进程长任务                             | `WorkflowAgent`          | 外部副作用的幂等性、流程版本、故障矩阵          |
-| React/Next.js Agent UI             | UI message / transport   | Canonical RunEvent、重连和业务事实   |
+| 需求                       | 可评估的切片                 | 应用仍负责                        |
+| ------------------------ | ---------------------- | ---------------------------- |
+| 多 Provider 与有界 Tool Loop | Core + `ToolLoopAgent` | 领域 State/Event、Policy、Eval   |
+| 工具审批 UI                  | approval API           | proposal hash、actor、资源版本、有效期 |
+| 跨进程长任务                   | `WorkflowAgent`        | 外部副作用的幂等性、流程版本、故障矩阵          |
+| React/Next.js Agent UI   | UI message / transport | Canonical RunEvent、重连和业务事实   |
 
-在核验基准中，AI SDK 7 要求 Node.js 22 与 ESM；官方仍将 `HarnessAgent` 及相关 harness packages 标记为 experimental，并明确提示可能出现 breaking changes。任何采用决定都必须基于当前官方文档和故障实验，不能把版本状态写死进领域层。
+在核验基准中，AI SDK 7 要求 Node.js 22 与 ESM。官方发布说明明确把 harness abstractions 与 `HarnessAgent` 标为 experimental；这项显式状态高于“无 `experimental_` 前缀通常视为 stable”的一般版本规则。`ToolLoopAgent` 用于进程内多步 Loop，`WorkflowAgent` 用于可恢复的 durable execution，`HarnessAgent` 则适配 Claude Code、Codex 等既有 Harness，三者不能互换。采用时应逐项核对实际文档与 package 状态，并通过故障实验确认语义，不能把框架版本写进领域契约。
 
 ## 7. MCP SDK 不是 Agent 框架
 
@@ -145,21 +146,32 @@ Durable Workflow 与 Agent Runtime 不是二选一。前者持有长期控制流
 
 - **Mastra**：适合需要 TypeScript 一体化 agent/workflow/memory/server 体验时做限时 POC。若采用，再深入其 state、suspend/resume、storage 和 eval；无需同时深学多个同层框架。
 - **LangChain.js 高层组件**：某个 loader、retriever 或 integration 能节省明确成本时按需使用，并通过 adapter 隔离。无需背诵历史 chains 和全部 integrations。
-- **AutoGen / CrewAI**：默认不作为 TypeScript-first、单 Agent-first 路线的前置。只有评测证明需要 Python-first Multi-Agent 模式时再做 POC。
+- **AutoGen / CrewAI**：默认不作为 TypeScript-first、单 Agent-first 路线的前置。只有评测证明需要 Python-first Multi-Agent 模式时再做 POC；Multi-Agent 的状态、权限与汇合语义见 [Multi-Agent：协作、状态与验证](/masterpiece-static-docs/05-模型接口与Agent内核/11-Multi-Agent协作状态与验证.md)。
 - **Rust Agent 框架或非官方模型 SDK**：先稳定 wire contract 和 TypeScript 控制面。Rust 优先承接边界清晰的 executor、gateway 或 parser，不因语言偏好提前重写 Agent Runtime。
 
-## 实践：框架对照实验
+## 实践：用 Resolution Desk 做框架对照实验
 
-候选框架必须使用同一任务和故障集：
+### 进入本章时已有能力
+
+Resolution Desk 已有一套手写的 Provider Adapter、Tool Gate、有界 Loop 与 Harness 测试，因此框架可以与真实基线比较，而不是只比较示例代码长度。
+
+### 本章增加的能力
+
+选择一个候选框架，在不改变领域类型和 Canonical Event 的前提下，重做“读取订单与政策并生成退款 Proposal”这一条只读、process-local 路径。候选框架必须使用同一任务和故障集：
 
 1. 固定模型、Prompt、Tool Schema、dataset 和预算。
 2. 手写 Runtime 与候选框架分别运行多次 trial。
-3. 注入流式断开、半截 Tool Call、Tool timeout、重复 event、approval 过期和 cancel。
-4. 对写操作注入“服务端已提交但响应丢失”。
-5. 检查是否能替换 model、tool、store 和 tracer，是否能导出原始事件。
-6. 比较 outcome、trajectory、latency、cost、恢复和敏感数据暴露。
+3. 注入流式断开、半截 Tool Call、只读 Tool Timeout、重复 Event 和 Cancel。
+4. 检查是否能替换 Model、Tool 与 Tracer，是否能导出原始事件；再执行当前层级的 Ejection Test，确认替换 Runtime Adapter 不会改写 Domain、Canonical Event 与 Eval。
+5. 比较 Outcome、Trajectory、Latency、Cost、取消收敛和敏感数据暴露。
 
-只有框架减少了已知实现成本，且没有破坏既有不变量，才值得进入主线。
+### 验收证据
+
+输出同一 Dataset 下的 Outcome、Trajectory、Latency、Cost、取消收敛和敏感数据暴露对比。只有框架减少了已知实现成本，且没有破坏既有不变量，才进入 Resolution Desk；否则继续使用手写 Runtime。
+
+### 完成模块 07 与 09 后的回访
+
+建立 Authorization、Approval、Idempotency、Checkpoint 与 Reconciliation 后，再用相同 Framework Port 增加 durable tier：注入 Approval 过期、外部服务 Commit 后 ACK 丢失、Worker 重启与旧 Checkpoint 恢复。此时 Ejection Test 才同时固定 Policy、UI Reducer 与权威 Outcome。候选框架不支持该层级时记为 `unsupported`，不能把 process-local Loop 的通过结果解释为 durable recovery。完整实验见 [AI SDK 与 LangGraph 对照实践](/masterpiece-static-docs/05-模型接口与Agent内核/12-AI-SDK与LangGraph对照实践.md)。
 
 ## 10. 一张实用决策图
 
@@ -202,7 +214,8 @@ flowchart TD
 - [A2UI](https://a2ui.org/)
 - [A2A Protocol v1.0.0](https://a2a-protocol.org/v1.0.0/specification/)
 - [Vercel: AI SDK 7](https://vercel.com/changelog/ai-sdk-7)
-- [Vercel: Program Claude Code, Codex and other harnesses with AI SDK](https://vercel.com/changelog/program-agent-harnesses-with-ai-sdk)
+- [Vercel: AI SDK 7 release](https://vercel.com/blog/ai-sdk-7)
+- [Vercel AI SDK: Versioning](https://ai-sdk.dev/docs/migration-guides/versioning)
 - [Vercel AI SDK: Tool calling](https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling)
 - [Temporal: Workflow Execution](https://docs.temporal.io/workflow-execution)
 - [Mastra](https://mastra.ai/)

@@ -2,6 +2,10 @@
 
 前端应用向模型 API 发送的是 JSON：messages、tools、attachments 和配置项。模型内部处理的却不是 JavaScript 对象，而是一段经过编码的 Token 序列。理解这层转换，可以解释三个常见问题：为什么工具定义也会消耗 Context，为什么响应必须逐步生成，以及为什么模型输出永远不等于外部动作已经发生。
 
+## 贯穿项目：Resolution Desk
+
+Resolution Desk 在这一章仍不接入真实 Provider。项目只新增两类可复用工件：一份包含指令、订单摘要、政策片段和 Tool Schema 的 Token Budget Sheet，以及一段能够重建完整候选 Item 的 Recorded Stream Fixture。第 05 模块实现 Provider Adapter 时，将使用同样的输入和期望 Item 做 Contract Test。
+
 ## 1. 从文本到 Token ID
 
 模型接收输入前，大致经历以下过程：
@@ -172,11 +176,18 @@ Token Budget 同时影响：
 
 ## 8. 最小实验
 
-使用目标模型的 Tokenizer 和官方 SDK 完成三组测量：
+完成三组不依赖 Agent Runtime 的测量：
 
-1. 比较中文、英文、代码、JSON、emoji 和长 ID 的 Token 数。
-2. 在同一请求中逐步增加 Tool Schema，记录 input Token 和首 Token 延迟。
-3. 将一个 Tool Call 以流式事件返回，保存每个原始 Event，并在本地重建完整 Item。
+1. 使用目标模型的 Tokenizer 或官方 Tokenizer 页面，比较中文、英文、代码、JSON、emoji 和长 ID 的 Token 数。
+2. 对 Resolution Desk 的同一份静态请求逐步加入 `get_order`、`get_policy` 和 `draft_refund` Schema，记录 Token 数；若没有可用 API，首 Token 延迟留作第 05 模块实测，不用估算值填充。
+3. 使用下面的教学用 Recorded Fixture，按顺序拼接参数并只在 `item.completed` 后解析。它表达完整性边界，不冒充任何 Provider 的正式 Event 名称：
+
+```jsonl
+{"type":"item.started","itemId":"call_1","kind":"tool_call","name":"draft_refund"}
+{"type":"arguments.delta","itemId":"call_1","delta":"{\"orderId\":\"ord_1001\","}
+{"type":"arguments.delta","itemId":"call_1","delta":"\"amountMinor\":5000}"}
+{"type":"item.completed","itemId":"call_1"}
+```
 
 验收标准：
 
@@ -184,6 +195,8 @@ Token Budget 同时影响：
 - Tool 参数只在 Item 完成后解析。
 - 截断、拒绝、取消与正常完成具有不同状态。
 - 没有任何网络 delta 直接触发外部写操作。
+
+保存 Token Budget Sheet、原始 JSONL 和期望的完整 Item。真实 Provider Event 的类型、闭合边界与 usage 将在模型接口章节中替换并验证这份教学 Fixture。
 
 ## 常见误区
 

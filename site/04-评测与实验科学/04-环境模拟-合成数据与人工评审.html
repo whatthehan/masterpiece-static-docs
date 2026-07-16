@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="zh">
+  <head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>04 · 环境模拟、合成数据与人工评审 - Agentic Masterpiece</title>
+<script>{;const saved = localStorage.getItem('rspress-theme-appearance');const preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches;const defaultTheme = 'auto';const theme = saved === 'light' || saved === 'dark' || saved === 'auto' ? saved : defaultTheme;const isDark = theme === 'auto' ? preferDark : theme === 'dark';document.documentElement.classList.toggle('dark', isDark);document.documentElement.classList.toggle('rp-dark', isDark);document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';}</script>
+<link href="/masterpiece-static-docs/static/css/styles.7f095e6272.css" rel="stylesheet">
+<script defer src="/masterpiece-static-docs/static/js/styles.97e0519c6b.js"></script>
+<script defer src="/masterpiece-static-docs/static/js/lib-react.153111d74d.js"></script>
+<script defer src="/masterpiece-static-docs/static/js/lib-router.575081ccc8.js"></script>
+<script defer src="/masterpiece-static-docs/static/js/5193.f8417e4998.js"></script>
+<script defer src="/masterpiece-static-docs/static/js/index.589265c4ef.js"></script>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="generator" content="Rspress v2.0.17">
+<meta property="og:type" content="website">
+<meta property="og:title" content="04 · 环境模拟、合成数据与人工评审 - Agentic Masterpiece">
+<meta name="description" content="一条 Recorded Trial 可以稳定复现“模型选错政策”，却无法单独回答另一类问题：用户在第三轮补充证据后，Agent 是否会改变判断？一次查询 Timeout 后，迟到的旧政策结果是否会覆盖当前状态？虚拟时钟越过政策生效边界时，结论是否随权威事实变化？完成后续行动控制后，同一环境还要继续验证 Approval 过期和退款 Commit 后 ACK 丢失。 这些问题的答案不只存在于模型输出，还存在于用户、Tool、时间和外部世界如何反应。因此，完整的 Agent Eval 不是“对一段文本打分”，而是让候选系统在可重置、可观察、可控制的环境中完成任务，再从权威状态判定结果。">
+<meta property="og:description" content="一条 Recorded Trial 可以稳定复现“模型选错政策”，却无法单独回答另一类问题：用户在第三轮补充证据后，Agent 是否会改变判断？一次查询 Timeout 后，迟到的旧政策结果是否会覆盖当前状态？虚拟时钟越过政策生效边界时，结论是否随权威事实变化？完成后续行动控制后，同一环境还要继续验证 Approval 过期和退款 Commit 后 ACK 丢失。 这些问题的答案不只存在于模型输出，还存在于用户、Tool、时间和外部世界如何反应。因此，完整的 Agent Eval 不是“对一段文本打分”，而是让候选系统在可重置、可观察、可控制的环境中完成任务，再从权威状态判定结果。"></head>
+
+  <body>
+    <div id="__rspress_root"><header class="rp-nav"><div class="rp-nav__left"><div class="rp-nav__title"><a href="/masterpiece-static-docs/" class="rp-nav__title__link rp-link"><span>Agentic Masterpiece</span></a></div></div><div class="rp-nav__right"><button class="rp-search-button"><div class="rp-search-button__content"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="none" viewBox="0 0 20 21" class="rp-search-button__icon"><path fill="currentColor" d="M8.333 1.913A6.667 6.667 0 0 1 15 8.58c0 1.54-.525 2.957-1.402 4.085l4.49 4.492a.834.834 0 0 1-1.177 1.178l-4.491-4.49a6.64 6.64 0 0 1-4.087 1.402 6.667 6.667 0 0 1 0-13.334m0 1.667a5 5 0 1 0 0 10 5 5 0 0 0 0-10"></path></svg><span class="rp-search-button__word">搜索</span></div><div class="rp-search-button__hotkey" style="opacity:0"><span></span><span>K</span></div></button><div class="rp-search-button--mobile"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="none" viewBox="0 0 20 21"><path fill="currentColor" d="M8.333 1.913A6.667 6.667 0 0 1 15 8.58c0 1.54-.525 2.957-1.402 4.085l4.49 4.492a.834.834 0 0 1-1.177 1.178l-4.491-4.49a6.64 6.64 0 0 1-4.087 1.402 6.667 6.667 0 0 1 0-13.334m0 1.667a5 5 0 1 0 0 10 5 5 0 0 0 0-10"></path></svg></div><ul class="rp-nav-menu rp-nav-menu--right"><li class="rp-nav-menu__item rp-nav-menu__item--active"><a href="/masterpiece-static-docs/" class="rp-nav-menu__item__container rp-link">全书</a></li><li class="rp-nav-menu__item"><a href="https://github.com/whatthehan/masterpiece-static-docs" target="_blank" class="rp-nav-menu__item__container rp-link">GitHub</a></li></ul><div class="rp-nav__others"><div class="rp-nav-menu__divider"></div><div class="rp-switch-appearance"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" class="rp-switch-appearance__icon rp-switch-appearance__icon--sun"><path fill="currentColor" d="m7.001 15.848-1.226 1.226a.58.58 0 0 0 0 .818.58.58 0 0 0 .818 0l1.226-1.226a.58.58 0 0 0 0-.818.58.58 0 0 0-.818 0m-.352-8.735a.584.584 0 0 0 .825-.825L6.237 5.051a.584.584 0 0 0-.825.825zM5.011 11.07h-1.75a.584.584 0 0 0 0 1.167h1.75c.324 0 .584-.26.584-.583a.585.585 0 0 0-.584-.584m7.003-5.835c.324 0 .584-.26.584-.584V2.9a.58.58 0 0 0-.584-.584.58.58 0 0 0-.583.583V4.65c0 .323.262.584.583.584m5.616 1.621 1.226-1.225a.58.58 0 0 0 0-.818.58.58 0 0 0-.818 0l-1.226 1.225a.58.58 0 0 0 0 .818.576.576 0 0 0 .818 0m3.138 4.214h-1.75a.58.58 0 0 0-.584.584c0 .324.26.584.583.584h1.751a.584.584 0 1 0 0-1.167m-3.389 5.124a.584.584 0 0 0-.825.825l1.238 1.238a.584.584 0 0 0 .825-.826zm-5.365-9.795a5.256 5.256 0 0 0-5.257 5.258 5.256 5.256 0 0 0 5.257 5.257 5.256 5.256 0 0 0 5.257-5.257 5.256 5.256 0 0 0-5.257-5.258m0 11.675a.58.58 0 0 0-.583.583v1.751a.582.582 0 1 0 1.167 0v-1.75a.584.584 0 0 0-.584-.584"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="currentColor" viewBox="0 0 19 19" class="rp-switch-appearance__icon rp-switch-appearance__icon--moon"><path fill="currentColor" d="M9.166 0a9.2 9.2 0 0 1 1.857.188.834.834 0 0 1 .042 1.623 4.47 4.47 0 1 0 5.457 5.457l.048-.135a.834.834 0 0 1 1.575.177q.186.902.188 1.856A9.168 9.168 0 1 1 9.166 0"></path></svg></div></div><button aria-label="mobile hamburger" class="rp-nav-hamburger rp-nav-hamburger__sm"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" fill="none" viewBox="0 0 21 21"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.667" d="M3.645 5.225h13.333M3.645 10.225h13.333M3.645 15.225h13.333"></path></svg></button><button aria-label="mobile hamburger" class="rp-nav-hamburger rp-nav-hamburger__md"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" fill="none" viewBox="0 0 21 21"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.667" d="M3.645 5.225h13.333M3.645 10.225h13.333M3.645 15.225h13.333"></path></svg><ul class="rp-hover-group rp-hover-group--hidden rp-hover-group--right"><div class="rp-nav-menu__others-mobile__container"><div class="rp-nav-hamburger__md__hover-group"><div class="rp-nav-screen-appearance"><div class="rp-nav-screen-appearance__left">主题</div><div class="rp-nav-screen-appearance__right"></div></div><div class="rp-nav-screen-divider"></div></div></div></ul></button></div></header><div class="rp-doc-layout__menu"><div class="rp-sidebar-menu"><button type="button" class="rp-sidebar-menu__left"><svg width="1em" height="1em" viewBox="0 0 32 32"><path fill="currentColor" d="M4 6h24v2H4zm0 18h24v2H4zm0-12h24v2H4zm0 6h24v2H4z"></path></svg><span>菜单</span></button><button type="button" class="rp-sidebar-menu__right"><span class="rp-sidebar-menu__right__text">目录</span><svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-sidebar-menu__right__icon" style="transform:rotate(0deg);transition:transform 0.2s ease-out"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></button></div></div><div class="rp-doc-layout__container"><aside class="rp-doc-layout__sidebar rp-scrollbar"><a href="/masterpiece-static-docs/" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">全书首页</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>01 导读：认识目标系统与构建路线</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/01-导读/01-如何阅读这本书" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 如何阅读这本书</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/01-导读/02-从一次Agent任务看懂系统分层" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 从一次 Agent 任务看懂系统分层</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/01-导读/03-术语与边界" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 术语与边界</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/01-导读/04-任务契约-Baseline与数据集" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 任务契约、Baseline 与数据集</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/01-导读/05-从学习到转型的完整路线" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · 从前端工程到 Agent 应用工程：贯穿项目的构建路线</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>02 数学与机器学习直觉</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/02-数学与机器学习直觉/01-概率-信息量与采样" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 概率、信息量与采样</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/02-数学与机器学习直觉/02-向量-嵌入与相似度" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 向量、Embedding 与相似度</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/02-数学与机器学习直觉/03-训练-泛化与分布偏移" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 训练、泛化与分布偏移</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>03 LLM 如何工作</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/03-LLM工作原理/01-Token与自回归生成" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Token 与自回归生成</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/03-LLM工作原理/02-Transformer-Attention与KV-Cache" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · Transformer、Attention 与 KV Cache</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/03-LLM工作原理/03-预训练-后训练与推理" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 预训练、后训练与推理</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/03-LLM工作原理/04-上下文窗口-采样与能力边界" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · Context Window、采样与能力边界</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>04 用 Eval 证明系统改进</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/04-评测与实验科学/01-Grader-Trial与统计" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Grader、Trial 与统计</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-评测与实验科学/02-结果-轨迹与Trace" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · Outcome、Trajectory 与 Trace</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-评测与实验科学/03-Eval驱动迭代" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · Eval 驱动迭代</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/04-评测与实验科学/04-环境模拟-合成数据与人工评审" class="rp-sidebar-item rp-sidebar-item--active rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 环境模拟、合成数据与人工评审</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>05 模型接口与 Agent Runtime</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/05-模型接口与Agent内核/01-TypeScript-Node运行时边界" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · TypeScript + Node：Agent Runtime 的运行时边界</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/02-指令层级-Prompt与Context" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 指令层级、Prompt 与 Context</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/03-模型API-状态与流式事件" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 模型 API、状态与流式事件</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/04-JSON-Schema基础" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · JSON Schema：把模型输出变成可检查的输入</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/05-结构化输出与工具调用" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · Structured Outputs 与 Tool Calling</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/06-Agent-Loop与状态机" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">06 · Agent Loop 与状态机</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/07-架构模式与多Agent边界" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">07 · Harness Engineering、架构模式与 Multi-Agent 边界</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/08-框架与SDK学习优先级" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">08 · 如何学习和选择 Agent SDK</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/09-Agent-Application-Server与UI事件协议" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">09 · Agent Application Server 与 UI 事件协议</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/10-AG-UI与前端事件适配" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">10 · AG-UI：把 Agent Runtime 接入产品前端</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/11-Multi-Agent协作状态与验证" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">11 · Multi-Agent：协作、状态与验证</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/12-AI-SDK与LangGraph对照实践" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">12 · 同一条 Runtime Slice：AI SDK 与 LangGraph 对照实践</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>06 Context、知识与记忆</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/06-上下文-知识与记忆/01-Context-Engineering" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Context Engineering</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/06-上下文-知识与记忆/02-来源-权限与新鲜度" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 来源、权限与新鲜度</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/06-上下文-知识与记忆/03-检索-RAG与重排" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · Retrieval、RAG 与 Reranking</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/06-上下文-知识与记忆/04-状态-记忆与压缩" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · State、Memory 与 Compaction</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>07 Tool、MCP 与行动控制</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/07-工具-协议与行动控制/01-工具契约与错误模型" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Tool Contract 与错误模型</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-工具-协议与行动控制/02-身份-授权与审批" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · Identity、Authorization 与 Approval</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-工具-协议与行动控制/03-MCP与互操作协议" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · MCP：能力发现与互操作边界</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-工具-协议与行动控制/04-幂等-补偿与沙箱" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · Idempotency、Compensation 与 Sandbox</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · A2A：跨 Agent 协作协议</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/07-工具-协议与行动控制/06-Agent-Skills与MCP扩展" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">06 · Agent Skills、动态工具发现与 MCP 扩展</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>08 安全与 Agent UX</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/08-安全与治理/01-Agent威胁建模" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 从“会调用工具”到 Agent 威胁模型</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-安全与治理/02-Prompt-Injection与不可信内容" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · Prompt Injection：当数据开始影响控制流</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-安全与治理/03-最小权限-隐私与Confused-Deputy" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 身份委派、最小权限与 Confused Deputy</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-安全与治理/04-纵深防御与人类控制" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 纵深防御与 Human-in-the-Loop</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-安全与治理/05-Agent-UX与可控交互" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · Agent UX：让界面忠实表达 Runtime</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-安全与治理/06-A2UI与声明式生成界面" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">06 · A2UI：用声明式协议生成受控界面</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/08-安全与治理/07-Agent安全评测与Red-Team" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">07 · Agent 安全评测与 Red Team</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>09 可靠性、可观测与发布</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/09-可靠性与可观测/01-失败分类-超时-重试与取消" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · Timeout 之后：Retry、Cancellation 与未知效果</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/09-可靠性与可观测/02-并发-背压与预算" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 并发、Backpressure 与任务预算</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/09-可靠性与可观测/03-持久执行-Checkpoint与Exactly-Once" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 持久执行：Checkpoint、Replay 与 Exactly-Once 边界</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/09-可靠性与可观测/04-Trace-SLO与成本" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 从一次 Run 到 Trace、SLO 与成本</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/09-可靠性与可观测/05-发布-模型依赖与生产运营" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · 发布 Agent 行为系统</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/09-可靠性与可观测/06-生产拓扑-部署与迁移验收" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">06 · 从 Runtime 到生产拓扑：部署与迁移验收</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>10 可选阅读：Rust 与跨语言边界</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/10-可选专题-Rust迁移/01-Rust迁移所需理论" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 何时把 Agent 组件迁移到 Rust</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/10-可选专题-Rust迁移/02-跨语言契约与控制面-执行面" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 跨语言契约：连接 Node 控制面与 Rust 执行面</span></div><div class="rp-sidebar-item__right"></div></a><div class="rp-sidebar-section-header"><div class="rp-sidebar-section-header__left"><span>11 总装、验收与能力迁移</span></div><div class="rp-sidebar-section-header__right"></div></div><a href="/masterpiece-static-docs/11-综合实践与作品设计/01-综合系统心智模型" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">01 · 综合系统心智模型</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/11-综合实践与作品设计/02-综合能力自测" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">02 · 综合能力自测：能否独立解释一个 Agent 系统</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/11-综合实践与作品设计/03-自测参考答案" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">03 · 自测参考答案与判断要点</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/11-综合实践与作品设计/04-八周学习与实践路径" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">04 · 八周构建路径：完成 Resolution Desk</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/11-综合实践与作品设计/05-一手资料索引" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">05 · 一手资料索引</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/11-综合实践与作品设计/06-能力与实践索引" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">06 · 能力与实践索引：把阅读转化为工程证据</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/11-综合实践与作品设计/07-Rust迁移验收清单" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">07 · Rust 迁移：采用条件与验收清单</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/11-综合实践与作品设计/08-场景专项与作品设计" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">08 · 从 Resolution Desk 迁移到其他 Agent 场景</span></div><div class="rp-sidebar-item__right"></div></a><a href="/masterpiece-static-docs/11-综合实践与作品设计/09-Resolution-Desk总装与验收" class="rp-sidebar-item rp-link" style="padding-left:12px" data-depth="0"><div class="rp-sidebar-item__left"><span class="rp-doc">09 · Resolution Desk：总装与验收</span></div><div class="rp-sidebar-item__right"></div></a></aside><div class="rp-doc-layout__doc"><main class="rp-doc-layout__doc-container"><div class="rp-doc rspress-doc"><!--$--><h1 class="rp-toc-include" id="04--环境模拟合成数据与人工评审"><a href="#04--环境模拟合成数据与人工评审" class="rp-header-anchor rp-link" aria-hidden="true">#</a>04 · 环境模拟、合成数据与人工评审<!-- --> </h1><div class="rp-not-doc rp-llms-container"><button class="rp-not-doc rp-llms-button rp-llms-copy-button"><div class="rp-llms-copy-button__icon-wrapper"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-llms-copy-button__icon-success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-llms-copy-button__icon-copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg></div><span>复制 Markdown</span></button><button class="rp-llms-button rp-llms-view-options__trigger "><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-llms-view-options__arrow "><path fill="currentColor" d="M16 22 6 12l1.4-1.4 8.6 8.6 8.6-8.6L26 12z"></path></svg></button></div>
+<p>一条 Recorded Trial 可以稳定复现“模型选错政策”，却无法单独回答另一类问题：用户在第三轮补充证据后，Agent 是否会改变判断？一次查询 Timeout 后，迟到的旧政策结果是否会覆盖当前状态？虚拟时钟越过政策生效边界时，结论是否随权威事实变化？完成后续行动控制后，同一环境还要继续验证 Approval 过期和退款 Commit 后 ACK 丢失。</p>
+<p>这些问题的答案不只存在于模型输出，还存在于用户、Tool、时间和外部世界如何反应。因此，完整的 Agent Eval 不是“对一段文本打分”，而是让候选系统在可重置、可观察、可控制的环境中完成任务，再从权威状态判定结果。</p>
+<h2 class="rp-toc-include" id="贯穿项目让-resolution-desk-进入可反应的世界"><a href="#贯穿项目让-resolution-desk-进入可反应的世界" class="rp-header-anchor rp-link" aria-hidden="true">#</a>贯穿项目：让 Resolution Desk 进入“可反应的世界”</h2>
+<p>前三章已经建立 Task、Trial、Grader、Recorded Trace 与 Eval Loop。本章不要求连接真实订单或支付系统，而是先把 Resolution Desk 的 Recorded Fixture 扩展为一个最小、有状态的只读 Evaluation Environment：</p>
+<ul>
+<li>客服用户可以在多轮中补充或拒绝补充信息；</li>
+<li>订单、政策和权限 Tool 根据当前状态返回结果；</li>
+<li>虚拟时钟控制查询超时、政策生效边界和迟到 Observation；</li>
+<li>Grader 可以读取隐藏的 Tenant、政策版本和状态转移，Agent 只能看到获准 Observation。</li>
+</ul>
+<p>学完模块 07 与 09 后，再在同一 Contract 下加入 Mock Payment Ledger，分别表达“未提交”、“已 Commit”和“ACK 丢失”。</p>
+<p>这一环境不是简化的生产替身，而是一种有明确边界的测量仪器。</p>
+<h2 class="rp-toc-include" id="1-环境也是被测系统的一部分"><a href="#1-环境也是被测系统的一部分" class="rp-header-anchor rp-link" aria-hidden="true">#</a>1. 环境也是被测系统的一部分</h2>
+<p>传统的纯函数测试可以写成 <code>output = f(input)</code>。Agent 任务更接近一段交互过程：</p>
+<div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>observation₀ → action₀ → environment transition₀</span></span>
+<span class="line"><span>             → observation₁ → action₁ → ... → outcome</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>每个 Action 都可能改变下一轮 Observation。如果 Tool 总是返回同一段 JSON，用户总是按预写脚本回复，时钟永远不前进，评测出来的只是对这些人工假设的适应程度。</p>
+<p>因此，一次 Trial 的完整版本应记录为：</p>
+<div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>candidate system version</span></span>
+<span class="line"><span>+ task and initial state</span></span>
+<span class="line"><span>+ simulator version</span></span>
+<span class="line"><span>+ fault schedule</span></span>
+<span class="line"><span>+ random seed</span></span>
+<span class="line"><span>+ graders</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>该组合中任何一项变化，都可能让两次结果不再可比。</p>
+<h2 class="rp-toc-include" id="2-environment-contract-和-simulator-contract"><a href="#2-environment-contract-和-simulator-contract" class="rp-header-anchor rp-link" aria-hidden="true">#</a>2. Environment Contract 和 Simulator Contract</h2>
+<p>评测环境契约（Environment Contract）定义 Agent 能看到什么、能做什么，以及世界如何因这些动作而变化。模拟器契约（Simulator Contract）则说明评测实现怎样可重复地履行这份契约。</p>
+<p>最小接口可以表达为：</p>
+<div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> EnvironmentSnapshot</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  taskId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  now</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  turn</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  stateVersion</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  stateHash</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">};</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">interface</span><span style="color:var(--shiki-token-function)"> EvaluationEnvironment</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-function)">Action</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-token-function)"> Observation</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-token-function)"> Outcome</span><span style="color:var(--shiki-foreground)">&gt; {</span></span>
+<span class="line"><span style="color:var(--shiki-token-function)">  reset</span><span style="color:var(--shiki-foreground)">(fixtureId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-foreground)"> seed</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">)</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> Promise</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-function)">EnvironmentSnapshot</span><span style="color:var(--shiki-foreground)">&gt;;</span></span>
+<span class="line"><span style="color:var(--shiki-token-function)">  observe</span><span style="color:var(--shiki-foreground)">()</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> Promise</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-function)">Observation</span><span style="color:var(--shiki-foreground)">&gt;;</span></span>
+<span class="line"><span style="color:var(--shiki-token-function)">  apply</span><span style="color:var(--shiki-foreground)">(action</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> Action</span><span style="color:var(--shiki-foreground)">)</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> Promise</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-function)">Observation</span><span style="color:var(--shiki-foreground)">&gt;;</span></span>
+<span class="line"><span style="color:var(--shiki-token-function)">  advanceClock</span><span style="color:var(--shiki-foreground)">(durationMs</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">)</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> Promise</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-constant)">void</span><span style="color:var(--shiki-foreground)">&gt;;</span></span>
+<span class="line"><span style="color:var(--shiki-token-function)">  snapshot</span><span style="color:var(--shiki-foreground)">()</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> Promise</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-function)">EnvironmentSnapshot</span><span style="color:var(--shiki-foreground)">&gt;;</span></span>
+<span class="line"><span style="color:var(--shiki-token-function)">  readOutcome</span><span style="color:var(--shiki-foreground)">()</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> Promise</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-function)">Outcome</span><span style="color:var(--shiki-foreground)">&gt;;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">}</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>真正重要的不是方法名，而是六条不变量：</p>
+<ol>
+<li><strong>可重置</strong>：每个 Trial 从声明的 Fixture 开始，不读取上一次残留状态。</li>
+<li><strong>状态转移明确</strong>：同一状态下的同一语义 Action 有定义好的结果集合。</li>
+<li><strong>权威状态可读</strong>：Grader 当前能直接读取 Tenant、订单、政策版本与环境状态；后续扩展后再读取退款 Ledger 和 Audit，不依赖 Agent 的自述。</li>
+<li><strong>故障可控</strong>：Timeout、ACK 丢失、延迟 Event 和权限变更来自显式 Fault Schedule，不是运气。</li>
+<li><strong>观察与内部状态分离</strong>：Agent 只获得生产中本来能看到的 Observation；Grader 才能读取隐藏真值。</li>
+<li><strong>契约版本化</strong>：Tool Schema、时间语义、错误模型和 Outcome Query 变更时，Simulator Version 也必须变更。</li>
+</ol>
+<div></div>
+<p>Agent 和 Grader 不能共用同一个无边界的读取接口。否则 Agent 可能直接查看隐藏标签、预期金额或测试名称，在没有完成任务的情况下通过评测。</p>
+<h2 class="rp-toc-include" id="3-stubmock-和-simulator-不是同一层能力"><a href="#3-stubmock-和-simulator-不是同一层能力" class="rp-header-anchor rp-link" aria-hidden="true">#</a>3. Stub、Mock 和 Simulator 不是同一层能力</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>测试替身</th><th>典型行为</th><th>适合问题</th><th>主要局限</th></tr></thead><tbody><tr><td>Stub</td><td>对固定输入返回预写结果</td><td>Adapter 能否解析一种响应</td><td>不表达状态转移</td></tr><tr><td>Mock</td><td>记录调用并验证参数、次数与顺序</td><td>某个边界是否被正确调用</td><td>容易把“调用符合预期”误当成业务成功</td></tr><tr><td>Simulator</td><td>持有领域状态，按契约执行转移</td><td>多轮交互、故障、恢复和最终 Outcome</td><td>实现成本更高，且可能与真实世界偏离</td></tr></tbody></table></div>
+<p>Resolution Desk 的 Recorded Policy Result 是 Stub 式 Fixture；检查 <code>commit_refund</code> 只调用一次是 Mock 式断言；能区分“退款已 Commit 但客户端未收到 ACK”，并在重试时返回同一 Receipt，才是 Mock Payment Simulator 的领域语义。</p>
+<h2 class="rp-toc-include" id="4-四类模拟对象"><a href="#4-四类模拟对象" class="rp-header-anchor rp-link" aria-hidden="true">#</a>4. 四类模拟对象</h2>
+<h3 class="rp-toc-include" id="41-user-simulator模拟行为不泄露答案"><a href="#41-user-simulator模拟行为不泄露答案" class="rp-header-anchor rp-link" aria-hidden="true">#</a>4.1 User Simulator：模拟行为，不泄露答案</h3>
+<p>用户模拟器（User Simulator）适合评测澄清、拒绝、长对话和交接。一个 Persona 至少包含：</p>
+<div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> SimulatedUser</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  goal</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  knownFacts</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  withheldFacts</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  disclosurePolicy</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  unacceptableRequests</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  turnBudget</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  exitConditions</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">};</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p><code>knownFacts</code> 和隐藏 Outcome 不应直接拼进 Agent Context。模拟用户只根据 Agent 的当前问题和 Disclosure Policy 回答。预写每一句对话虽然可重现，但会奖励固定话术；完全使用另一个模型又会引入新的随机性和偏见。更稳妥的次序是：先用有限状态机建立确定性 Baseline，再使用经人工校准、由模型驱动的用户模拟器补充表达多样性。</p>
+<h3 class="rp-toc-include" id="42-tool-simulator模拟语义不只模拟-http-200"><a href="#42-tool-simulator模拟语义不只模拟-http-200" class="rp-header-anchor rp-link" aria-hidden="true">#</a>4.2 Tool Simulator：模拟语义，不只模拟 HTTP 200</h3>
+<p>Tool Simulator 需要实现与生产一致的输入 Schema、授权语义、错误类型和最小状态转移。对 Resolution Desk 而言：</p>
+<ul>
+<li><code>get_order</code> 必须在 Candidate Generation 前执行 Tenant 过滤；</li>
+<li><code>get_policy</code> 需要表达版本、生效期和缺失 Metadata；</li>
+<li><code>propose_refund</code> 只产生不可变 Proposal，不产生外部效果；</li>
+<li><code>commit_refund</code> 在执行前重新读取 Authorization、Approval 和订单版本。</li>
+</ul>
+<p>本章当下只实现前两类只读 Tool；<code>propose_refund</code> 与 <code>commit_refund</code> 用来说明未来 Contract 必须保持的语义，等模块 07 建立行动控制后再接入。</p>
+<p>Tool Description 也属于契约。只替换函数实现、却使用与生产不同的 Description，会测到不同的 Tool Selection 行为。</p>
+<h3 class="rp-toc-include" id="43-clock-simulator让时间成为输入"><a href="#43-clock-simulator让时间成为输入" class="rp-header-anchor rp-link" aria-hidden="true">#</a>4.3 Clock Simulator：让时间成为输入</h3>
+<p>真实等待 30 分钟才测试审批过期，又慢又不可重现。虚拟时钟（Virtual Clock）应控制：</p>
+<ul>
+<li>Policy 和 Approval 的生效时间与截止时间；</li>
+<li>Runtime Timeout、Retry Backoff 和 Lease；</li>
+<li>延迟 Tool Result、过期 Event 和 Cancellation Race；</li>
+<li>Grader 中所有“当前时间”相关断言。</li>
+</ul>
+<p>Application Server、Simulator 和 Grader 必须使用同一个受控 Clock Port。某一层偷读系统时间，就会使边界案例产生偶发失败。</p>
+<h3 class="rp-toc-include" id="44-进阶回访external-effect-simulator-由权威-ledger-决定"><a href="#44-进阶回访external-effect-simulator-由权威-ledger-决定" class="rp-header-anchor rp-link" aria-hidden="true">#</a>4.4 进阶回访：External-effect Simulator 由权威 Ledger 决定</h3>
+<p>首次阅读只需理解 Commit 与 ACK 是两个不同事实，不在本章实现退款路径。完成 Authorization、Approval、Idempotency 与 Reconciliation 后，再按本节契约扩展 Simulator。</p>
+<p>Mock Payment 至少要保存：</p>
+<div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> RefundLedgerEntry</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  intentId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  idempotencyKey</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  orderId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  amountMinor</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  effect</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &#x27;not_committed&#x27;</span><span style="color:var(--shiki-token-keyword)"> |</span><span style="color:var(--shiki-token-string-expression)"> &#x27;committed&#x27;</span><span style="color:var(--shiki-token-keyword)"> |</span><span style="color:var(--shiki-token-string-expression)"> &#x27;rejected&#x27;</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  receiptId</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  committedAt</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">};</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>故障计划可以在 Commit 之前拒绝请求，也可以在 Commit 之后丢弃 ACK。两者在客户端都可能表现为 Timeout，但权威 Outcome 完全不同。重试相同 Intent 时，模拟器必须按稳定 Idempotency Key 返回既有 Receipt，而不是创建第二笔退款。</p>
+<h2 class="rp-toc-include" id="5-状态化多轮-eval"><a href="#5-状态化多轮-eval" class="rp-header-anchor rp-link" aria-hidden="true">#</a>5. 状态化多轮 Eval</h2>
+<p>多轮 Eval 不是将几段对话串联起来，而是让每一轮都依赖当前权威状态。下图展示 Resolution Desk 最终环境的完整状态空间；当前只读实践走到 <code>Ready</code>、<code>Proposed</code> 或 <code>Escalated</code>，Approval 与外部效果分支留待模块 07 与 09 后回访：</p>
+<div></div>
+<p>一个 Task 应同时声明：</p>
+<ul>
+<li>初始领域状态与 Agent 可见输入；</li>
+<li>隐藏用户事实及其披露条件；</li>
+<li>可用 Tool、权限和外部效果范围；</li>
+<li>虚拟时间与 Fault Schedule；</li>
+<li>终止条件、Turn/Token/Tool Budget；</li>
+<li>权威 Outcome 和 Trajectory 不变量。</li>
+</ul>
+<p>评测不应强制 Agent 说出某一句固定话术。例如，“缺少损坏照片时必须先请求必要证据，不得提交退款”是行为不变量；“第二句必须包含‘请上传照片’”则可能是过度拟合表面形式。</p>
+<h2 class="rp-toc-include" id="6-合成数据不等于真实分布"><a href="#6-合成数据不等于真实分布" class="rp-header-anchor rp-link" aria-hidden="true">#</a>6. 合成数据不等于真实分布</h2>
+<p>合成数据（Synthetic Data）适合扩展组合边界：日期前后一天、金额上限两侧、缺失字段、权限变体、多语言表达和故障顺序。它不能自动证明这些案例在真实业务中的发生率。</p>
+<p>可靠的生成流程是：</p>
+<ol>
+<li>从产品契约、脱敏事故、人工访谈或专家列举中提取风险维度；</li>
+<li>用约束或模型生成 Candidate，保留生成方法和 Seed；</li>
+<li>程序化检查领域不变量，例如金额、日期和 Tenant 是否自洽；</li>
+<li>由领域专家确认可解性、预期结果和严重等级；</li>
+<li>将已确认案例分配到 Development、Regression 或 Holdout，不让 Holdout 进入日常 Prompt 调整。</li>
+</ol>
+<p>每个案例都应保留 <code>source_kind</code>，至少区分 <code>production_derived</code>、<code>expert_authored</code>、<code>synthetic_mutation</code> 和 <code>adversarial</code>。报告需分开这些 Slice，不能用一万条低成本合成样本稀释数十条高信息量的真实失败。</p>
+<p>合成任务还可能无意泄露答案，例如文件名含 <code>expected_refuse</code>，Tool Result 带有 <code>gold_label</code>，或攻击案例具有不自然的统一措辞。这些特征必须在练习系统之外进行检查。</p>
+<h2 class="rp-toc-include" id="7-simulator-fidelity忠实于需要验证的语义"><a href="#7-simulator-fidelity忠实于需要验证的语义" class="rp-header-anchor rp-link" aria-hidden="true">#</a>7. Simulator Fidelity：忠实于需要验证的语义</h2>
+<p>模拟器保真度（Simulator Fidelity）不是 UI 像不像生产，而是与当前结论相关的契约是否一致。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>维度</th><th>Resolution Desk 需要对齐的内容</th><th>偏离后的典型误判</th></tr></thead><tbody><tr><td>Semantic</td><td>订单、政策、Proposal、Approval、Refund Outcome 语义</td><td>把接受请求误判为退款完成</td></tr><tr><td>Authorization</td><td>actor、tenant、resource、purpose 和二次授权</td><td>测试通过，生产却发生 Confused Deputy</td></tr><tr><td>Temporal</td><td>TTL、Timeout、Backoff、Lease 和 Event 顺序</td><td>审批过期或竞态永远测不到</td></tr><tr><td>Failure</td><td>拒绝、限流、Commit 前失败、Commit 后 ACK 丢失</td><td>所有 Timeout 都被当成无外部效果</td></tr><tr><td>Protocol</td><td>Tool Schema、Error Shape、Idempotency 和版本兼容</td><td>Adapter 在真实响应上解析失败</td></tr><tr><td>Distribution</td><td>用户目标、信息缺失、表达和攻击比例</td><td>测试总在简洁、合作的用户上高分</td></tr></tbody></table></div>
+<p>不需要一开始就复刻整个生产系统。对“日期边界判定”而言，时间与 Policy 语义必须高保真，UI 像素级还原则无关。对“重连后审批界面是否误导”而言，Public State 与交互时序又成为关键语义。</p>
+<p>可以通过三类证据检查保真度：</p>
+<ul>
+<li><strong>Contract Test</strong>：生产 Adapter 和 Simulator 运行同一组输入、错误与边界案例；</li>
+<li><strong>Recorded Differential</strong>：对脱敏的生产或 Sandbox 响应做语义差异比较，不要只比字节；</li>
+<li><strong>Calibration Run</strong>：定期在受控 Sandbox 中运行少量任务，检查 Simulator 与目标环境的失败类型和排序是否一致。</li>
+</ul>
+<h2 class="rp-toc-include" id="8-reward-gaming-和-grader-gaming"><a href="#8-reward-gaming-和-grader-gaming" class="rp-header-anchor rp-link" aria-hidden="true">#</a>8. Reward Gaming 和 Grader Gaming</h2>
+<p>当一个指标变成优化目标，系统会倾向寻找得分的最短路径。奖励投机（Reward Gaming）指系统提高了形式上的 Reward，却没有完成真实目标；评分器投机（Grader Gaming）是其中直接针对判定漏洞的情形。</p>
+<p>Resolution Desk 中的典型例子包括：</p>
+<ul>
+<li>Grader 只查最终文本是否有“已退款”，Agent 直接声明成功；</li>
+<li>Tool Mock 只计数调用，Agent 传入无效金额也能得分；</li>
+<li>Fixture 文件名泄露预期行为，Agent 不查政策便选择答案；</li>
+<li>评测只有攻击样本，候选系统拒绝所有请求而获得高安全分；</li>
+<li>Multi-Agent 系统让多个 Worker 重复猜测，用高得多的 Token 换取 pass@k，却没比较等预算的基线。</li>
+</ul>
+<p>对策不是把所有 Grader 都隐藏起来，而是让“通过”必须依赖真正完成任务：</p>
+<ul>
+<li>从权威 Ledger 读取 Outcome，同时检查 Trajectory 不变量；</li>
+<li>为每个风险案例增加 Benign Counterpart 和 Nearby Variant；</li>
+<li>将开发集与 Holdout 分开，避免直接向候选系统暴露隐藏状态；</li>
+<li>定期阅读高分和低分 Trial 的 Trace，特别检查意外捷径；</li>
+<li>将 Token、Tool Call、Latency 和 Fan-out 纳入等预算对比。</li>
+</ul>
+<h2 class="rp-toc-include" id="9-人工标注与分歧裁决"><a href="#9-人工标注与分歧裁决" class="rp-header-anchor rp-link" aria-hidden="true">#</a>9. 人工标注与分歧裁决</h2>
+<p>客观业务状态优先用程序 Grader。“澄清问题是否充分又不冗余”、“拒绝解释是否让客服能够继续处理”等维度，则需要人工评审（Human Review）。</p>
+<p>一份可用的标注协议至少包含：</p>
+<ol>
+<li>单一、可观察的评价维度；</li>
+<li><code>pass</code> / <code>fail</code> / <code>unknown</code> / <code>not_applicable</code> 的定义；</li>
+<li>每个等级的正反示例和边界示例；</li>
+<li>标注者可以看到的 Trace 与 Outcome 范围；</li>
+<li>不确定时的升级条件，以及所需领域专家资格；</li>
+<li>Rubric 和标注数据版本。</li>
+</ol>
+<p>高影响或主观维度宜由两名标注者独立判定，先记录分歧，再由第三人或领域负责人按 Rubric 裁决。裁决不应覆盖原始标签；分歧本身可能表明 Task 模糊、证据不足或 Rubric 无法区分相邻等级。</p>
+<p>报告至少保留原始一致率和分歧混淆项；样本量足够时，再结合适合标签类型的一致性统计。只报裁决后“100% 一致”会删除最有价值的评测设计信号。</p>
+<p>LLM Judge 可以学习人工 Rubric 并处理大量低风险样本，但只有在独立人工集上报告一致性、False Positive 和 False Negative 后，才能进入持续评测。</p>
+<h2 class="rp-toc-include" id="10-进阶回访multi-agent-的-credit-assignment"><a href="#10-进阶回访multi-agent-的-credit-assignment" class="rp-header-anchor rp-link" aria-hidden="true">#</a>10. 进阶回访：Multi-Agent 的 Credit Assignment</h2>
+<p>首次阅读可以跳过本节。完成 <a href="/masterpiece-static-docs/05-模型接口与Agent内核/11-Multi-Agent协作状态与验证" class="rp-link">Multi-Agent：协作、状态与验证</a>，理解 Parent/Child Run、Artifact 与 Join 后，再回来讨论贡献归因。</p>
+<p>当一次 Run 包含 Coordinator、Policy Evidence Agent 和 Case Evidence Agent 时，最终 Outcome 属于整个系统。贡献归因（Credit Assignment）试图回答：成功或失败主要由哪个交互和控制点造成？</p>
+<p>这不能靠“最后说话的 Agent”来判定。一个 Worker 可能提供了正确证据，Coordinator 在 Join 时丢失了版本；也可能两个 Worker 都给出有限结论，冲突检测器却错误合并。</p>
+<p>初步评测应保留三层证据：</p>
+<ul>
+<li><strong>System Outcome</strong>：任务是否成功，安全不变量是否始终成立；</li>
+<li><strong>Boundary Checks</strong>：委派范围、Artifact Schema、来源、Join、冲突检测、Cancel 传播是否正确；</li>
+<li><strong>Component Diagnostics</strong>：每个 Agent 获得了什么 Context，返回了什么 Artifact，使用了多少预算。</li>
+</ul>
+<p>反事实测试可以辅助定位：在保持 Task 和总预算可比的条件下，移除某个 Worker、替换其 Artifact 或使用已录制 Artifact 重放 Join。但这些是根因诊断，不是严格的单 Agent 因果得分。多 Agent 共享 Context、模型和环境时，错误往往高度相关。</p>
+<h2 class="rp-toc-include" id="11-实践为-resolution-desk-建立最小模拟环境"><a href="#11-实践为-resolution-desk-建立最小模拟环境" class="rp-header-anchor rp-link" aria-hidden="true">#</a>11. 实践：为 Resolution Desk 建立最小模拟环境</h2>
+<h3 class="rp-toc-include" id="进入本章时已有能力"><a href="#进入本章时已有能力" class="rp-header-anchor rp-link" aria-hidden="true">#</a>进入本章时已有能力</h3>
+<p>现有证据包含 Task Contract、Recorded Policy/Order Fixture、Recorded Trace 与 Outcome Grader；外部效果目前只有一份纸面 Mock Payment Contract，尚无退款 Executor。</p>
+<h3 class="rp-toc-include" id="本章当下增加的能力"><a href="#本章当下增加的能力" class="rp-header-anchor rp-link" aria-hidden="true">#</a>本章当下增加的能力</h3>
+<p>第 04 部分尚未建立 Approval、退款 Command 与持久恢复，因此当前实践只完成可读、可重置的环境切片：</p>
+<ol>
+<li>为 Environment 定义 <code>reset</code>、<code>observe</code>、<code>apply</code>、<code>advanceClock</code>、<code>snapshot</code> 和 <code>readOutcome</code> 语义。</li>
+<li>准备三个初始 Fixture：政策结论明确、缺少必要证据、其他 Tenant 的高相似订单。</li>
+<li>实现确定性 User Simulator：先由录制的 Action Sequence 驱动；只有收到询问必要事实的 Action 时才补充损坏日期或证据，第三次无效澄清后请求人工接管。</li>
+<li>让 Policy 和 Order Tool 根据当前 Fixture 返回版本化 Observation，不使用同一个固定 JSON 覆盖所有 Task。</li>
+<li>用 Virtual Clock 控制只读 Tool Timeout、政策生效边界和延迟 Observation，不接入退款 Executor。</li>
+<li>注入三种只读 Fault Schedule：Model Stream 截断、查询 Timeout、旧版本 Tool Result 迟到。</li>
+<li>为每个风险案例添加 Benign Counterpart，并保留 <code>source_kind</code>、Simulator Version、Seed 和 Fault Schedule。</li>
+<li>为“澄清是否充分”写一页 Rubric，由两名评审者独立标注 10 条 Trace，保留原始分歧与裁决理由。</li>
+</ol>
+<h3 class="rp-toc-include" id="必须产出的验收证据"><a href="#必须产出的验收证据" class="rp-header-anchor rp-link" aria-hidden="true">#</a>必须产出的验收证据</h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>证据</th><th>最低验收条件</th></tr></thead><tbody><tr><td>Environment Contract</td><td>说明 Agent Observation、Grader-only State、Action、Clock 和 Outcome Query</td></tr><tr><td>Reset Test</td><td>两次相同 Fixture + Seed 的初始 Snapshot Hash 一致，且不受前一 Trial 影响</td></tr><tr><td>State-transition Test</td><td>非法状态转移被拒绝，合法转移产生新 <code>stateVersion</code></td></tr><tr><td>Read-only Fault Test</td><td>截断 Stream 不产生完整 Item；Timeout 与迟到 Observation 具有明确分类和顺序</td></tr><tr><td>Clock Test</td><td>不使用真实等待即可验证政策生效边界、Timeout 和延迟 Event</td></tr><tr><td>Dataset Manifest</td><td>每个 Task 有来源类型、风险 Slice、预期 Outcome、Simulator Version 和审核状态</td></tr><tr><td>Human Review Report</td><td>保留 Rubric、原始标签、一致率、分歧类型和裁决理由</td></tr><tr><td>Gaming Check</td><td>去除文件名、顺序和表面措辞线索后，关键结论仍成立</td></tr></tbody></table></div>
+<p>验收时同时保存至少一条失败 Trial。一个只能展示 Happy Path 的 Simulator，无法证明故障语义和 Grader 确实有效。</p>
+<h3 class="rp-toc-include" id="八周路径第-3-周接入-live-tool-loop"><a href="#八周路径第-3-周接入-live-tool-loop" class="rp-header-anchor rp-link" aria-hidden="true">#</a>八周路径第 3 周接入 Live Tool Loop</h3>
+<p>本章建立 Environment Contract 时还没有 Agent Runtime，因此 <code>apply(action)</code> 先接收脚本中的 Typed Action。进入八周路径第 3 周、完成有界 Tool Loop 后，再把同一个端口接到 Candidate Agent：Runtime 产生 Action，Environment 执行状态转移并返回下一轮 Observation，Grader 仍只读取隐藏的权威状态。</p>
+<p>这一步不需要重写 Simulator。先运行脚本路径，确认 Fixture 在预期 Action 下能够到达 Gold Outcome；再运行 Live Tool Loop，比较 Agent Trace 是否遵守同一组状态转移、预算和终止条件。若两条路径得出不同领域结果，优先检查 Runtime Action Adapter，而不是修改 Gold Label 迁就模型输出。</p>
+<h3 class="rp-toc-include" id="完成模块-07-与-09-后的回访"><a href="#完成模块-07-与-09-后的回访" class="rp-header-anchor rp-link" aria-hidden="true">#</a>完成模块 07 与 09 后的回访</h3>
+<p>学完 Approval、Idempotency、Receipt、Checkpoint 与 Reconciliation 后，再扩展同一个 Environment：让 Mock Payment 按稳定 Intent 和 Idempotency Key 保存权威 Ledger，并注入 Commit 前 Timeout、Commit 后 ACK 丢失、Approval 过期后迟到 Command。回访验收要求 Ledger 只有一笔 Commit，恢复路径查询原 Intent 并返回同一 Receipt。</p>
+<p>这部分用于验证后续可靠性语义，不属于第 04 部分或八周路径第 3 周的实现前置。</p>
+<h2 class="rp-toc-include" id="常见误区"><a href="#常见误区" class="rp-header-anchor rp-link" aria-hidden="true">#</a>常见误区</h2>
+<ul>
+<li>Recorded Response 足够评测所有多轮 Agent 行为。</li>
+<li>Simulator 越像生产越好，与当前结论无关的细节也要复制。</li>
+<li>只要设置了随机 Seed，多轮 Trial 就完全可重现。</li>
+<li>合成数据数量大，就能代表生产分布。</li>
+<li>人工标注者有分歧，说明应更换其中一人。</li>
+<li>Mock 验证 Tool 被调用，就等于权威 Outcome 正确。</li>
+<li>Multi-Agent 最终成功，就可以把功劳归给 Coordinator 或最后一个 Worker。</li>
+<li>Eval 分数上升就不需要阅读 Trace 和检查意外捷径。</li>
+</ul>
+<h2 class="rp-toc-include" id="章末检查"><a href="#章末检查" class="rp-header-anchor rp-link" aria-hidden="true">#</a>章末检查</h2>
+<ol>
+<li>Environment Contract 与 Simulator Contract 分别约束什么？</li>
+<li>为什么 Commit 后 ACK 丢失不能用固定 Timeout Stub 充分评测？</li>
+<li>合成数据适合补齐什么，不能证明什么？</li>
+<li>怎样判断 Simulator Fidelity 是否足以支持某个具体结论？</li>
+<li>人工标注分歧为什么应被保留而不是覆盖？</li>
+<li>Multi-Agent 评测中，为什么系统 Outcome 与组件诊断不能合并为一个分数？</li>
+</ol>
+<h2 class="rp-toc-include" id="一手资料"><a href="#一手资料" class="rp-header-anchor rp-link" aria-hidden="true">#</a>一手资料</h2>
+<ul>
+<li><a href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents" target="_blank" rel="noopener noreferrer" class="rp-link">Anthropic — Demystifying evals for AI agents</a></li>
+<li><a href="https://developers.openai.com/api/docs/guides/evaluation-best-practices" target="_blank" rel="noopener noreferrer" class="rp-link">OpenAI — Evaluation best practices</a></li>
+<li><a href="https://doi.org/10.6028/NIST.AI.600-1" target="_blank" rel="noopener noreferrer" class="rp-link">NIST — AI RMF Generative AI Profile</a></li>
+<li><a href="https://arxiv.org/abs/2406.12045" target="_blank" rel="noopener noreferrer" class="rp-link">τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains</a></li>
+<li><a href="https://arxiv.org/abs/2503.13657" target="_blank" rel="noopener noreferrer" class="rp-link">Why Do Multi-Agent LLM Systems Fail?</a></li>
+</ul>
+<blockquote>
+<p>资料与链接核验日期：2026-07-15。Anthropic 的当前指南强调干净环境、权威 Outcome 和人工校准；OpenAI 的当前指南强调人工反馈校准、多来源数据与持续评测。产品 API 和工具名称可能变化，本章只依赖其评测方法。</p>
+</blockquote>
+<h2 class="rp-toc-include" id="本章小结"><a href="#本章小结" class="rp-header-anchor rp-link" aria-hidden="true">#</a>本章小结</h2>
+<p>可信的 Agent Eval 需要一个会因动作而变化的世界。Environment Contract 定义世界的语义，Simulator 使其可重置、可观察和可故障注入；合成数据扩展已知边界，人工评审校准主观标准，Trace 则帮助发现 Reward 与 Grader Gaming。完成这一层后，后续 Runtime、Tool 和多 Agent 实现都能进入同一套可比对的试验环境。</p>
+<p><a href="/masterpiece-static-docs/04-评测与实验科学/03-Eval驱动迭代" class="rp-link">上一章：Eval 驱动迭代</a> · <a href="/masterpiece-static-docs/05-模型接口与Agent内核/01-TypeScript-Node运行时边界" class="rp-link">下一部分：TypeScript + Node.js 运行时边界</a></p><!--/$--></div><footer class="rp-doc-footer"><div class="rp-doc-footer__edit"><div class="rp-last-updated"><p>最后更新于<!-- -->: <span>2026/7/16 00:39:00</span></p></div></div><div class="rp-doc-footer__divider"></div><div class="rp-prev-next-page"><a href="/masterpiece-static-docs/04-评测与实验科学/03-Eval驱动迭代" class="rp-prev-next-page__item rp-prev-next-page__prev rp-link"><span class="rp-prev-next-page__item__desc">上一页</span><span class="rp-prev-next-page__item__title"><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon rp-prev-next-page__rotate_180"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg><span>03 · Eval 驱动迭代</span></span></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/01-TypeScript-Node运行时边界" class="rp-prev-next-page__item rp-prev-next-page__next rp-link"><span class="rp-prev-next-page__item__desc">下一页</span><span class="rp-prev-next-page__item__title"><span>01 · TypeScript + Node：Agent Runtime 的运行时边界</span><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></span></a></div></footer></main></div><aside class="rp-doc-layout__outline rp-scrollbar"><div class="rp-outline"><div class="rp-outline__title">目录<svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg></div><nav class="rp-outline__toc rp-scrollbar"><a href="#贯穿项目让-resolution-desk-进入可反应的世界" class="rp-toc-item rp-link" title="贯穿项目：让 Resolution Desk 进入“可反应的世界”" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">贯穿项目：让 Resolution Desk 进入“可反应的世界”</span></a><a href="#1-环境也是被测系统的一部分" class="rp-toc-item rp-link" title="1. 环境也是被测系统的一部分" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">1. 环境也是被测系统的一部分</span></a><a href="#2-environment-contract-和-simulator-contract" class="rp-toc-item rp-link" title="2. Environment Contract 和 Simulator Contract" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">2. Environment Contract 和 Simulator Contract</span></a><a href="#3-stubmock-和-simulator-不是同一层能力" class="rp-toc-item rp-link" title="3. Stub、Mock 和 Simulator 不是同一层能力" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">3. Stub、Mock 和 Simulator 不是同一层能力</span></a><a href="#4-四类模拟对象" class="rp-toc-item rp-link" title="4. 四类模拟对象" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">4. 四类模拟对象</span></a><a href="#41-user-simulator模拟行为不泄露答案" class="rp-toc-item rp-link" title="4.1 User Simulator：模拟行为，不泄露答案" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.1 User Simulator：模拟行为，不泄露答案</span></a><a href="#42-tool-simulator模拟语义不只模拟-http-200" class="rp-toc-item rp-link" title="4.2 Tool Simulator：模拟语义，不只模拟 HTTP 200" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.2 Tool Simulator：模拟语义，不只模拟 HTTP 200</span></a><a href="#43-clock-simulator让时间成为输入" class="rp-toc-item rp-link" title="4.3 Clock Simulator：让时间成为输入" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.3 Clock Simulator：让时间成为输入</span></a><a href="#44-进阶回访external-effect-simulator-由权威-ledger-决定" class="rp-toc-item rp-link" title="4.4 进阶回访：External-effect Simulator 由权威 Ledger 决定" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.4 进阶回访：External-effect Simulator 由权威 Ledger 决定</span></a><a href="#5-状态化多轮-eval" class="rp-toc-item rp-link" title="5. 状态化多轮 Eval" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">5. 状态化多轮 Eval</span></a><a href="#6-合成数据不等于真实分布" class="rp-toc-item rp-link" title="6. 合成数据不等于真实分布" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">6. 合成数据不等于真实分布</span></a><a href="#7-simulator-fidelity忠实于需要验证的语义" class="rp-toc-item rp-link" title="7. Simulator Fidelity：忠实于需要验证的语义" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">7. Simulator Fidelity：忠实于需要验证的语义</span></a><a href="#8-reward-gaming-和-grader-gaming" class="rp-toc-item rp-link" title="8. Reward Gaming 和 Grader Gaming" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">8. Reward Gaming 和 Grader Gaming</span></a><a href="#9-人工标注与分歧裁决" class="rp-toc-item rp-link" title="9. 人工标注与分歧裁决" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">9. 人工标注与分歧裁决</span></a><a href="#10-进阶回访multi-agent-的-credit-assignment" class="rp-toc-item rp-link" title="10. 进阶回访：Multi-Agent 的 Credit Assignment" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">10. 进阶回访：Multi-Agent 的 Credit Assignment</span></a><a href="#11-实践为-resolution-desk-建立最小模拟环境" class="rp-toc-item rp-link" title="11. 实践：为 Resolution Desk 建立最小模拟环境" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">11. 实践：为 Resolution Desk 建立最小模拟环境</span></a><a href="#进入本章时已有能力" class="rp-toc-item rp-link" title="进入本章时已有能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">进入本章时已有能力</span></a><a href="#本章当下增加的能力" class="rp-toc-item rp-link" title="本章当下增加的能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">本章当下增加的能力</span></a><a href="#必须产出的验收证据" class="rp-toc-item rp-link" title="必须产出的验收证据" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">必须产出的验收证据</span></a><a href="#八周路径第-3-周接入-live-tool-loop" class="rp-toc-item rp-link" title="八周路径第 3 周接入 Live Tool Loop" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">八周路径第 3 周接入 Live Tool Loop</span></a><a href="#完成模块-07-与-09-后的回访" class="rp-toc-item rp-link" title="完成模块 07 与 09 后的回访" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">完成模块 07 与 09 后的回访</span></a><a href="#常见误区" class="rp-toc-item rp-link" title="常见误区" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">常见误区</span></a><a href="#章末检查" class="rp-toc-item rp-link" title="章末检查" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">章末检查</span></a><a href="#一手资料" class="rp-toc-item rp-link" title="一手资料" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">一手资料</span></a><a href="#本章小结" class="rp-toc-item rp-link" title="本章小结" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章小结</span></a></nav><div class="rp-outline__divider"></div><div class="rp-outline__bottom"></div></div></aside></div></div>
+    <div id="__rspress_modal_container"></div>
+  </body>
+</html>

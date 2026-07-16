@@ -265,16 +265,24 @@ flowchart LR
 
 只有明确可重试的瞬时错误才应重试。Schema 错误、权限拒绝和协议不兼容不会因为指数退避自动恢复；Tool Command 超时还可能意味着副作用已经发生，必须先查询回执。
 
-## 实践：从事件 fixture 重建一次响应
+## 实践：从模型流重建一次退款资格判断
 
-不连接真实模型，先准备类型化 fixture：
+### 进入本章时已有能力
+
+Resolution Desk 已能组织 Prompt、Context 与只读工具边界，但仍把模型响应近似看成一个最终字符串。
+
+### 本章增加的能力
+
+不连接真实模型，先为同一条退款资格判断准备类型化 Event Fixture：
 
 1. 文本由三个 delta 组成并正常关闭。
 2. Tool Call 参数跨四个 delta，在第三个 delta 后断流。
 3. 同一完成 event 被重放两次。
 4. response 标记 completed，但应用仍在等待审批。
 
-实现 Provider Adapter，并验证：
+实现 Provider Adapter，使 Provider Event 先闭合为 Item，再投影为 Resolution Desk 的内部事件。
+
+### 验收证据
 
 - 正常文本只生成一个 completed item；
 - 未闭合 Tool Call 永远不会产生 `tool.proposed`；

@@ -176,6 +176,8 @@ MCP 不是：
 
 如果远端对象拥有自己的 Runtime、Task 生命周期和 Artifact，需要在不暴露其内部 Tool / Memory 的情况下协作，它已经不是普通 MCP Tool。完成本模块的可靠行动基础后，再评估 [A2A 跨 Agent 协作协议](/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议.md)。
 
+当核心 Tool、Resource 与授权边界稳定后，还可以按需引入 [Agent Skills、动态工具发现与 MCP 扩展](/masterpiece-static-docs/07-工具-协议与行动控制/06-Agent-Skills与MCP扩展.md)：它们分别补充可复用工作方法、大规模 Tool Catalog、内嵌 View、长时协议操作和特定身份接入，不会改变 Host 对业务授权与副作用的责任。
+
 ## 10. Host 的安全检查表
 
 - 固定并验证 Server 来源、版本和 digest。
@@ -189,18 +191,28 @@ MCP 不是：
 - 记录协议版本、capabilities、actor、decision 和 Trace。
 - 对本地进程设置 filesystem、network、credential 与 resource isolation。
 
-## 实践：实现一个最小但受控的 MCP 接入
+## 实践：通过 MCP 接入订单、物流与政策
 
-建立一个日历或知识查询场景：
+### 进入本章时已有能力
 
-1. 一个 Server 提供只读 Resource 和 query Tool。
-2. 另一个 Server 提供需要 Approval 的 Command Tool。
+Resolution Desk 已有稳定 Tool Contract、资源级 Authorization 和不可变 Approval，但订单、物流和政策能力仍以应用内 TypeScript 函数注册。
+
+### 本章增加的能力
+
+建立两个最小 MCP Server：
+
+1. Commerce Server 提供 `get_order` 与 `get_shipment` 只读 Query Tool。
+2. Policy Server 提供版本化退款政策 Resource 与只读检索 Tool。
 3. 手工推演 `initialize → tools/list → tools/call`。
 4. 为 Server Schema 变化、Timeout、重复响应和 Cancellation 准备 Fixtures。
 5. 验证 Resource 内容中的恶意指令不能扩大 Tool 权限。
 6. 验证 Server A 的敏感结果不会自动进入 Server B 的请求。
 
-实现完成后应能指出：协议协商、身份认证、业务授权、用户审批和真实副作用分别发生在哪一层。
+`commit_refund` 继续留在 Resolution Desk 的受控 Executor 中，不因为 MCP 接入而下放业务授权或付款凭证。
+
+### 验收证据
+
+Contract Fixture 覆盖 Server Schema 变化、Timeout、重复响应和 Cancellation。恶意政策 Resource 不能扩大 Tool 权限，Commerce Server 的敏感结果不会自动进入 Policy Server 请求；关闭任一 Server 时，Run 进入明确的部分结果或失败状态。实现完成后能够指出协议协商、身份认证、业务授权、用户审批和真实副作用分别发生在哪一层。
 
 ## 常见误区
 

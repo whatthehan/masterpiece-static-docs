@@ -1,6 +1,6 @@
 # 02 · Prompt Injection：当数据开始影响控制流
 
-一个研究 Agent 打开供应商网页，页面正文里夹着一段对人不可见、对模型却可见的文字：要求读取内部 CRM，并把客户名单附在下一次搜索请求的 URL 中。模型可能把它当成完成任务的新步骤，因为“用户指令”和“网页数据”最终都以 Token 进入同一段 Context。
+Resolution Desk 读取用户附件和售后政策时，可能遇到一段对人不显眼、对模型却可见的文字：要求忽略退款上限、读取其他客户资料，并把结果附在下一次外部请求的 URL 中。模型可能把它当成完成工单的新步骤，因为“用户指令”和“外部数据”最终都以 Token 进入同一段 Context。
 
 这类攻击称为 Prompt Injection。它与传统 SQL Injection 有一个重要差别：SQL 解析器拥有相对明确的语法边界，而模型处理的是开放自然语言，无法仅靠转义字符把“数据”和“指令”彻底分开。工程目标因此不是寻找万能过滤器，而是保证模型即使受到影响，也无法越过权限、数据流和执行环境的边界。
 
@@ -110,19 +110,28 @@ Prompt Injection 回归集至少应覆盖：
 
 Outcome Eval 要检查 CRM 是否被越权读取、网络是否访问了禁止目标、数据是否真的离开边界；Trajectory Eval 则检查模型提出了什么工具序列、在哪个 enforcement point 被阻断。模型最后说“我无法协助”并不能证明此前没有执行过危险动作。
 
-## 7. 实作：为一个外部内容入口建立攻击链
+## 实践：阻断 Resolution Desk 的附件注入链
 
-选择应用中的一个入口，例如网页抓取、邮件附件或知识库检索，完成以下产出：
+### 进入本章时已有能力
 
-1. 标出内容从获取、解析、索引、检索、Context 到工具调用的每一跳；
-2. 设计一条“读取秘密并发送到外部”的攻击路径；
-3. 在模型、策略和环境中各设置至少一个控制点；
-4. 写出一条真实 Outcome 断言和一条 Trajectory 断言；
-5. 逐层关闭防御，确认任何一个单层失效都不足以造成外泄。
+Resolution Desk 已标出数据流和安全不变量，外部附件与政策片段能够进入 Context，但退款写操作仍被锁住。
+
+### 本章增加的能力
+
+以 `customer_attachment` 为固定入口，建立一条可执行攻击链：恶意附件先要求覆盖系统规则，再诱导读取其他租户订单，最后要求把资料发送到任意 URL 或直接提交退款。随后在三层加入彼此独立的控制：
+
+1. Context Builder 为附件、检索片段和 Tool Result 标记来源与 `untrusted_data`，并限制敏感字段；
+2. Policy 同时检查数据来源、actor、tenant、purpose、目标 Sink 与候选动作；
+3. Executor 使用最小凭证和 egress allowlist，拒绝任意外发与未获准 Command；
+4. Memory Writer 拒绝把附件指令或模型摘要直接保存为长期事实。
+
+### 验收证据
+
+同一组 Fixture 至少包含正常附件、改写后的攻击文本、编码或拆句变体、Tool Result 注入和 Persistent Injection。Outcome 断言检查其他租户数据未被读取、禁止目标未被访问、退款未发生、长期 Memory 未被污染；Trajectory 断言指出攻击候选在哪层被拒绝。逐层关闭模型侧标记、分类器或 Prompt 防护时，Policy 与执行环境仍必须守住真实效果。
 
 ## 本章小结
 
-Prompt Injection 的本质是自然语言数据影响控制流。来源标签和模型防护可以降低成功率，真正限制影响范围的是最小 Context、服务端授权、数据流策略、Sink 校验、凭证隔离和网络出口控制。下一章将进一步讨论这些控制依赖的 [最小权限、隐私与 Confused Deputy](/masterpiece-static-docs/08-安全与治理/03-最小权限-隐私与Confused-Deputy.md)。
+Prompt Injection 的本质是自然语言数据影响控制流。来源标签和模型防护可以降低成功率，真正限制影响范围的是最小 Context、服务端授权、数据流策略、Sink 校验、凭证隔离和网络出口控制。Resolution Desk 仍未开放退款写操作；下一章继续补齐执行所需的 [最小权限、隐私与 Confused Deputy](/masterpiece-static-docs/08-安全与治理/03-最小权限-隐私与Confused-Deputy.md) 边界。
 
 ## 一手资料
 

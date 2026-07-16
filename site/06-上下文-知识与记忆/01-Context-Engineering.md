@@ -1,6 +1,6 @@
 # 01 · Context Engineering
 
-Coding Agent 很少把整个仓库一次性塞进模型窗口。它通常先搜索文件，读取少量相关片段，按需加载 Skill；任务变长后，再把已经完成的过程压缩或外置为工件。这个行为揭示了 Context Engineering 的核心：模型能力不仅取决于“窗口能装多少”，还取决于每一轮选择了什么、遗漏了什么、哪些内容已经过期。
+Resolution Desk 不应把整张订单表、全部政策、完整聊天历史和所有工具一次性塞进模型窗口。判断退款资格时需要当前订单与有效政策；等待审批时需要冻结的 Proposal、资源版本与审批期限。Context Engineering 的核心不是“窗口能装多少”，而是每一轮选择了什么、遗漏了什么、哪些内容已经过期。Claude Code 或 Codex 按需搜索文件和外置长任务工件，可以作为这种选择机制的类比。
 
 Context 不是聊天历史的别名，而是 Runtime 针对当前决策生成的一份有限投影。本章把这份投影变成可实现、可追踪和可评测的构建流程。
 
@@ -212,9 +212,15 @@ exclusion reasons
 
 评测应同时观察 outcome、evidence coverage、tool-selection accuracy、input token、latency 和 policy violation。通过消融对比全量历史、selective history、retrieval、rerank 和 compaction，才能知道哪项机制真正有收益。
 
-## 实践：把临时字符串替换为 Context Builder
+## 实践：为 Resolution Desk 建立 Context Builder
 
-选择一个已有的 Agent Loop，完成以下改造：
+### 进入本章时已有能力
+
+Resolution Desk 已有可恢复的 Web UI、Canonical Event 和有界只读 Loop，但模型输入仍缺少统一的来源、选择理由与预算清单。
+
+### 本章增加的能力
+
+改造上一模块的退款 Agent Loop：
 
 1. `buildContext(snapshot)` 返回结构化输入和 Manifest。
 2. 过期政策与无权文档在 retrieval 前被排除。
@@ -223,7 +229,9 @@ exclusion reasons
 5. Compaction 前后，禁止项、待审批动作和 evidence refs 不丢失。
 6. 对无关工具做一次消融，比较质量、token 和 latency。
 
-验收时应能回答：某一轮为什么选择了这些内容，为什么排除了另一些内容，以及换一个 builder version 后指标如何变化。
+### 验收证据
+
+为“判断资格”“请求澄清”“生成 Proposal”和“等待审批”各保存一份 Context Manifest。每份 Manifest 都能说明选择与排除理由、来源版本、信任级别和 Token 占用；Compaction 前后禁止项、待审批动作与 Evidence Ref 不丢失，无关工具消融结果包含质量、Token 和延迟变化。
 
 ## 常见误区
 

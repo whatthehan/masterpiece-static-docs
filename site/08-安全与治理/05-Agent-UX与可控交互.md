@@ -1,6 +1,8 @@
 # 05 · Agent UX：让界面忠实表达 Runtime
 
-用户批准了一笔退款。支付请求发出后网络中断，界面随即显示请求超时；用户点击停止。此时前端最容易犯的错误，是立刻显示“退款已取消”。实际上，Runtime 只确认收到了停止意图，尚不知道支付系统是否已经提交退款。
+Resolution Desk 已有不可变 Proposal、受限委派和三层执行门禁。现在需要把这些服务端事实投影成可信界面：用户必须看清自己批准的订单、金额、依据、资源版本和外部效果，模型生成的文案不能伪造 Approval，也不能决定哪些按钮可用。
+
+支付请求发出后若网络中断，用户再点击停止，前端最容易犯的错误是立刻显示“退款已取消”。实际上，Runtime 只确认收到了停止意图，尚不知道支付系统是否已经提交退款。
 
 Agent UX 不只是聊天气泡、流式文字和 Loading 动画。它是持久 Runtime 状态的产品化投影：展示已经确认的事实、仍然未知的部分、当前责任人，以及在这一状态下真正合法的操作。
 
@@ -122,9 +124,15 @@ function reduceUXProjection(
 
 普通 Error Toast 无法承载“结果未知、自动核对中、十分钟后转人工”这类长期状态。
 
-## 8. 实作：设计六个可恢复界面
+## 实践：为 Resolution Desk 实现可信退款界面
 
-以一笔带审批的写操作为例，绘制：等待补充信息、等待审批、执行中、停止请求已收到、效果核对中、已转人工六个界面。每个界面必须注明：
+### 进入本章时已有能力
+
+Resolution Desk 已能持久化 Human Gate、校验 Approval Record，并用 Dry Run 证明合法 Proposal 可进入 `command_ready`；退款 Executor 仍被写操作开关锁住，当前 UI 也可能把模型文本、HTTP 状态和本地按钮状态误当作领域事实。
+
+### 本章增加的能力
+
+基于 `RunSnapshot + RunEvent` 实现等待补充信息、等待审批、执行中、停止请求已收到、效果核对中、已转人工六个界面。每个界面必须注明：
 
 1. 对应的 Runtime 状态和 Snapshot 字段；
 2. 已确认事实与仍未知内容；
@@ -132,11 +140,15 @@ function reduceUXProjection(
 4. 每个控件明确不保证的事项；
 5. 刷新和断线后如何恢复相同视图。
 
-只要某个界面无法映射到持久状态，或在 ACK 丢失时直接显示“操作已取消”，就不应进入实现阶段。
+退款 Preview 与 Approval 必须由原生可信组件渲染服务端保存的 Proposal；组件从 `availableControls` 获取合法操作，不接受模型生成的金额、权限结论或按钮配置。只有本章全部 UI 与服务端 Fixture 通过后，才在 Mock 支付环境打开 `commit_refund`。
+
+### 验收证据
+
+用同一组 Snapshot/Event Fixture 验证刷新、重复 Event、序号缺口、Proposal 过期、审批后订单版本变化、ACK 丢失和用户 Stop。界面必须恢复到服务端同一状态，旧审批不能继续使用，效果未知时不得显示失败、取消或成功。若某个界面无法映射到持久状态，或高风险 Approval 可由模型/A2UI Payload 生成，本章验收失败；全部通过后，合法原生 Approval 才能在 Mock 支付系统得到一张 Receipt。
 
 ## 本章小结
 
-Agent UX 是 Runtime 的诚实投影，而不是对模型输出的装饰。状态、证据、审批和控制项来自服务端事实；前端负责把它们变成用户能理解的任务界面。下一章将讨论 [A2UI 声明式生成界面](/masterpiece-static-docs/08-安全与治理/06-A2UI与声明式生成界面.md)：当 Agent 参与组合界面时，如何仍由应用掌握组件、数据和 Action 的解释权。
+Agent UX 是 Runtime 的诚实投影，而不是对模型输出的装饰。Resolution Desk 的退款 Preview 与 Approval 固定由原生可信 UI 承担；状态、证据和控制项都来自服务端事实。主线下一章进入 [Agent 安全评测与 Red Team](/masterpiece-static-docs/08-安全与治理/07-Agent安全评测与Red-Team.md)；需要声明式生成界面时，再阅读可选的 [A2UI 分支](/masterpiece-static-docs/08-安全与治理/06-A2UI与声明式生成界面.md)，并且只把它用于低风险澄清与证据收集。
 
 ## 一手资料
 
