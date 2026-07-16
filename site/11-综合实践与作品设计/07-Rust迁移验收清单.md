@@ -1,6 +1,6 @@
 # 07 · Rust 迁移：采用条件与验收清单
 
-本章列出 Rust 组件进入系统前必须满足的条件与验收门槛。学习 Ownership、Tokio 或 Serde 可以与 TypeScript 主线并行；一旦开始替换 Resolution Desk 组件，就必须证明迁移解决了一个已测量的问题，并且没有改变 Agent 的业务语义。
+本章列出 Rust 组件进入系统前必须满足的条件与验收标准。学习 Ownership、Tokio 或 Serde 可以与 TypeScript 主线并行；一旦开始替换 Resolution Desk 组件，就必须证明迁移解决了一个已测量的问题，并且没有改变 Agent 的业务语义。
 
 “保持 TypeScript + Node”是完全有效的结论。Rust 迁移只在收益、边界和回滚都能够验证时成立。
 
@@ -70,7 +70,7 @@ Sidecar 或独立服务必须具备：
 - mTLS 或等价 Workload Identity、短期 Audience-bound 凭证和 Anti-replay；
 - 可核验 Policy Decision Reference，Resource Service 在执行前重新授权。
 
-Process Boundary 不等于自动隔离。CPU、Memory、File、Network、Process 与 Secret 必须独立配置上限并进行故障测试。
+Process Boundary 不会自动带来安全隔离。CPU、Memory、File、Network、Process 与 Secret 必须分别配置限制，并接受故障测试。
 
 ## 6. 受控执行面检查
 

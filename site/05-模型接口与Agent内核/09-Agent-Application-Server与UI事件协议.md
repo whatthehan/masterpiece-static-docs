@@ -1,6 +1,6 @@
 # 09 · Agent Application Server 与 UI 事件协议
 
-前端可以直接连接模型 Provider 的流式接口，并把文本 delta 渲染成打字机效果。只要界面开始展示 Tool Call、审批、取消和后台任务，这种连接方式就不再可靠：刷新页面会丢失工具状态，重复 event 可能生成两张审批卡，Provider 宣布 response completed 时，业务 Run 可能仍在等待用户确认。
+前端可以直接连接模型 Provider 的流式接口，并把文本增量（Delta）渲染成打字机效果。只要界面开始展示 Tool Call、审批、取消和后台任务，这种连接方式就不再可靠：刷新页面会丢失工具状态，重复 Event 可能生成两张审批卡，而 Provider 发出 `response.completed` 时，业务 Run 可能仍在等待用户确认。
 
 Agent Application Server 位于模型 Runtime 与产品 UI 之间。它把易变的 Provider Event 翻译成应用自己的事实，持久化后再投影为浏览器可重放、可去重、可脱敏的事件。对前端工程师而言，这一层很像“服务端状态机 + Event Store + Redux reducer”，只是状态会跨连接和进程存在。
 
@@ -8,10 +8,10 @@ Agent Application Server 位于模型 Runtime 与产品 UI 之间。它把易变
 
 - 区分 Provider Event、Canonical RunEvent、Transport Frame 与 UI State。
 - 设计 Thread、Run、Item 的公开事件协议。
-- 实现 Snapshot + Delta、SSE 重连、sequence gap 和幂等 reducer。
-- 把 AG-UI、AI SDK UI 等方案放在 Adapter 层，而不是领域层。
+- 实现 Snapshot + Delta、SSE 重连、Sequence Gap 和幂等 Reducer。
+- 理解 AG-UI、AI SDK UI 等方案位于 Adapter 层，而不是领域层；只有存在互操作需求时才实现相应 Adapter。
 
-> 本章分为两个实现层次。第 1～4 节和第 7 节建立最小闭环：事件分层、Canonical RunEvent、Public Snapshot 与纯 UI Reducer；第 5～6、8～9 节处理生产环境中的原子持久化、断线重放、协议兼容和 UI Adapter。最小闭环稳定后，再加入后一个层次。
+> 本章分为核心主线与进阶实践。第 1～4 节和第 7 节建立最小闭环：事件分层、Canonical RunEvent、Public Snapshot 与纯 UI Reducer。第 5～6 节和第 8 节处理生产环境中的原子持久化、断线重放与协议兼容；第 9 节说明 UI Adapter 的位置，只有存在协议互操作需求时才需要实现。
 
 ## 1. Agent Application Server 的位置
 
@@ -40,7 +40,7 @@ Provider Event
 → reduce UI state
 ```
 
-SSE 连接不是 source of truth。客户端离线时 Run 仍可能继续执行、等待审批或进入失败状态；重新连接后，页面从服务端 Snapshot 和后续 Event 恢复。
+SSE 连接不是权威事实源（Source of Truth）。客户端离线时，Run 仍可能继续执行、等待审批或进入失败状态；重新连接后，页面根据服务端 Snapshot 和后续 Event 恢复。
 
 ## 2. 同一个事实有三种协议表示
 
@@ -54,7 +54,7 @@ output_item.done
 response.completed
 ```
 
-第一个 delta 不能直接渲染成可批准动作。只有完整 Item 闭合、JSON 解析和 Schema 校验通过后，Runtime 才产生稳定事件：
+第一个 Delta 不能直接渲染为可批准的动作。只有完整 Item 已闭合，并通过 JSON 解析和 Schema 校验后，Runtime 才能产生稳定事件：
 
 ```text
 41 item.started(kind=assistant_message)
@@ -65,7 +65,7 @@ response.completed
 46 run.state_changed(state=waiting_approval)
 ```
 
-UI 消费的是第二组应用事实。Provider 的 `response.completed` 只表示该 response 已结束，不能越过 Runtime 直接把 Run 写成 completed。
+UI 消费的是第二组应用事实。Provider 的 `response.completed` 只表示该 Response 已结束，不能越过 Runtime 直接把 Run 写成 `completed`。
 
 ## 3. 设计 Canonical RunEvent
 
@@ -188,7 +188,7 @@ type RunEvent =
     });
 ```
 
-这里的 `RunEvent` 是 Application Server 对客户端公开的 canonical contract，与 Agent Loop 章的内部 `RuntimeTransitionEvent` 不是同一类对象。只有内部状态已持久化，并且完成脱敏和可见性裁剪后，才产生公开事件：
+这里的 `RunEvent` 是 Application Server 对客户端公开的规范契约（Canonical Contract），与 Agent Loop 章节中的内部 `RuntimeTransitionEvent` 不是同一类对象。只有内部状态完成持久化、脱敏和可见性裁剪后，系统才产生公开事件：
 
 | 内部转移                        | 公开投影                                | 说明                            |
 | --------------------------- | ----------------------------------- | ----------------------------- |
@@ -200,9 +200,9 @@ type RunEvent =
 
 `EffectStatus` 与可靠性章共享同一组领域语义。`executing_tool` 属于 Run 执行状态，不是 Effect Status：Command 尚未发出时为 `absent`，发出后但尚无权威证据时为 `unknown`，获得 Receipt 或权威查询结果后才能进入 `committed` 或 `compensated`。`partially_committed` 只用于聚合多个 Effect 的视图，单个 Effect 仍使用前四种状态。
 
-`publicArguments`、`publicPreview` 和 `publicSummary` 必须在写入公共事件前脱敏。密钥、完整 Context、raw reasoning 和敏感 Tool Result 分别进入受控存储，Event 只保存 UI 与审计需要的字段或引用。
+`publicArguments`、`publicPreview` 和 `publicSummary` 必须在写入公共事件前完成脱敏。密钥、完整 Context、原始 Reasoning 和敏感 Tool Result 分别进入受控存储，Event 只保存 UI 与审计需要的字段或引用。
 
-Run completed 表示 Runtime 已进入终态；Outcome passed 表示独立 grader 认可业务结果。两者应是不同事件，避免 UI 把“执行结束”误画成“目标成功”。
+Run Completed 表示 Runtime 已进入终态；Outcome Passed 表示独立 Grader 认可业务结果。两者应是不同事件，避免 UI 把“执行结束”错误展示为“目标成功”。
 
 ## 4. Public Snapshot 与 Durable Checkpoint
 
@@ -269,7 +269,7 @@ commit
 
 如果先向浏览器推送、随后才写数据库，进程在两步之间崩溃后，客户端会看到一个服务端无法重放的状态。Outbox 允许投递失败后重试，同时通过 `UNIQUE(run_id, seq)` 与 `UNIQUE(event_id)` 抵御重复追加和重复发送。
 
-高频文本 delta 可以在 Provider Adapter 内按短时间窗合并，再分配应用 `seq`。合并只影响显示粒度，不能跨越 Item、Tool Call 或状态转移边界。
+高频文本 Delta 可以在 Provider Adapter 内按较短时间窗合并，再分配应用 `seq`。合并只影响显示粒度，不能跨越 Item、Tool Call 或状态转移边界。
 
 ## 6. SSE 的 sequence、gap 与重连
 
@@ -287,9 +287,9 @@ data: {"schemaVersion":1,"eventId":"evt_45","runId":"run_7",
 - `seq` 由 Application Server 分配，仅在单个 Run 内严格递增。
 - `seq < nextSeq` 表示重复，客户端幂等忽略。
 - `seq > nextSeq` 表示缺口，客户端暂停归并并请求补发。
-- 重连携带 `Last-Event-ID` 或 `after_seq`，Server 从 Event Store replay，不重新调用模型。
+- 重连时携带 `Last-Event-ID` 或 `after_seq`，Server 从 Event Store 重放事件，不重新调用模型。
 - 旧事件超过保留期时，Server 返回 `resync-required`；客户端先获取 `RunSnapshot(upToSeq=N)`，再订阅 `N+1`。
-- heartbeat 属于 transport control frame，不占领域 `seq`，也不进入 Event Store。
+- Heartbeat 属于传输控制帧（Transport Control Frame），不占用领域 `seq`，也不进入 Event Store。
 
 Snapshot 解决“从一个完整状态重新开始”，Delta 解决“低成本追上后续变化”。两者缺一不可。
 
@@ -342,7 +342,7 @@ function applyEvent(state: UIState, event: RunEvent): UIState {
 }
 ```
 
-Reducer 不发网络请求，不执行 Tool，也不把 UI 状态写回领域数据库。相同 Snapshot 加相同 Event 序列必须得到相同结果，这使断线恢复和 fixture test 变得确定。
+Reducer 不发起网络请求，不执行 Tool，也不把 UI 状态写回领域数据库。相同 Snapshot 加相同 Event 序列必须得到相同结果，这使断线恢复和 Fixture Test 具有确定性。
 
 ## 8. 协议兼容
 
@@ -352,21 +352,21 @@ Event 协议应独立版本化，并在握手时协商 `supportedSchemaVersions`
 - 非关键展示 Event 可以让旧客户端只推进 sequence、不处理内容。
 - 改变审批或终态语义时升级 schema version。
 - Server 声明 `minimumClientVersion`，不让旧 UI 猜测关键状态。
-- 保存 v1 wire fixtures，并持续喂给当前和仍受支持的旧 reducer。
+- 保存 v1 Wire Fixture，并持续用它验证当前版本和仍受支持的旧版 Reducer。
 
-## 9. UI 协议位于 Product Edge
+## 9. UI 协议位于产品边缘层
 
-AG-UI 提供类型化 Agent↔UI events，AI SDK UI 提供 message、stream 和 transport 能力。它们可以承载产品交互，但不应反向定义领域事实：
+AG-UI 提供类型化的 Agent ↔ UI Event，AI SDK UI 提供 Message、Stream 和 Transport 能力。它们可以承载产品交互，但不应反向定义领域事实：
 
 ```text
-Canonical RunEvent ──AG-UI adapter──> AG-UI Events
-Canonical RunEvent ──AI SDK adapter─> UI Message Parts / Stream
-Canonical RunEvent ──native SSE─────> custom UI
+Canonical RunEvent ──AG-UI Adapter──> AG-UI Events
+Canonical RunEvent ──AI SDK Adapter─> UI Message Parts / Stream
+Canonical RunEvent ──Native SSE─────> Custom UI
 ```
 
 更换 UI Runtime 时，proposal hash、approval 绑定、Event Store 和 Run 终态不应随之重写。
 
-本章只建立 Adapter 的位置。AG-UI 的运行输入、事件生命周期、Shared State、用户控制和 Contract Test，将在下一章 [AG-UI：把 Agent Runtime 接入产品前端](/masterpiece-static-docs/05-模型接口与Agent内核/10-AG-UI与前端事件适配.md)中展开。声明式生成界面 A2UI 属于 Renderer Contract，不是另一套 Run Event，后续将在安全与 Agent UX 模块单独讨论。
+本章只确定 Adapter 的位置。存在 AG-UI 互操作需求时，可以选读进阶实验 [AG-UI：把 Agent Runtime 接入产品前端](/masterpiece-static-docs/05-模型接口与Agent内核/10-AG-UI与前端事件适配.md)，继续学习运行输入、事件生命周期、Shared State、用户控制和 Contract Test。声明式生成界面 A2UI 属于 Renderer Contract，不是另一套 Run Event；[A2UI 与声明式生成界面](/masterpiece-static-docs/08-安全与治理/06-A2UI与声明式生成界面.md)会单独讨论其安全与交互边界。
 
 ## 10. 故障测试矩阵
 
@@ -392,11 +392,11 @@ Resolution Desk 可以在服务端完成只读 Agent Loop 并生成退款 Propos
 ### 本章增加的能力
 
 1. 为现有 Runtime 定义 `RunEvent`、`RunSnapshot` 和 JSON Schema。
-2. 用录制的 Provider fixture 实现 adapter，覆盖文本 delta、完整 Tool Item、截断和失败。
+2. 用录制的 Provider Fixture 实现 Adapter，覆盖文本 Delta、完整 Tool Item、截断和失败。
 3. 实现 Event Store + Snapshot + Outbox 的原子追加。
 4. 提供 `GET /runs/:id/snapshot` 与 `GET /runs/:id/events?after_seq=`。
-5. 用 native SSE 接入纯 UI Reducer，跑完故障矩阵。
-6. 最后再实现一个 AG-UI 或 AI SDK UI adapter，验证领域层没有变化。
+5. 用 Native SSE 接入纯 UI Reducer，跑完故障矩阵。
+6. 可选：存在互操作需求时，再实现一个 AG-UI 或 AI SDK UI Adapter，并验证领域层没有变化。
 
 ### 验收证据
 
@@ -412,7 +412,7 @@ Resolution Desk 可以在服务端完成只读 Agent Loop 并生成退款 Propos
 
 ## 本章小结
 
-Agent Application Server 把 Provider 流转换成持久、稳定、可版本化的应用事件。Snapshot + Delta、sequence、gap detection 和纯 reducer 让前端在刷新与断线后仍能恢复真实状态。下一章将实现 [AG-UI 前端事件适配](/masterpiece-static-docs/05-模型接口与Agent内核/10-AG-UI与前端事件适配.md)，验证公开领域事实可以稳定投影到标准 UI 协议。
+Agent Application Server 把 Provider 流转换成持久、稳定、可版本化的应用事件。Snapshot + Delta、Sequence、Gap Detection 和纯 Reducer 让前端在刷新与断线后仍能恢复真实状态。核心主线下一章进入 [Context Engineering](/masterpiece-static-docs/06-上下文-知识与记忆/01-Context-Engineering.md)；需要标准 UI 协议互操作时，再选读 [AG-UI 前端事件适配](/masterpiece-static-docs/05-模型接口与Agent内核/10-AG-UI与前端事件适配.md)。
 
 ## 延伸阅读
 

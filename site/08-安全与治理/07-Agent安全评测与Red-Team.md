@@ -208,7 +208,7 @@ False Refusal Rate = 被不必要拒绝的合法 Trials / 可判定的合法 Tri
 
 ## 8. 建立隔离的 Security Regression Set
 
-安全回归集（Security Regression Set）与普通质量 Dataset 共用 Task/Trial/Trace 基础设施，但需要独立访问控制、保留期和发布门禁。原因包括：它可能描述未修复缺陷、防御边界、Canary Secret 和内部检测逻辑。
+安全回归集（Security Regression Set）与常规质量评测集共用 Task/Trial/Trace 基础设施，但需要独立访问控制、保留期和发布门禁。原因包括：它可能描述未修复缺陷、防御边界、Canary Secret 和内部检测逻辑。
 
 一个最小 Case Contract：
 
@@ -267,6 +267,8 @@ reproduce in clean environment
 ## 10. 实践：Resolution Desk 完整红队演练
 
 核心写路径必须运行 Tool、MCP、Memory、原生 UX 与重复副作用演练，即路径 A、B、C、F。路径 D 只在启用 Multi-Agent / A2A 时加入，路径 E 只在启用 A2UI 时加入；未启用的能力不构成核心发布依赖。
+
+这是核心主线首次允许常规业务 Run 调用 Mock Executor 的章节。此前章节只能使用 Dry Run，或在与用户路径隔离的故障 Harness 中调用 Mock Executor。只有本章全部适用门禁通过，系统才能跑通“原生 Approval → Mock `commit_refund` → Receipt / Reconciliation”路径。
 
 ### 隔离环境
 
@@ -342,7 +344,7 @@ flowchart LR
 4. 运行 Nearby Variant，避免只验证某个固定字符串；
 5. 在隔离环境中关闭一层概率防线，检查确定性 Policy/Environment 是否守住外部效果；
 6. 报告 ASR Effect、ASR Boundary、False Refusal、Blast Radius、Detection 与 Containment Evidence；
-7. 对失败 Case 完成最小化、人工确认和修复归因，再加入 Security Regression Set。
+7. 对失败样本完成最小化、人工确认和修复归因，再加入 Security Regression Set。
 
 ## 11. 验收证据与发布门禁
 
@@ -396,4 +398,4 @@ flowchart LR
 
 Agent Red Team 的测量对象是从不可信入口到高影响 Outcome 的完整攻击链。Attack Surface Inventory 暴露能力与权限，隔离环境使攻击可重现且不伤害真实系统，ASR、False Refusal 和 Blast Radius 从不同角度表达防御质量，Security Regression Set 则将已确认问题变成持续发布门禁。Resolution Desk 的 Mock 写路径只有在核心 Tool、MCP、Memory 与 Native UX，以及所有已启用扩展的组合攻击下仍能守住权威状态，才具备进入后续可靠性工程的基础。
 
-[上一章：A2UI 与声明式生成界面](/masterpiece-static-docs/08-安全与治理/06-A2UI与声明式生成界面.md) · [下一部分：失败、Timeout、Retry 与 Cancellation](/masterpiece-static-docs/09-可靠性与可观测/01-失败分类-超时-重试与取消.md)
+[上一章：Agent UX 与可控交互](/masterpiece-static-docs/08-安全与治理/05-Agent-UX与可控交互.md) · [下一部分：失败、Timeout、Retry 与 Cancellation](/masterpiece-static-docs/09-可靠性与可观测/01-失败分类-超时-重试与取消.md) · [进阶实验：A2UI](/masterpiece-static-docs/08-安全与治理/06-A2UI与声明式生成界面.md)

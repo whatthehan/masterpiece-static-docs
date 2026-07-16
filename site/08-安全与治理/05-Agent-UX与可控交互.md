@@ -122,13 +122,13 @@ function reduceUXProjection(
 - **Recovery View**：解释失败位置、已发生效果和安全重试路径；
 - **Notification**：长任务离开页面后，在需要人时重新通知。
 
-普通 Error Toast 无法承载“结果未知、自动核对中、十分钟后转人工”这类长期状态。
+一次性错误提示（Toast）无法承载“结果未知、自动核对中、十分钟后转人工”这类长期状态。
 
 ## 实践：为 Resolution Desk 实现可信退款界面
 
 ### 进入本章时已有能力
 
-Resolution Desk 已能持久化 Human Gate、校验 Approval Record，并用 Dry Run 证明合法 Proposal 可进入 `command_ready`；退款 Executor 仍被写操作开关锁住，当前 UI 也可能把模型文本、HTTP 状态和本地按钮状态误当作领域事实。
+Resolution Desk 已能持久化 Human Gate、校验 Approval Record，并用 Dry Run 证明合法 Proposal 可进入 `command_ready`；退款 Executor 尚未向常规业务 Run 开放，当前 UI 也可能把模型文本、HTTP 状态和本地按钮状态误当作领域事实。
 
 ### 本章增加的能力
 
@@ -140,11 +140,11 @@ Resolution Desk 已能持久化 Human Gate、校验 Approval Record，并用 Dry
 4. 每个控件明确不保证的事项；
 5. 刷新和断线后如何恢复相同视图。
 
-退款 Preview 与 Approval 必须由原生可信组件渲染服务端保存的 Proposal；组件从 `availableControls` 获取合法操作，不接受模型生成的金额、权限结论或按钮配置。只有本章全部 UI 与服务端 Fixture 通过后，才在 Mock 支付环境打开 `commit_refund`。
+退款 Preview 与 Approval 必须由原生可信组件渲染服务端保存的 Proposal；组件从 `availableControls` 获取合法操作，不接受模型生成的金额、权限结论或按钮配置。本章只实现可信 UI，并用 Dry Run 验证合法 Approval 能推进到 `command_ready`；Mock `commit_refund` 仍不向常规业务 Run 开放，直到 08/07 的全部适用安全门禁通过。
 
 ### 验收证据
 
-用同一组 Snapshot/Event Fixture 验证刷新、重复 Event、序号缺口、Proposal 过期、审批后订单版本变化、ACK 丢失和用户 Stop。界面必须恢复到服务端同一状态，旧审批不能继续使用，效果未知时不得显示失败、取消或成功。若某个界面无法映射到持久状态，或高风险 Approval 可由模型/A2UI Payload 生成，本章验收失败；全部通过后，合法原生 Approval 才能在 Mock 支付系统得到一张 Receipt。
+用同一组 Snapshot/Event Fixture 验证刷新、重复 Event、序号缺口、Proposal 过期、审批后订单版本变化、模拟的未知效果和用户 Stop。界面必须恢复到服务端同一状态，旧审批不能继续使用，效果未知时不得显示失败、取消或成功。若某个界面无法映射到持久状态，或高风险 Approval 可由模型/A2UI Payload 生成，本章验收失败；全部通过后，合法原生 Approval 也只能在 Dry Run 中到达 `command_ready`，不能产生 Mock Receipt。
 
 ## 本章小结
 
