@@ -572,4 +572,4 @@ type CandidateBehaviorBundle = {
 - [NIST AI RMF Generative AI Profile](https://doi.org/10.6028/NIST.AI.600-1)
 - [CoALA: Cognitive Architectures for Language Agents](https://arxiv.org/abs/2309.02427)
 
-[上一章：生产拓扑、部署与迁移验收](/masterpiece-static-docs/09-可靠性与可观测/06-生产拓扑-部署与迁移验收.md) · [下一部分：综合系统心智模型](/masterpiece-static-docs/11-综合实践与作品设计/01-综合系统心智模型.md)
+[上一章：生产拓扑、部署与迁移验收](/masterpiece-static-docs/09-可靠性与可观测/06-生产拓扑-部署与迁移验收.md) · [可选专题：Rust 与跨语言边界](/masterpiece-static-docs/10-可选专题-Rust迁移/01-Rust迁移所需理论.md) · [继续主线：综合系统心智模型](/masterpiece-static-docs/11-综合实践与作品设计/01-综合系统心智模型.md)

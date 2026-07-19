@@ -126,18 +126,21 @@ flowchart LR
 | [07 Tool、协议与行动控制](/masterpiece-static-docs/07-工具-协议与行动控制/01-工具契约与错误模型.md)                | Agent 系统              | 将建议推进到受控、可幂等收敛的 Mock 行动                              |
 | [08 安全与治理](/masterpiece-static-docs/08-安全与治理/01-Agent威胁建模.md)                            | Agentic UI + 横切证据线    | 建立可信交互、A2UI Surface、最小权限与安全门禁                        |
 | [09 可靠性与可观测](/masterpiece-static-docs/09-可靠性与可观测/01-失败分类-超时-重试与取消.md)                    | 横切证据线                 | 从故障中恢复，建立生产证据，并把改进限制在候选、评测与受控发布闭环内                   |
-| [10 综合实践](/masterpiece-static-docs/11-综合实践与作品设计/01-综合系统心智模型.md)                          | 三线总装                  | 完成端到端回归、故障演练和发布验收                                    |
+| [10 Rust 与跨语言边界](/masterpiece-static-docs/10-可选专题-Rust迁移/01-Rust迁移所需理论.md)               | 可选专题                  | 仅在基准证据支持迁移时评估 Rust 执行面                               |
+| [11 综合实践与作品设计](/masterpiece-static-docs/11-综合实践与作品设计/01-综合系统心智模型.md)                     | 三线总装                  | 完成端到端回归、故障演练和发布验收                                    |
 
 第 02–04 部分的实验使用给定 Fixture 或小型独立实验，不要求读者提前拥有完整 Runtime。从第 05 部分开始，所有实现持续累加在同一个练习项目中。
 
 ## Agentic UI 核心路径
 
-Agentic UI 不是主项目完成后的装饰层，也不等于“把模型文字放进聊天窗口”。建议按下面四章连续阅读：
+Agentic UI 不是主项目完成后的装饰层，也不等于“把模型文字放进聊天窗口”。四篇核心文章分成两个阶段：
 
 1. [Application Server 与 UI 事件协议](/masterpiece-static-docs/05-模型接口与Agent内核/09-Agent-Application-Server与UI事件协议.md)：明确领域状态、Canonical Event、Snapshot 与客户端边界；
 2. [AG-UI 与前端事件适配](/masterpiece-static-docs/05-模型接口与Agent内核/10-AG-UI与前端事件适配.md)：建立 Agent Backend 与用户界面的运行时交互平面；
 3. [Agent UX 与可控交互](/masterpiece-static-docs/08-安全与治理/05-Agent-UX与可控交互.md)：设计 Stop、Interrupt、Approval、Recovery 和 Human Handoff；
 4. [A2UI 与声明式生成界面](/masterpiece-static-docs/08-安全与治理/06-A2UI与声明式生成界面.md)：让 Agent 在受控 Catalog 内描述低风险界面，由本地可信组件渲染。
+
+第 1–2 章在 Agent Runtime 初步成形后建立 UI 运行时边界；随后完成 Context、Tool 与第 08 部分前四章的安全前置，再进入第 3–4 章完成产品交互和声明式界面。两阶段之间的间隔是依赖关系，不是把 UI 降级为附加内容。
 
 AG-UI 与 A2UI 都是核心学习和实践内容，但领域状态机、Authorization 和高风险 Approval 仍由应用持有。协议位于可替换的产品边界，不应反向成为领域真相。
 
@@ -152,11 +155,11 @@ Claude Code、Codex 等工具提供一组熟悉的直觉：项目规则进入 Co
 第一次阅读按照侧栏的三条主线推进，并让工程证据线始终伴随实现：
 
 1. 完成导读、LLM 底层知识和 Eval 基线；
-2. 完成 05/01–08、06 与 07/01–04，建立单 Agent Runtime，再加入 Context、Knowledge、Tool 与受控行动；
-3. 学习 Multi-Agent 与 A2A 的责任模型，并用对照 Eval 决定是否在生产采用；
-4. 沿“05/09 → 05/10 → 08/05 → 08/06”连续完成 Agentic UI 核心路径；
-5. 完成系统性安全、可靠性、可观测、发布门禁与受控改进演练；
-6. 在综合实践中完成三层总装。
+2. 按顺序完成第 05 部分：建立单 Agent Runtime、UI 运行时边界、Multi-Agent 心智模型与 Framework 判断方法；
+3. 完成第 06–07 部分，加入 Context、Knowledge、Memory、Tool、MCP、受控行动与跨 Agent 协作；
+4. 完成第 08 部分：先建立安全前置，再回到 Agentic UI 第二阶段完成 Agent UX 与 A2UI，最后执行 Red Team；
+5. 完成第 09 部分的可靠性、可观测、发布门禁与受控改进演练；按需阅读第 10 部分；
+6. 在第 11 部分完成三层总装。
 
 Agentic RAG / GraphRAG、Framework 对照、Skills、Rust、资料索引、能力索引和场景迁移用于定向查阅，不构成核心项目完成条件。
 

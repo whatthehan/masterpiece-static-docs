@@ -1,4 +1,4 @@
-# 01 · TypeScript + Node：Agent Runtime 的运行时边界
+# 01 · TypeScript + Node.js：Agent Runtime 的运行时边界
 
 前端工程师第一次实现 Agent，通常会从一个熟悉的接口开始：接收请求，调用模型，再把结果流式返回浏览器。只要模型开始调用工具，这个看似普通的 BFF（Backend for Frontend，面向前端的后端）就要同时处理多条异步链路：模型流尚未结束，用户可能已经取消任务；工具返回的是未经验证的 JSON；两个互不相关的查询可以并行，但写操作必须等待前置动作的回执。
 

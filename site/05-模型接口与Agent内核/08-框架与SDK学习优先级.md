@@ -205,7 +205,7 @@ flowchart TD
 
 ## 本章小结
 
-框架学习应沿着职责边界推进：先用 Provider 官方 SDK 理解协议，再用手写 Runtime 建立基线，之后才按状态图、HITL、UI、durability 或互操作需求选择相应工具。任何框架都不应接管应用的领域事实、授权和副作用语义。Agent Runtime 的骨架建立后，下一部分进入 [Context Engineering](/masterpiece-static-docs/06-上下文-知识与记忆/01-Context-Engineering.md)，先补齐模型每一步能够看到的证据、状态与工具；完成 Agent 层后，再进入独立的 Agentic UI 主线。
+框架学习应沿着职责边界推进：先用 Provider 官方 SDK 理解协议，再用手写 Runtime 建立基线，之后才按状态图、HITL、UI、durability 或互操作需求选择相应工具。任何框架都不应接管应用的领域事实、授权和副作用语义。下一章先进入 [Agent Application Server 与 UI 事件协议](/masterpiece-static-docs/05-模型接口与Agent内核/09-Agent-Application-Server与UI事件协议.md)，把已经建立的 Runtime 状态投影为稳定的产品边界；第 06 部分再用 [Context Engineering](/masterpiece-static-docs/06-上下文-知识与记忆/01-Context-Engineering.md)补齐每一步能够看到的证据、状态与工具。
 
 ## 官方资料
 

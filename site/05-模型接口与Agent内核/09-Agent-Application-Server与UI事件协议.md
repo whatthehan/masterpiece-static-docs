@@ -1,4 +1,4 @@
-# Agentic UI 01 · Agent Application Server 与 UI 事件协议
+# 09 · Agent Application Server 与 UI 事件协议
 
 前端可以直接连接模型 Provider 的流式接口，并把文本增量（Delta）渲染成打字机效果。只要界面开始展示 Tool Call、审批、取消和后台任务，这种连接方式就不再可靠：刷新页面会丢失工具状态，重复 Event 可能生成两张审批卡，而 Provider 发出 `response.completed` 时，业务 Run 可能仍在等待用户确认。
 
@@ -12,6 +12,8 @@ Agent Application Server 位于模型 Runtime 与产品 UI 之间。它把易变
 - 实现 Snapshot + Delta、SSE 重连、Sequence Gap、多客户端去重和幂等 Reducer。
 - 理解 AG-UI、AI SDK UI 等方案位于 Adapter 层，而不是领域层，并为下一章实现 AG-UI Adapter 固定边界。
 
+> **Agentic UI 核心路径 · 01 / 04**
+>
 > 本章是 Agentic UI 主线的第一站。第 1～4 节和第 7 节建立事件分层、Canonical RunEvent、Public Snapshot 与纯 UI Reducer；第 5～6 节和第 8 节补齐原子持久化、断线重放与协议兼容；第 9 节把这组产品状态语义交给下一章的 AG-UI Adapter。三部分共同构成可恢复 UI 的必修基础。
 
 ## 1. Agent Application Server 的位置

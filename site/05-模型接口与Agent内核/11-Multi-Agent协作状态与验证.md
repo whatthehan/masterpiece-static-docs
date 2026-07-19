@@ -6,7 +6,7 @@
 
 > 时效性核验：2026-07-19。本章涉及 OpenAI Agents SDK、AI SDK、LangGraph、A2A 与 MAST 的结论依据文末一手资料；具体 API 与稳定性状态应在实现时重新核对。
 
-> 阅读位置：这是 Agent 层主线的必懂设计章节。完成[幂等、补偿与沙箱](/masterpiece-static-docs/07-工具-协议与行动控制/04-幂等-补偿与沙箱.md)后，先在本章建立协作状态与验证模型，再进入[A2A 与跨 Agent 协作协议](/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议.md)，随后转入 Agentic UI 主线。必懂不等于必部署：Resolution Desk 始终保留单 Agent Baseline，Multi-Agent 只有在同一 Dataset、预算和 Eval 下证明净收益后，才进入生产候选路径。
+> 阅读位置：这是 Agent 层主线的必懂设计章节。此处先建立 Parent / Child、Artifact、Budget 与 Verifier 的状态责任；第 07 部分完成受控行动后，再把这些责任映射到[A2A 与跨 Agent 协作协议](/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议.md)。必懂不等于必部署：Resolution Desk 始终保留单 Agent Baseline，Multi-Agent 只有在同一 Dataset、预算和 Eval 下证明净收益后，才进入生产候选路径。
 
 ## 本章目标
 
@@ -394,7 +394,7 @@ sequenceDiagram
 
 ## 本章小结
 
-Multi-Agent 的核心不是角色编排，而是控制权、状态所有权、能力衰减和结果验证。Parent Harness 持有不可静默退化的 Goal Contract、总预算和终态；Planner、Worker、Strategist、Verifier 只提交各自权限范围内的候选产物。可靠系统通常以确定性 Workflow 为骨架，让 Agent 在可隔离、可并行、可验收的局部执行，再通过 Evidence Packet、Structured Gap、版本化 Artifact 与明确 Join 收敛。下一章进入 [A2A 与跨 Agent 协作协议](/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议.md)，把同一组 Parent、Task、Artifact、权限与恢复语义扩展到跨系统 Wire Contract；[AI SDK 与 LangGraph 的 Runtime 实现对照](/masterpiece-static-docs/05-模型接口与Agent内核/12-AI-SDK与LangGraph对照实践.md)可在主线完成后查阅。
+Multi-Agent 的核心不是角色编排，而是控制权、状态所有权、能力衰减和结果验证。Parent Harness 持有不可静默退化的 Goal Contract、总预算和终态；Planner、Worker、Strategist、Verifier 只提交各自权限范围内的候选产物。可靠系统通常以确定性 Workflow 为骨架，让 Agent 在可隔离、可并行、可验收的局部执行，再通过 Evidence Packet、Structured Gap、版本化 Artifact 与明确 Join 收敛。下一章用 [AI SDK 与 LangGraph 的 Runtime 实现对照](/masterpiece-static-docs/05-模型接口与Agent内核/12-AI-SDK与LangGraph对照实践.md)练习识别框架接管的 Harness 职责；第 07/05 章再把同一组 Parent、Task、Artifact、权限与恢复语义扩展到跨系统 A2A Wire Contract。
 
 ## 官方资料与研究
 

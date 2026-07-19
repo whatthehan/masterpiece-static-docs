@@ -1,4 +1,4 @@
-# 07 · Rust 迁移：采用条件与验收清单
+# 附录 C · Rust 迁移：采用条件与验收清单
 
 本章列出 Rust 组件进入系统前必须满足的条件与验收标准。学习 Ownership、Tokio 或 Serde 可以与 TypeScript 主线并行；一旦开始替换 Resolution Desk 组件，就必须证明迁移解决了一个已测量的问题，并且没有改变 Agent 的业务语义。
 

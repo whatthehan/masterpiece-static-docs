@@ -425,4 +425,4 @@ flowchart LR
 
 Agent Red Team 的测量对象是从不可信入口到高影响 Outcome 的完整攻击链。Attack Surface Inventory 暴露能力与权限，隔离环境使攻击可重现且不伤害真实系统，ASR、False Refusal 和 Blast Radius 从不同角度表达防御质量，Security Regression Set 则将已确认问题变成持续发布门禁。Resolution Desk 的 Mock 写路径只有在核心 Tool、MCP、Memory、AG-UI、A2UI 与原生受信 UI，以及生产候选实际启用的协作扩展下仍能守住权威状态，才具备进入后续可靠性工程的基础。
 
-[上一章：纵深防御与人类控制](/masterpiece-static-docs/08-安全与治理/04-纵深防御与人类控制.md) · [下一部分：失败、Timeout、Retry 与 Cancellation](/masterpiece-static-docs/09-可靠性与可观测/01-失败分类-超时-重试与取消.md)
+[上一章：A2UI 与声明式生成界面](/masterpiece-static-docs/08-安全与治理/06-A2UI与声明式生成界面.md) · [下一部分：失败、Timeout、Retry 与 Cancellation](/masterpiece-static-docs/09-可靠性与可观测/01-失败分类-超时-重试与取消.md)

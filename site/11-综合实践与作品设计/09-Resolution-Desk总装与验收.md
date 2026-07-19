@@ -1,10 +1,10 @@
-# 09 · Resolution Desk：总装与验收
+# 终章 · Resolution Desk：总装与验收
 
 前面的章节分别建立了 LLM 与 Model Adapter、Agent Loop、Context Builder、Knowledge、Memory、Tool Contract、Authorization、AG-UI、A2UI、Agent UX、Recovery、Eval 和 Controlled Improvement。本章不再增加新的核心概念，而是把 LLM 底层、Agent 系统与 Agentic UI 三层装配成一条可以运行、失败、恢复并接受复查的产品纵切面；安全、可靠性与 Eval 证据贯穿整条链路，生产信号只能经候选、独立评测与发布门禁影响后续版本。
 
 最终应用仍运行在 Mock 或 Sandbox 中。功能完备指目标范围内的状态和故障语义完整，不表示已经接入真实支付或能够处理任意售后任务。
 
-本章是第 10 部分核心路径的终点。进入顺序应为：综合系统心智模型、综合能力自测、参考答案、八周构建路径，再到本章总装。资料索引、Rust 清单和场景迁移属于后续附录，不插入这条连续路径。
+本章是第 11 部分核心路径的终点。进入顺序应为：综合系统心智模型、综合能力自测、参考答案、八周构建路径，再到本章总装。资料索引、Rust 清单和场景迁移属于后续附录，不插入这条连续路径。
 
 ## 1. 最终产品边界
 

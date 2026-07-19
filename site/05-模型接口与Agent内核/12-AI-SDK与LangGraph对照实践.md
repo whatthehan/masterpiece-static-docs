@@ -1,4 +1,4 @@
-# 12 · 同一条 Runtime Slice：AI SDK 与 LangGraph 对照实践
+# 12 · AI SDK 与 LangGraph：同一 Runtime Slice 的对照实践
 
 框架示例通常展示各自最顺畅的路径：几行代码声明 Tool、流式返回一段文本，或者画出一张会暂停和恢复的图。这样的 Demo 适合了解 API，却无法回答更重要的问题：框架接管了哪些 Harness 职责，故障发生时哪些代码会重跑，应用能否保留自己的领域状态与验收体系。
 
@@ -6,7 +6,7 @@
 
 > 时效性核验：2026-07-15。AI SDK 7、LangGraph.js API 与稳定性状态依据文末官方资料；采用时应固定实际版本，并重新运行本章故障矩阵。
 
-> 阅读位置：本章沿用第 06 至 09 部分已经建立的领域状态、Authorization、Checkpoint、Telemetry 与发布语义。完成这些主线内容，并读过前一章的 Multi-Agent 状态边界后，再进行框架对照。
+> 阅读位置：本章采用两次阅读。第一次只识别 Framework Port、状态所有权和 Ejection Test，不要求实现 Durable Tier；完成第 06–09 部分的 Authorization、Checkpoint、Telemetry 与发布语义后，再回访故障矩阵并完成对照实验。
 
 ## 本章目标
 
@@ -359,4 +359,4 @@ Resolution Desk 已有手写 Provider Adapter、Tool Gate、有界 Agent Loop、
 - [LangGraph: Backwards compatibility](https://docs.langchain.com/oss/javascript/langgraph/backward-compatibility)
 - [OpenAI Agents SDK for TypeScript](https://openai.github.io/openai-agents-js/)
 
-[相关核心章节：A2A 与跨 Agent 协作](/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议.md)
+[下一部分：Context Engineering](/masterpiece-static-docs/06-上下文-知识与记忆/01-Context-Engineering.md) · [回访时关联：A2A 与跨 Agent 协作](/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议.md)
