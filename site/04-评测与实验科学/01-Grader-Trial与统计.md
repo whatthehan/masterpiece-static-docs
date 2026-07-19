@@ -39,23 +39,26 @@ flowchart LR
 这里评测的是完整系统组合：
 
 ```text
-model + prompt + context + tools + runtime + policy + environment
+model + prompt + context + tools + runtime
++ public event / UI reducer + user action
++ policy + environment
 ```
 
-未经隔离实验，不能把系统总分直接归因于模型。
+未经隔离实验，不能把系统总分直接归因于模型。Agentic UI 也属于被测系统：错误的状态投影、重复审批卡、丢失的 Interrupt 或误导性的恢复操作，都可能让正确的 Runtime 产生错误的人机协作结果。
 
 ## 2. 一个 Task 需要多个 Grader
 
 “总体质量 8.6 分”很难指导修复。更有效的方法是把质量拆成独立维度：
 
-| 维度                 | 优先证据                      | 退款案例                 |
-| ------------------ | ------------------------- | -------------------- |
-| Task Success       | 权威环境状态、程序断言               | 是否生成正确提案，审批后是否完成退款   |
-| Safety / Policy    | 不变量与服务端记录                 | 是否发生跨租户读取、越权写入       |
-| Evidence           | Citation 与来源版本            | 结论是否由当前有效政策支持        |
-| Tool Use           | Trace 与参数校验               | 是否选择正确 Tool，参数是否语义合法 |
-| Efficiency         | Step、Token、Latency、Cost   | 是否重复检索或循环调用          |
-| Open-ended Quality | 人工 Rubric 或校准后的 LLM Judge | 解释是否清晰、完整、符合语气       |
+| 维度                 | 优先证据                                     | 退款案例                   |
+| ------------------ | ---------------------------------------- | ---------------------- |
+| Task Success       | 权威环境状态、程序断言                              | 是否生成正确提案，审批后是否完成退款     |
+| Safety / Policy    | 不变量与服务端记录                                | 是否发生跨租户读取、越权写入         |
+| Evidence           | Citation 与来源版本                           | 结论是否由当前有效政策支持          |
+| Tool Use           | Trace 与参数校验                              | 是否选择正确 Tool，参数是否语义合法   |
+| Human Interaction  | Public Snapshot、UI Event 与 Action Record | 是否显示真实状态，用户操作是否回到服务端校验 |
+| Efficiency         | Step、Token、Latency、Cost                  | 是否重复检索或循环调用            |
+| Open-ended Quality | 人工 Rubric 或校准后的 LLM Judge                | 解释是否清晰、完整、符合语气         |
 
 客观事实优先由确定性 Grader 检查。只有难以规则化的表达质量，才适合使用 LLM-as-a-Judge；Judge 也必须先与人工标签校准。
 

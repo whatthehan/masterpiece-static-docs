@@ -1,10 +1,12 @@
-# 05 · Agent UX：让界面忠实表达 Runtime
+# Agentic UI 03 · Agent UX 与可控交互
 
-Resolution Desk 已有不可变 Proposal、受限委派和三层执行门禁。现在需要把这些服务端事实投影成可信界面：用户必须看清自己批准的订单、金额、依据、资源版本和外部效果，模型生成的文案不能伪造 Approval，也不能决定哪些按钮可用。
+上一章已经让 Resolution Desk 通过 AG-UI Adapter 传递运行、消息、Tool 与 State Event。事件能够抵达浏览器之后，下一个问题不是怎样增加动画，而是怎样把服务端事实投影成可信界面：用户必须看清正在处理的对象、金额、依据、资源版本和外部效果，模型生成的文案不能伪造 Approval，也不能决定哪些按钮可用。
 
 支付请求发出后若网络中断，用户再点击停止，前端最容易犯的错误是立刻显示“退款已取消”。实际上，Runtime 只确认收到了停止意图，尚不知道支付系统是否已经提交退款。
 
 Agent UX 不只是聊天气泡、流式文字和 Loading 动画。它是持久 Runtime 状态的产品化投影：展示已经确认的事实、仍然未知的部分、当前责任人，以及在这一状态下真正合法的操作。
+
+本章先固定公开状态、可信原生组件与用户控制的语义；下一章用 A2UI 实现低风险动态 Surface，随后安全主线把前文已经建立的 Authorization、Approval 与 Action Gateway 纳入 Threat Model、最小权限和纵深防御验证。界面可以先于完整安全门禁设计，但任何高风险动作在门禁完成前都只能停留在 Dry Run。
 
 ## 1. 从传统请求状态升级为任务状态
 
@@ -128,7 +130,7 @@ function reduceUXProjection(
 
 ### 进入本章时已有能力
 
-Resolution Desk 已能持久化 Human Gate、校验 Approval Record，并用 Dry Run 证明合法 Proposal 可进入 `command_ready`；退款 Executor 尚未向常规业务 Run 开放，当前 UI 也可能把模型文本、HTTP 状态和本地按钮状态误当作领域事实。
+Resolution Desk 已有 Canonical `RunSnapshot + RunEvent`、AG-UI Adapter 和可恢复的前端投影，能够展示 Proposal 与 `waiting_approval`；前文也已经建立 Authorization、Approval 与外部副作用门禁。当前 UI 仍可能把模型文本、HTTP 状态和本地按钮状态误当作领域事实，后续安全章节会把这些交互纳入完整攻击链和纵深防御验证。
 
 ### 本章增加的能力
 
@@ -140,7 +142,7 @@ Resolution Desk 已能持久化 Human Gate、校验 Approval Record，并用 Dry
 4. 每个控件明确不保证的事项；
 5. 刷新和断线后如何恢复相同视图。
 
-退款 Preview 与 Approval 必须由原生可信组件渲染服务端保存的 Proposal；组件从 `availableControls` 获取合法操作，不接受模型生成的金额、权限结论或按钮配置。本章只实现可信 UI，并用 Dry Run 验证合法 Approval 能推进到 `command_ready`；Mock `commit_refund` 仍不向常规业务 Run 开放，直到 08/07 的全部适用安全门禁通过。
+退款 Preview 与 Approval 必须由原生可信组件渲染服务端保存的 Proposal；组件从 `availableControls` 获取合法操作，不接受模型生成的金额、权限结论或按钮配置。本章只实现可信 UI，并用 Dry Run 验证合法 Approval 能推进到 `command_ready`；Mock `commit_refund` 仍不向常规业务 Run 开放，直到 [Agent 安全评测与 Red Team](/masterpiece-static-docs/08-安全与治理/07-Agent安全评测与Red-Team.md)及其前置安全门禁全部通过。
 
 ### 验收证据
 
@@ -148,7 +150,7 @@ Resolution Desk 已能持久化 Human Gate、校验 Approval Record，并用 Dry
 
 ## 本章小结
 
-Agent UX 是 Runtime 的诚实投影，而不是对模型输出的装饰。Resolution Desk 的退款 Preview 与 Approval 固定由原生可信 UI 承担；状态、证据和控制项都来自服务端事实。主线下一章进入 [Agent 安全评测与 Red Team](/masterpiece-static-docs/08-安全与治理/07-Agent安全评测与Red-Team.md)；需要声明式生成界面时，再阅读可选的 [A2UI 分支](/masterpiece-static-docs/08-安全与治理/06-A2UI与声明式生成界面.md)，并且只把它用于低风险澄清与证据收集。
+Agent UX 是 Runtime 的诚实投影，而不是对模型输出的装饰。Resolution Desk 的退款 Preview 与 Approval 固定由原生可信 UI 承担；状态、证据和控制项都来自服务端事实。下一章进入 [Agentic UI 04：A2UI 与声明式生成界面](/masterpiece-static-docs/08-安全与治理/06-A2UI与声明式生成界面.md)，为低风险澄清与证据收集增加一个受控的动态 Surface。
 
 ## 一手资料
 

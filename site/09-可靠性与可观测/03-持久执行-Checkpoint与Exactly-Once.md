@@ -28,6 +28,8 @@ context/source artifact references
 
 Public Snapshot 与 Durable Checkpoint 也不相同：前者面向 UI，只包含可公开状态；后者面向 Runtime 恢复，需要保存版本、所有权、预算和在途效果等内部字段。
 
+浏览器通过 AG-UI 或 Native Transport 恢复时，应先读取 Public Snapshot，再按应用 Cursor 重放后续公开事件；A2UI Surface 也只能从受控的 Surface Snapshot 或重新投影恢复。客户端重连不能触发 Workflow Replay、重新调用模型或重新生成已经提交的 Proposal。
+
 ## 2. Workflow 与 Activity 要分开
 
 Durable Workflow 将确定性控制逻辑与外部非确定性操作分离：

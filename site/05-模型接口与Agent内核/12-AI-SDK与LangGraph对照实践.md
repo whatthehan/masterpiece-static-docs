@@ -359,4 +359,4 @@ Resolution Desk 已有手写 Provider Adapter、Tool Gate、有界 Agent Loop、
 - [LangGraph: Backwards compatibility](https://docs.langchain.com/oss/javascript/langgraph/backward-compatibility)
 - [OpenAI Agents SDK for TypeScript](https://openai.github.io/openai-agents-js/)
 
-[下一项进阶实验：A2A 与跨 Agent 协作](/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议.md)
+[相关核心章节：A2A 与跨 Agent 协作](/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议.md)
