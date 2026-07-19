@@ -184,6 +184,16 @@ deterministic code
 
 Router 通常仍是 Workflow，因为路由后的分支由代码限定。多次调用模型也不等于 Multi-Agent；关键在于是否存在独立状态、职责、权限和生命周期。
 
+### 反思不是一种单独的架构
+
+Self-Critique、Self-Refine 与 Reflexion 经常被统称为“反思”，但它们位于不同的反馈范围：
+
+- **Self-Critique** 让模型检查当前候选，产出批评或缺陷列表；
+- **Self-Refine** 在同一次有界任务中依据反馈改写候选；
+- **Reflexion** 把任务反馈整理成可供后续尝试读取的文字经验，需要明确 Memory Scope、写入质量和失效规则。
+
+这三种模式都没有天然的正确性保证。Evaluator 若与 Generator 共享同一盲点，循环只会更自信地重复错误；反馈若未经验证写入长期 Memory，错误还会跨任务传播。当前 Run 内的改写属于 Agent Loop，跨 Run 的经验属于 Memory，而修改后续生产版本则必须进入[受控改进与独立发布门禁](/masterpiece-static-docs/09-可靠性与可观测/07-受控改进-从生产证据到候选Behavior-Bundle.md)。
+
 ## 8. ReAct 与 Plan 的工程化表达
 
 ReAct 的 Reason → Act → Observe 在产品中应落为：

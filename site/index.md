@@ -8,7 +8,7 @@ Large Language Model（LLM）让软件能够在运行时解释模糊目标、选
 2. **Agent 系统知识**：把概率能力组织成有状态、有预算、有权限、可恢复的 Runtime，进一步处理 Context、Knowledge、Memory、Tool、MCP、Multi-Agent 与 A2A；
 3. **Agentic UI 与前端知识**：把后台 Run 投影为人类能够理解和控制的界面，系统学习 Canonical Event、Public Snapshot、Reducer、AG-UI、Agent UX、A2UI、Approval 与 Recovery。
 
-Evaluation（Eval）、安全、可靠性和可观测性不构成孤立的第四层。它们是一条贯穿三层的**工程证据线**：从第一个模型实验开始，持续回答系统是否更好、是否越权、故障能否收敛，以及发布是否有充分证据。
+Evaluation（Eval）、安全、可靠性和可观测性不构成孤立的第四层。它们是一条贯穿三层的**工程证据线**：从第一个模型实验开始，持续回答系统是否更好、是否越权、故障能否收敛，以及发布是否有充分证据。生产 Trace 和用户修订也只有经过这条证据线，才能成为下一版系统的改进候选；它们不能直接改变在线行为。
 
 ```mermaid
 flowchart TB
@@ -17,6 +17,7 @@ flowchart TB
     A["Agent 系统层<br/>Context · Runtime · Tool/MCP · Memory · Multi-Agent/A2A"]
     L["LLM 底层<br/>Token · Attention · Training · Inference · Model API"]
     E["横切工程证据<br/>Eval · Security · Reliability · Observability"]
+    I["受控改进闭环<br/>Signal · Change Proposal · Candidate Bundle · Release"]
 
     H <--> U
     U <--> A
@@ -24,6 +25,10 @@ flowchart TB
     E -.->|"验证与约束"| U
     E -.->|"验证与约束"| A
     E -.->|"验证与约束"| L
+    E -->|"生产证据与反馈"| I
+    I -.->|"独立评测与发布门禁"| U
+    I -.->|"独立评测与发布门禁"| A
+    I -.->|"独立评测与发布门禁"| L
 ```
 
 贯穿全书的工程原则是：
@@ -40,7 +45,7 @@ flowchart TB
 - Agent Runtime 如何管理状态、工具、副作用、预算与失败恢复；
 - 前端如何消费可重放事件、表达不确定状态，并为用户提供可信的审批与接管入口。
 
-正文不要求读者了解本书的内部规划资料，也不把训练基础模型作为前置条件。
+阅读本书不要求预先具备 Agent 应用工程背景，也不把训练基础模型作为前置条件。
 
 ## 贯穿项目：Resolution Desk
 
@@ -67,13 +72,15 @@ flowchart TB
 - AG-UI Adapter，以及与原生事件投影共享 Fixture 的 Contract Test；
 - 至少一个受 Catalog 约束的 A2UI Surface，用于低风险澄清或证据收集；
 - 固定、可信的原生 Approval UI；A2UI 不承载退款等高风险最终确认；
-- 带 Access Control List（ACL）、来源、版本和时效性的政策检索；
-- 只保存经用户确认偏好的受治理 Memory；
+- 带 Access Control List（ACL）、来源、版本、时效性和可回滚 Index Manifest 的政策检索；
+- 可定位到 Claim 的引用校验，以及证据不足时的拒答或人工升级；
+- 只保存经用户确认偏好的受治理 Memory，并支持跨 Thread 读取、更正、撤销和删除验证；
 - 通过 Model Context Protocol（MCP）接入的订单、物流与政策查询能力；
 - 不可变 Proposal、服务端 Authorization、Approval 与幂等退款 Command；
 - Cancel、断线重连、Checkpoint、未知效果核对与人工接管；
 - Dataset、Grader、Trace、Audit、Service Level Objective（SLO）与发布门禁；
-- 跨 Application Server、Queue、Worker 与 Tool 的 OpenTelemetry 因果链。
+- 跨 Application Server、Queue、Worker 与 Tool 的 OpenTelemetry 因果链；
+- 一次从生产证据到 Change Proposal、候选 Behavior Bundle、独立 Eval 和回滚的受控改进演练。
 
 Multi-Agent 设计和 Agent2Agent Protocol（A2A）属于 Agent 系统层的必懂能力，但不默认进入生产主路径。只有在相同 Dataset、近似总预算和明确故障模型下，相对单 Agent Baseline 取得可重复收益，Resolution Desk 才启用远程风险复核分支。
 
@@ -94,6 +101,8 @@ flowchart LR
     EXEC <--> PAYMENT["Mock Payment System"]
     APP -.->|"通过 Eval 后才采用"| REVIEW["Multi-Agent / A2A<br/>Artifact only"]
     APP --> EVIDENCE["Eval · Trace · Audit · SLO"]
+    EVIDENCE --> IMPROVE["Controlled Improvement<br/>Finding · Eval Target · Candidate Bundle"]
+    IMPROVE -.->|"Approval + Release Gate"| APP
 ```
 
 所有订单、物流、支付和外部 Agent 服务均由 Mock 实现，并运行在隔离的 Sandbox 中。项目不连接真实支付，不开放任意 Shell、SQL 或网页操作。
@@ -116,8 +125,8 @@ flowchart LR
 | [06 Context、知识与记忆](/masterpiece-static-docs/06-上下文-知识与记忆/01-Context-Engineering.md)      | Agent 系统              | 检索当前有效政策，展示来源并隔离无权内容                                 |
 | [07 Tool、协议与行动控制](/masterpiece-static-docs/07-工具-协议与行动控制/01-工具契约与错误模型.md)                | Agent 系统              | 将建议推进到受控、可幂等收敛的 Mock 行动                              |
 | [08 安全与治理](/masterpiece-static-docs/08-安全与治理/01-Agent威胁建模.md)                            | Agentic UI + 横切证据线    | 建立可信交互、A2UI Surface、最小权限与安全门禁                        |
-| [09 可靠性与可观测](/masterpiece-static-docs/09-可靠性与可观测/01-失败分类-超时-重试与取消.md)                    | 横切证据线                 | 从断流、重启和 ACK 丢失中恢复并确认真实 Outcome                       |
-| [11 综合实践](/masterpiece-static-docs/11-综合实践与作品设计/01-综合系统心智模型.md)                          | 三线总装                  | 完成端到端回归、故障演练和发布验收                                    |
+| [09 可靠性与可观测](/masterpiece-static-docs/09-可靠性与可观测/01-失败分类-超时-重试与取消.md)                    | 横切证据线                 | 从故障中恢复，建立生产证据，并把改进限制在候选、评测与受控发布闭环内                   |
+| [10 综合实践](/masterpiece-static-docs/11-综合实践与作品设计/01-综合系统心智模型.md)                          | 三线总装                  | 完成端到端回归、故障演练和发布验收                                    |
 
 第 02–04 部分的实验使用给定 Fixture 或小型独立实验，不要求读者提前拥有完整 Runtime。从第 05 部分开始，所有实现持续累加在同一个练习项目中。
 
@@ -146,9 +155,9 @@ Claude Code、Codex 等工具提供一组熟悉的直觉：项目规则进入 Co
 2. 完成 05/01–08、06 与 07/01–04，建立单 Agent Runtime，再加入 Context、Knowledge、Tool 与受控行动；
 3. 学习 Multi-Agent 与 A2A 的责任模型，并用对照 Eval 决定是否在生产采用；
 4. 沿“05/09 → 05/10 → 08/05 → 08/06”连续完成 Agentic UI 核心路径；
-5. 完成系统性安全、可靠性、可观测和发布门禁；
+5. 完成系统性安全、可靠性、可观测、发布门禁与受控改进演练；
 6. 在综合实践中完成三层总装。
 
-Rust、资料索引、能力索引和场景迁移用于定向查阅，不构成核心项目完成条件。
+Agentic RAG / GraphRAG、Framework 对照、Skills、Rust、资料索引、能力索引和场景迁移用于定向查阅，不构成核心项目完成条件。
 
 [开始阅读：如何阅读这本书](/masterpiece-static-docs/01-导读/01-如何阅读这本书.md)

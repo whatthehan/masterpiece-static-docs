@@ -26,6 +26,7 @@ Durable Runtime    Temporal / Inngest / workflow SDK
 Tool Integration   MCP SDK / provider tools / connectors
 Agent Interop      A2A SDK / application adapter
 Observability      OpenTelemetry + one eval/trace product
+Offline Optimizer  DSPy / MIPROv2 / GEPA（Python，可选实验）
 ```
 
 这些组件不是同一类竞品。例如 MCP 解决 Host 与 Server 的能力发现和调用，并不提供 Agent Loop；AG-UI 连接 Agent Backend 与用户界面，A2UI 表达受 Catalog 约束的声明式界面，MCP Apps 把 Server 提供的交互式 HTML/JavaScript 隔离在宿主控制的沙箱中，A2A 连接独立 Agent 系统；Temporal 让 Workflow 跨故障恢复，并不替模型选择 Context。任何 UI SDK 或协议也不应成为订单状态的 Source of Truth。
@@ -151,6 +152,7 @@ Durable Workflow 与 Agent Runtime 不是二选一。前者持有长期控制流
 - **Mastra**：适合需要 TypeScript 一体化 agent/workflow/memory/server 体验时做限时 POC。若采用，再深入其 state、suspend/resume、storage 和 eval；无需同时深学多个同层框架。
 - **LangChain.js 高层组件**：某个 loader、retriever 或 integration 能节省明确成本时按需使用，并通过 adapter 隔离。无需背诵历史 chains 和全部 integrations。
 - **AutoGen / CrewAI**：默认不作为 TypeScript-first、单 Agent-first 路线的前置。只有评测证明需要 Python-first Multi-Agent 模式时再做 POC；Multi-Agent 的状态、权限与汇合语义见 [Multi-Agent：协作、状态与验证](/masterpiece-static-docs/05-模型接口与Agent内核/11-Multi-Agent协作状态与验证.md)。
+- **DSPy / MIPROv2 / GEPA**：属于离线优化与实验工具，不是 Agent Runtime。它们可以依据训练样本和评分函数搜索候选 Prompt 或 Program，但不能读取私有 Holdout、改写 Grader、绕过安全门禁或直接发布生产版本。本书仍用 TypeScript / Node.js 完成应用主线；只有建立 Dataset、Eval 和发布隔离后，才在独立 Python 环境中按需评估，完整位置见[受控改进](/masterpiece-static-docs/09-可靠性与可观测/07-受控改进-从生产证据到候选Behavior-Bundle.md)。
 - **Rust Agent 框架或非官方模型 SDK**：先稳定 wire contract 和 TypeScript 控制面。Rust 优先承接边界清晰的 executor、gateway 或 parser，不因语言偏好提前重写 Agent Runtime。
 
 ## 实践：用 Resolution Desk 做框架对照实验
@@ -224,3 +226,5 @@ flowchart TD
 - [Vercel AI SDK: Tool calling](https://ai-sdk.dev/docs/ai-sdk-core/tools-and-tool-calling)
 - [Temporal: Workflow Execution](https://docs.temporal.io/workflow-execution)
 - [Mastra](https://mastra.ai/)
+- [DSPy](https://dspy.ai/)
+- [GEPA](https://arxiv.org/abs/2507.19457)
