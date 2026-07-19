@@ -9,7 +9,7 @@
 <script defer src="/masterpiece-static-docs/static/js/lib-react.153111d74d.js"></script>
 <script defer src="/masterpiece-static-docs/static/js/lib-router.575081ccc8.js"></script>
 <script defer src="/masterpiece-static-docs/static/js/5193.f8417e4998.js"></script>
-<script defer src="/masterpiece-static-docs/static/js/index.dd6441ccc4.js"></script>
+<script defer src="/masterpiece-static-docs/static/js/index.66035edb4b.js"></script>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="generator" content="Rspress v2.0.17">
 <meta property="og:type" content="website">
@@ -28,13 +28,13 @@
 <h2 class="rp-toc-include" id="本章目标"><a href="#本章目标" class="rp-header-anchor rp-link" aria-hidden="true">#</a>本章目标</h2>
 <ul>
 <li>判断 AG-UI 位于 Provider Stream、Canonical Event 与 UI State 的哪一层。</li>
-<li>理解 Run、Text、Tool、State 与 Special Event 的生命周期。</li>
+<li>理解 Run、Text、Tool、State 与 Special Event 的生命周期，以及它们与持久事实、实时信号的差异。</li>
 <li>实现 Canonical RunEvent 到 AG-UI Event 的单向 Adapter。</li>
-<li>处理 Shared State、前端 Tool、用户控制、重连和协议升级的边界。</li>
+<li>处理 Shared State、Pending Reverse Request、用户控制、多客户端重连和协议升级的边界。</li>
 <li>用 Contract Test 证明更换 UI 协议不会改变领域语义。</li>
 </ul>
 <h2 class="rp-toc-include" id="1-先把四层-event-分开"><a href="#1-先把四层-event-分开" class="rp-header-anchor rp-link" aria-hidden="true">#</a>1. 先把四层 Event 分开</h2>
-<p>同一个“模型正在输出文本”的事实，在系统中可能有四种表示：</p>
+<p>同一个“模型正在输出文本”的现象，在系统中可能有五种表示：</p>
 <div></div>
 
 
@@ -66,8 +66,13 @@
 
 
 
-<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>层</th><th>优化目标</th><th>生命周期由谁定义</th></tr></thead><tbody><tr><td>Provider Event</td><td>准确表达某个模型 API 的生成过程</td><td>Model Provider</td></tr><tr><td>Canonical RunEvent</td><td>持久表达应用已经确认的事实</td><td>应用领域与 Runtime</td></tr><tr><td>AG-UI Event</td><td>让 Agent Backend 与前端互操作</td><td>AG-UI Protocol</td></tr><tr><td>UI State</td><td>形成当前页面可渲染的投影</td><td>产品前端</td></tr></tbody></table></div>
-<p>AG-UI 应位于 Product Edge。若直接把 AG-UI Event 写成领域事实，日后更换前端协议时，审批、终态和审计语义也会被迫迁移。</p>
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>层</th><th>优化目标</th><th>生命周期由谁定义</th></tr></thead><tbody><tr><td>Provider Event</td><td>准确表达某个模型 API 的生成过程</td><td>Model Provider</td></tr><tr><td>Application Live Signal</td><td>改善当前连接的实时反馈，可安全丢弃</td><td>应用传输层</td></tr><tr><td>Canonical RunEvent</td><td>持久表达应用已经确认的事实</td><td>应用领域与 Runtime</td></tr><tr><td>AG-UI Event</td><td>让 Agent Backend 与前端互操作</td><td>AG-UI Protocol</td></tr><tr><td>UI State</td><td>形成当前页面可渲染的投影</td><td>产品前端</td></tr></tbody></table></div>
+<p>AG-UI 应位于 Product Edge。若直接把 AG-UI Event 写成领域事实，日后更换前端协议时，审批、终态和审计语义也会被迫迁移。Adapter 可以同时读取已提交的 Canonical Event 和可丢弃的 Live Signal，但必须保留二者的持久性差异。</p>
 <h2 class="rp-toc-include" id="2-ag-ui-的最小运行模型"><a href="#2-ag-ui-的最小运行模型" class="rp-header-anchor rp-link" aria-hidden="true">#</a>2. AG-UI 的最小运行模型</h2>
 <p>AG-UI 的核心形态可以概括为：</p>
 <div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>run(input: RunAgentInput) → stream&lt;BaseEvent&gt;</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
@@ -143,7 +148,7 @@
 <span class="line"><span>→ TOOL_CALL_RESULT(toolCallId, content)?</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
 <p>若网络在 <code>TOOL_CALL_ARGS</code> 中途断开，客户端可以展示“不完整”，但 Runtime 不能据此执行 Tool。可执行提议仍必须来自已经闭合、解析、Schema 校验并经过 Policy 检查的 Canonical Event。</p>
 <h2 class="rp-toc-include" id="4-从-canonical-runevent-映射到-ag-ui"><a href="#4-从-canonical-runevent-映射到-ag-ui" class="rp-header-anchor rp-link" aria-hidden="true">#</a>4. 从 Canonical RunEvent 映射到 AG-UI</h2>
-<p>Adapter 应只读取已经提交的公共领域事件：</p>
+<p>Adapter 对 Canonical Event 只读取已经提交的公共事实；对 Live Signal 则走独立、可丢弃的投影入口：</p>
 
 
 
@@ -209,7 +214,22 @@
 
 
 
-<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>Canonical RunEvent</th><th>AG-UI 投影</th><th>说明</th></tr></thead><tbody><tr><td><code>run.started</code></td><td><code>RUN_STARTED</code></td><td>保留 <code>threadId</code>、<code>runId</code> 关联</td></tr><tr><td><code>item.started(kind=assistant_message)</code></td><td><code>TEXT_MESSAGE_START</code></td><td><code>itemId</code> 映射为稳定 <code>messageId</code></td></tr><tr><td>活动 Assistant Message 的 <code>item.text_delta</code></td><td><code>TEXT_MESSAGE_CONTENT</code></td><td>只发送已脱敏的显示内容</td></tr><tr><td>活动 Assistant Message 的 <code>item.completed</code></td><td><code>TEXT_MESSAGE_END</code></td><td>只闭合已经存在的 Message</td></tr><tr><td><code>tool.proposed</code></td><td><code>TOOL_CALL_START/ARGS/END</code></td><td>对高风险 Tool 只投影已校验的 Proposal</td></tr><tr><td><code>tool.state_changed(succeeded)</code></td><td><code>TOOL_CALL_RESULT</code></td><td>发送公开摘要或引用，不发送 Secret</td></tr><tr><td>Public Snapshot</td><td><code>STATE_SNAPSHOT</code> / <code>MESSAGES_SNAPSHOT</code></td><td>建立前端基线，不替代执行恢复状态</td></tr><tr><td>可公开状态变化</td><td><code>STATE_DELTA</code> 或 <code>CUSTOM</code></td><td>Delta 使用 RFC 6902 JSON Patch 时需限制路径</td></tr><tr><td><code>run.state_changed(waiting_approval)</code></td><td>稳定基线：<code>STATE_*</code> / <code>CUSTOM</code>；中断扩展：Snapshots + <code>RUN_FINISHED(outcome.type = &quot;interrupt&quot;)</code></td><td>关闭 UI Run 不等于关闭领域 Workflow</td></tr><tr><td><code>run.completed</code></td><td><code>RUN_FINISHED</code> 或 <code>RUN_FINISHED(outcome.type = &quot;success&quot;)</code></td><td>只映射已经确认的成功终态</td></tr><tr><td><code>run.error_recorded</code></td><td><code>RUN_ERROR</code> 或可恢复状态事件</td><td>可恢复错误不能被误投影为永久终态</td></tr></tbody></table></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>Canonical RunEvent</th><th>AG-UI 投影</th><th>说明</th></tr></thead><tbody><tr><td><code>run.started</code></td><td><code>RUN_STARTED</code></td><td>保留 <code>threadId</code>、<code>runId</code> 关联</td></tr><tr><td><code>item.started(kind=assistant_message)</code></td><td><code>TEXT_MESSAGE_START</code></td><td><code>itemId</code> 映射为稳定 <code>messageId</code></td></tr><tr><td>活动 Assistant Message 的 <code>item.text_chunk_committed</code></td><td><code>TEXT_MESSAGE_CONTENT</code></td><td>重放时发送已持久、已脱敏的 Chunk</td></tr><tr><td>活动 Assistant Message 的实时 <code>item.text_delta</code></td><td><code>TEXT_MESSAGE_CONTENT</code></td><td>只服务当前连接；按 Stream Offset 去重</td></tr><tr><td>活动 Assistant Message 的 <code>item.completed</code></td><td><code>TEXT_MESSAGE_END</code>，必要时先重建 Messages Snapshot</td><td>最终文本与哈希是规范终态</td></tr><tr><td><code>tool.proposed</code></td><td><code>TOOL_CALL_START/ARGS/END</code></td><td>对高风险 Tool 只投影已校验的 Proposal</td></tr><tr><td><code>tool.state_changed(succeeded)</code></td><td><code>TOOL_CALL_RESULT</code></td><td>发送公开摘要或引用，不发送 Secret</td></tr><tr><td>Public Snapshot</td><td><code>STATE_SNAPSHOT</code> / <code>MESSAGES_SNAPSHOT</code></td><td>建立前端基线，不替代执行恢复状态</td></tr><tr><td>可公开状态变化</td><td><code>STATE_DELTA</code> 或 <code>CUSTOM</code></td><td>Delta 使用 RFC 6902 JSON Patch 时需限制路径</td></tr><tr><td><code>run.state_changed(waiting_approval)</code></td><td>稳定基线：<code>STATE_*</code> / <code>CUSTOM</code>；中断扩展：Snapshots + <code>RUN_FINISHED(outcome.type = &quot;interrupt&quot;)</code></td><td>关闭 UI Run 不等于关闭领域 Workflow</td></tr><tr><td><code>run.state_changed(state=completed)</code></td><td><code>RUN_FINISHED</code> 或 <code>RUN_FINISHED(outcome.type = &quot;success&quot;)</code></td><td>只映射已经确认的成功终态</td></tr><tr><td><code>run.error_recorded</code></td><td><code>RUN_ERROR</code> 或可恢复状态事件</td><td>可恢复错误不能被误投影为永久终态</td></tr><tr><td><code>input.required</code>、<code>approval.required</code></td><td>稳定基线：<code>STATE_*</code> / 版本化自定义事件；中断扩展：Interrupt</td><td>Pending 状态必须已进入 Public Snapshot</td></tr><tr><td><code>control.accepted / applied / rejected</code></td><td><code>STATE_DELTA</code> 或版本化自定义事件</td><td>不虚构 Queue、Steer、Cancel 的标准事件名</td></tr></tbody></table></div>
 <h3 class="rp-toc-include" id="41-稳定终态与中断扩展不能混用"><a href="#41-稳定终态与中断扩展不能混用" class="rp-header-anchor rp-link" aria-hidden="true">#</a>4.1 稳定终态与中断扩展不能混用</h3>
 
 
@@ -236,14 +256,19 @@
 
 <div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>基线</th><th>等待审批时怎样结束当前交互</th><th>怎样恢复</th><th>必须锁定的 Contract</th></tr></thead><tbody><tr><td>稳定 TypeScript SDK</td><td>不发送成功语义的 <code>RUN_FINISHED</code>；用公开 State / Custom Event 表达等待状态，继续方式由应用定义</td><td>通过应用 Command 恢复现有 Run，或由应用显式建立新 Run</td><td><code>RUN_FINISHED</code> 只对应领域成功终态</td></tr><tr><td>Interrupts 扩展</td><td>先发送 <code>STATE_SNAPSHOT</code> 与 <code>MESSAGES_SNAPSHOT</code>，再发送带 <code>outcome.type = &quot;interrupt&quot;</code> 和 Interrupt 列表的 <code>RUN_FINISHED</code></td><td>Client 用新的 <code>runId</code> 发起新 Run，并在 <code>resume</code> 数组中按 <code>interruptId</code> 提交结果</td><td>Snapshot 顺序、Interrupt ID、Resume Payload 与新 Run ID</td></tr></tbody></table></div>
 <p>中断扩展闭合的是本次 AG-UI 交互，而不是等待中的领域 Workflow。若 <code>outcome</code> 被省略，扩展文档仍按兼容规则把它解释为成功；因此 Adapter 不能用“缺少字段”暗示等待审批。稳定 SDK 的 Event Union 又不包含这组字段，生产代码必须以固定版本导出的类型和录制 Fixture 为准，不能把 Concepts 示例直接强制转换进 SDK 类型。</p>
-<p>一个窄接口比在领域层导入 AG-UI SDK 类型更容易测试：</p>
+<p>一个窄接口比在领域层导入 AG-UI SDK 类型更容易测试。实时信号必须显式进入另一个入口，防止无意写入 Event Store：</p>
 <div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> AgUiAdapter</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
 <span class="line"><span style="color:var(--shiki-token-function)">  fromSnapshot</span><span style="color:var(--shiki-foreground)">(snapshot</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> RunSnapshot</span><span style="color:var(--shiki-foreground)">)</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> AgUiEvent</span><span style="color:var(--shiki-foreground)">[];</span></span>
 <span class="line"><span style="color:var(--shiki-token-function)">  fromEvent</span><span style="color:var(--shiki-foreground)">(event</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> RunEvent</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-foreground)"> state</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> AgUiProjectionState</span><span style="color:var(--shiki-foreground)">)</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> AgUiEvent</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-token-function)">  fromLiveSignal</span><span style="color:var(--shiki-foreground)">(</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    signal</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> LiveRunSignal</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    state</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> AgUiProjectionState</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  )</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> AgUiEvent</span><span style="color:var(--shiki-foreground)">[];</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">};</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> AgUiProjectionState</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  activeTextMessageIds</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> Set</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-constant)">string</span><span style="color:var(--shiki-foreground)">&gt;;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  deliveredOffsetsByStream</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> Map</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-constant)">string</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">&gt;;</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">};</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:var(--shiki-token-keyword)">function</span><span style="color:var(--shiki-token-function)"> fromEvent</span><span style="color:var(--shiki-foreground)">(</span></span>
@@ -260,14 +285,8 @@
 <span class="line"><span style="color:var(--shiki-foreground)">        role</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;assistant&quot;</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">      }];</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">    }</span></span>
-<span class="line"><span style="color:var(--shiki-token-keyword)">    case</span><span style="color:var(--shiki-token-string-expression)"> &quot;item.text_delta&quot;</span><span style="color:var(--shiki-foreground)">:</span></span>
-<span class="line"><span style="color:var(--shiki-token-keyword)">      return</span><span style="color:var(--shiki-token-constant)"> state</span><span style="color:var(--shiki-token-function)">.</span><span style="color:var(--shiki-token-constant)">activeTextMessageIds</span><span style="color:var(--shiki-token-function)">.has</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-constant)">event</span><span style="color:var(--shiki-foreground)">.</span><span style="color:var(--shiki-token-constant)">data</span><span style="color:var(--shiki-foreground)">.itemId)</span></span>
-<span class="line"><span style="color:var(--shiki-token-keyword)">        ?</span><span style="color:var(--shiki-foreground)"> [{</span></span>
-<span class="line"><span style="color:var(--shiki-foreground)">            type</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;TEXT_MESSAGE_CONTENT&quot;</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
-<span class="line"><span style="color:var(--shiki-foreground)">            messageId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> event</span><span style="color:var(--shiki-foreground)">.</span><span style="color:var(--shiki-token-constant)">data</span><span style="color:var(--shiki-foreground)">.itemId</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
-<span class="line"><span style="color:var(--shiki-foreground)">            delta</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> event</span><span style="color:var(--shiki-foreground)">.</span><span style="color:var(--shiki-token-constant)">data</span><span style="color:var(--shiki-foreground)">.append</span><span style="color:var(--shiki-token-punctuation)">,</span></span>
-<span class="line"><span style="color:var(--shiki-foreground)">          }]</span></span>
-<span class="line"><span style="color:var(--shiki-token-keyword)">        :</span><span style="color:var(--shiki-foreground)"> [];</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">    case</span><span style="color:var(--shiki-token-string-expression)"> &quot;item.text_chunk_committed&quot;</span><span style="color:var(--shiki-foreground)">:</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">      return</span><span style="color:var(--shiki-token-function)"> projectUndeliveredFragments</span><span style="color:var(--shiki-foreground)">(event</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-foreground)"> state);</span></span>
 <span class="line"><span style="color:var(--shiki-token-keyword)">    case</span><span style="color:var(--shiki-token-string-expression)"> &quot;item.completed&quot;</span><span style="color:var(--shiki-foreground)">: {</span></span>
 <span class="line"><span style="color:var(--shiki-token-keyword)">      if</span><span style="color:var(--shiki-foreground)"> (</span><span style="color:var(--shiki-token-keyword)">!</span><span style="color:var(--shiki-token-constant)">state</span><span style="color:var(--shiki-token-function)">.</span><span style="color:var(--shiki-token-constant)">activeTextMessageIds</span><span style="color:var(--shiki-token-function)">.has</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-constant)">event</span><span style="color:var(--shiki-foreground)">.</span><span style="color:var(--shiki-token-constant)">data</span><span style="color:var(--shiki-foreground)">.itemId)) </span><span style="color:var(--shiki-token-keyword)">return</span><span style="color:var(--shiki-foreground)"> [];</span></span>
 <span class="line"><span style="color:var(--shiki-token-constant)">      state</span><span style="color:var(--shiki-token-function)">.</span><span style="color:var(--shiki-token-constant)">activeTextMessageIds</span><span style="color:var(--shiki-token-function)">.delete</span><span style="color:var(--shiki-foreground)">(</span><span style="color:var(--shiki-token-constant)">event</span><span style="color:var(--shiki-foreground)">.</span><span style="color:var(--shiki-token-constant)">data</span><span style="color:var(--shiki-foreground)">.itemId);</span></span>
@@ -281,6 +300,47 @@
 <span class="line"><span style="color:var(--shiki-foreground)">  }</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">}</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
 <p>这段代码表达的是 Adapter 结构，不是完整 AG-UI SDK 类型。<code>activeTextMessageIds</code> 确保 <code>tool_result</code> 等非消息 Item 不会误发 <code>TEXT_MESSAGE_END</code>；生产实现还应把孤立 Text Delta / End 记录为协议错误。实际实现应直接使用固定版本 SDK 导出的 Discriminated Union，并对每一种受支持的 Event 生成 Golden Fixture。</p>
+<p><code>fromLiveSignal</code> 和 <code>fromEvent</code> 可能观察到同一段文本，因此 Adapter 必须按 <code>(streamId, offset)</code> 记录已发送 Fragment：实时连接已经发送的 Fragment 不能因持久 Chunk 到达而再次追加；重连连接则从 Snapshot 或持久 Chunk 开始，不尝试补发已经消失的实时信号。<code>item.completed.data.final.text</code> 与 Adapter 累积文本不一致时，不能再用 Content Delta“修修补补”，而应发出新的 Messages Snapshot，建立规范基线。</p>
+<h3 class="rp-toc-include" id="42-应用控制语义不能伪装成标准字段"><a href="#42-应用控制语义不能伪装成标准字段" class="rp-header-anchor rp-link" aria-hidden="true">#</a>4.2 应用控制语义不能伪装成标准字段</h3>
+<p>AG-UI 的生命周期、消息、Tool、State 和 Interrupt 能力可以承载一部分交互，但它不自动定义 Resolution Desk 的 Queue、Steer、Cancel-and-send 或 Side Question 语义：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>应用语义</th><th>可使用的 AG-UI 能力</th><th>仍由应用定义的部分</th></tr></thead><tbody><tr><td>Queue follow-up</td><td>后续运行输入、State 或版本化自定义事件</td><td>队列顺序、<code>commandId</code>、何时出列</td></tr><tr><td>Steer without cancel</td><td>Human-in-the-loop capability 可声明 Intervention 支持</td><td>指令 Command、可注入边界、拒绝原因</td></tr><tr><td>Cancel-and-send</td><td>Transport Abort 可停止当前 HTTP 消费，但不能替代领域取消</td><td>Cancel Intent 与新输入的原子接受、安全排空、外部效果核对</td></tr><tr><td>Side question</td><td>可启动一个独立 AG-UI Run</td><td>父 <code>snapshotSeq</code>、只读约束、结果过期标记、禁止解决父 Approval</td></tr><tr><td>Pending input / approval</td><td>固定版本支持时可使用 Interrupts；否则使用 State / 版本化自定义投影</td><td>Durable Pending Request、权限、比较并交换、过期与审计</td></tr></tbody></table></div>
+<p>Capability 只说明“实现可能支持某类干预”，不是可直接提交的 Command Schema。Adapter 不应自造 <code>QUEUE_FOLLOW_UP</code>、<code>STEER</code> 或 <code>CANCEL_AND_SEND</code> 等 AG-UI 标准事件名；这些名称属于应用 Command API。只有固定版本 SDK 确实导出的字段才能进入标准 Event，其他信息放在明确命名空间和版本的应用 Envelope 中。</p>
+<p>Interrupt 也不能泛化为所有实时控制。官方 Interrupt 语义会闭合当前 AG-UI Run，并要求新的 Run 携带 Resume；未决 Interrupt 还会阻塞不符合 Resume Contract 的新输入。因此 Queue follow-up 和同 Run Steer 不能冒充 Interrupt，Side Question 也必须使用隔离 Run，不能偷渡为对 Pending Approval 的响应。</p>
 <h2 class="rp-toc-include" id="5-shared-state-不是共享数据库"><a href="#5-shared-state-不是共享数据库" class="rp-header-anchor rp-link" aria-hidden="true">#</a>5. Shared State 不是共享数据库</h2>
 <p>AG-UI 可以用 <code>STATE_SNAPSHOT</code> 建立状态基线，再用 <code>STATE_DELTA</code> 发送 RFC 6902 JSON Patch。对于熟悉 Redux、Immer 或 Query Cache 的前端工程师，这很容易理解；危险之处在于把浏览器 State 误当成领域权威。</p>
 <p>建议只公开专用的 <code>PublicAgentState</code>：</p>
@@ -321,6 +381,9 @@
 <span class="line"><span>→ authorize / approve / append event</span></span>
 <span class="line"><span>→ project new AG-UI events</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
 <p>Frontend Tool 也遵循相同原则。剪贴板、页面选区或本地文件选择可以由浏览器执行；退款、发信和权限变更不能因为被包装成“前端 Tool”就绕过服务端 Policy。</p>
+<h3 class="rp-toc-include" id="61-pending-reverse-request-不是连接内-promise"><a href="#61-pending-reverse-request-不是连接内-promise" class="rp-header-anchor rp-link" aria-hidden="true">#</a>6.1 Pending Reverse Request 不是连接内 Promise</h3>
+<p>等待补充信息或审批时，Application Server 先提交 <code>input.required</code> 或 <code>approval.required</code>，并把对应 <code>PendingReverseRequest</code> 放入 Public Snapshot。之后即使发起请求的 SSE 断开、用户切换设备或服务进程重启，请求仍保持 Pending。</p>
+<p>客户端回应时提交应用 Command，并携带 <code>requestId</code>、期望版本和新的 <code>commandId</code>。若采用固定版本的 AG-UI Interrupts，Adapter 还要遵守 Snapshot 在前、带 Interrupt Outcome 的 <code>RUN_FINISHED</code> 在后的顺序，并按该版本的 Resume Contract 启动新 Run。无论使用哪种映射，服务端都要重新读取 Proposal、权限和过期时间。</p>
 <h2 class="rp-toc-include" id="7-transport断线与重放"><a href="#7-transport断线与重放" class="rp-header-anchor rp-link" aria-hidden="true">#</a>7. Transport、断线与重放</h2>
 <p>AG-UI 是 Transport-agnostic，官方 HTTP Client 支持基于 HTTP 的事件传输，架构也允许 SSE、WebSocket、Webhook 或其他机制。协议 Event 与投递保证应分别设计：</p>
 
@@ -359,24 +422,45 @@
 
 
 <div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>问题</th><th>AG-UI Event 层</th><th>Application Transport 层</th></tr></thead><tbody><tr><td>这是什么变化</td><td><code>type</code> 与事件 Payload</td><td>不定义业务含义</td></tr><tr><td>是否重复、是否缺失</td><td>Event 本身不应被假定为持久日志</td><td><code>eventId</code>、<code>seq</code>、Ack / Replay 策略</td></tr><tr><td>断线后从哪里继续</td><td>可用 Snapshot 重建 UI 基线</td><td>Event Store、Cursor、保留期</td></tr><tr><td>心跳和连接存活</td><td>不应伪装成领域事件</td><td>Heartbeat / Ping / Timeout</td></tr><tr><td>慢客户端</td><td>不改变领域状态</td><td>Buffer、Backpressure、Resync</td></tr></tbody></table></div>
-<p>因此可以在 AG-UI Event 外增加产品 Envelope：</p>
-<div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> DeliveredAgUiEvent</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
-<span class="line"><span style="color:var(--shiki-foreground)">  eventId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
-<span class="line"><span style="color:var(--shiki-foreground)">  runId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
-<span class="line"><span style="color:var(--shiki-foreground)">  seq</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
-<span class="line"><span style="color:var(--shiki-foreground)">  schemaVersion</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> 1</span><span style="color:var(--shiki-foreground)">;</span></span>
-<span class="line"><span style="color:var(--shiki-foreground)">  event</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> AgUiEvent</span><span style="color:var(--shiki-foreground)">;</span></span>
-<span class="line"><span style="color:var(--shiki-foreground)">};</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>因此可以在 AG-UI Event 外增加产品 Envelope。Canonical Frame 与 Live Frame 必须使用不同游标，不能把实时 Offset 冒充领域 <code>seq</code>：</p>
+<div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> DeliveredAgUiFrame</span><span style="color:var(--shiki-token-keyword)"> =</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  |</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      kind</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;canonical&quot;</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      eventId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      runId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      seq</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      schemaVersion</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> 1</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      event</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> AgUiEvent</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    }</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">  |</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      kind</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;live&quot;</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      deliveryId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      runId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      streamId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      offset</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      event</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> AgUiEvent</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    };</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
 <p>是否采用这层 Envelope 取决于客户端与 Server 的实现，但应用必须有一种明确的重复、Gap 和 Resync 语义。不能因为底层使用 SSE，就自动假设事件可重放。</p>
+<h3 class="rp-toc-include" id="71-多客户端不能依赖最后到达者获胜"><a href="#71-多客户端不能依赖最后到达者获胜" class="rp-header-anchor rp-link" aria-hidden="true">#</a>7.1 多客户端不能依赖“最后到达者获胜”</h3>
+<p>多个浏览器可以同时观察同一个 Thread，但领域顺序只由 Application Server 分配：</p>
+<ul>
+<li>Command 以 <code>commandId</code> 去重，以资源版本和 Pending Request 版本做比较并交换（Compare-and-Swap）。</li>
+<li>Canonical Event 以 <code>(runId, seq)</code> 排序，以 <code>eventId</code> 去重。</li>
+<li>Live Signal 只在 <code>(streamId, offset)</code> 内有局部顺序；丢失不会阻塞 Canonical Reducer。</li>
+<li>某客户端本地的 Optimistic State 不广播为事实；其他客户端只消费服务端已接受事件。</li>
+<li>慢客户端出现领域 Gap 时停止归并并 Resync；不能用后到的 State Delta 覆盖缺失基线。</li>
+</ul>
+<p>这组规则保证浏览器 A 提交审批、浏览器 B 排队追问、浏览器 C 断线重连时，三者最终看到同一个 Pending Request、输入队列和 Run 终态。</p>
 <h2 class="rp-toc-include" id="8-ag-uia2uia2a-与-mcp-不可互换"><a href="#8-ag-uia2uia2a-与-mcp-不可互换" class="rp-header-anchor rp-link" aria-hidden="true">#</a>8. AG-UI、A2UI、A2A 与 MCP 不可互换</h2>
 <div></div>
 <ul>
 <li><strong>AG-UI</strong> 定义 Agent Backend 与用户界面的运行时交互事件。</li>
-<li><strong>A2UI</strong> 定义受限、声明式的生成界面结构，可作为 AG-UI Payload 传输。</li>
+<li><strong>A2UI</strong> 定义受限、声明式的生成界面结构和 Renderer Contract，可作为 AG-UI Payload 传输。</li>
 <li><strong>A2A</strong> 定义独立 Agent 系统间的发现、消息与 Task 协作。</li>
 <li><strong>MCP</strong> 定义 Host / Client 如何发现和调用 Tool、Resource 与 Prompt。</li>
 </ul>
 <p>协议组合取决于系统边界，协议的价值来自真正的互操作需求，而不是缩写数量。Resolution Desk 在本书主线中实现 AG-UI，并在 Agent UX 之后实现一个受控 A2UI Surface，以分别掌握运行时交互平面与声明式渲染平面；A2A 与 MCP 则继续服从 Agent 协作和 Tool/Data 接入边界。</p>
+<p>A2UI Surface 可以声明低风险表单、证据筛选器或“提交补充信息”动作。Renderer 产生的用户动作仍是不可信 Intent，必须经 Allowlist 转成前述 Application Command。A2UI 不定义 Run 的持久 <code>seq</code>、Queue 顺序、安全排空点、Approval 的比较并交换或外部效果状态；一个按钮叫“批准”也不能获得原生 Approval 组件的权限。反过来，AG-UI 的 <code>STATE_DELTA</code> 也不应该被解释成任意创建可执行界面的许可。</p>
 <h2 class="rp-toc-include" id="9-contract-test-与故障矩阵"><a href="#9-contract-test-与故障矩阵" class="rp-header-anchor rp-link" aria-hidden="true">#</a>9. Contract Test 与故障矩阵</h2>
 
 
@@ -431,7 +515,35 @@
 
 
 
-<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>Fixture</th><th>期望结果</th></tr></thead><tbody><tr><td>Text Content 在 Start 前到达</td><td>Adapter 或 Client 明确拒绝，不创建无主 Message</td></tr><tr><td>同一 Text End 重复投递</td><td>UI 幂等归并，不产生第二条消息</td></tr><tr><td>Tool Args 中途断流</td><td>不产生可执行 Proposal 或 Approval</td></tr><tr><td>JSON Patch 修改未公开路径</td><td>Patch Gate 拒绝并记录协议错误</td></tr><tr><td>Patch 基线版本不匹配</td><td>停止应用 Delta，获取新 Snapshot</td></tr><tr><td>稳定基线发送 <code>RUN_FINISHED</code> 时领域 Run 仍等待审批</td><td>Contract Test 失败，改用公开等待状态或应用定义的恢复流程</td></tr><tr><td>中断扩展未先发送两个 Snapshot 就发送 <code>RUN_FINISHED(outcome.type = &quot;interrupt&quot;)</code></td><td>拒绝该序列并重新获取基线，修正 Adapter 的事件顺序</td></tr><tr><td>Resume 使用旧 <code>runId</code> 或未知 <code>interruptId</code></td><td>服务端拒绝 Command，不猜测待恢复节点</td></tr><tr><td>Client 回传伪造 <code>proposalHash</code></td><td>服务端读取 Canonical Proposal 后拒绝</td></tr><tr><td>Adapter 升级后新增 Event 字段</td><td>旧 Fixture 仍通过；未知 Optional Field 被安全忽略</td></tr><tr><td>慢客户端错过保留期</td><td>返回 Resync，不能重新调用模型伪造历史</td></tr></tbody></table></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>Fixture</th><th>期望结果</th></tr></thead><tbody><tr><td>Text Content 在 Start 前到达</td><td>Adapter 或 Client 明确拒绝，不创建无主 Message</td></tr><tr><td>同一 Text End 重复投递</td><td>UI 幂等归并，不产生第二条消息</td></tr><tr><td>Tool Args 中途断流</td><td>不产生可执行 Proposal 或 Approval</td></tr><tr><td>JSON Patch 修改未公开路径</td><td>Patch Gate 拒绝并记录协议错误</td></tr><tr><td>Patch 基线版本不匹配</td><td>停止应用 Delta，获取新 Snapshot</td></tr><tr><td>稳定基线发送 <code>RUN_FINISHED</code> 时领域 Run 仍等待审批</td><td>Contract Test 失败，改用公开等待状态或应用定义的恢复流程</td></tr><tr><td>中断扩展未先发送两个 Snapshot 就发送 <code>RUN_FINISHED(outcome.type = &quot;interrupt&quot;)</code></td><td>拒绝该序列并重新获取基线，修正 Adapter 的事件顺序</td></tr><tr><td>Resume 使用旧 <code>runId</code> 或未知 <code>interruptId</code></td><td>服务端拒绝 Command，不猜测待恢复节点</td></tr><tr><td>Client 回传伪造 <code>proposalHash</code></td><td>服务端读取 Canonical Proposal 后拒绝</td></tr><tr><td>Adapter 升级后新增 Event 字段</td><td>旧 Fixture 仍通过；未知 Optional Field 被安全忽略</td></tr><tr><td>慢客户端错过保留期</td><td>返回 Resync，不能重新调用模型伪造历史</td></tr><tr><td>Live Delta 已发送，覆盖它的持久 Chunk 随后到达</td><td>Adapter 按 Stream Offset 去重，不重复追加文本</td></tr><tr><td>Live Delta 缺失后收到 <code>item.completed</code></td><td>用 Messages Snapshot 或规范终态收敛，不把缺口当领域 Gap</td></tr><tr><td>Queue follow-up 请求超时后以同一 <code>commandId</code> 重试</td><td>只出现一个队列项</td></tr><tr><td>用 Transport Abort 实现 Cancel-and-send</td><td>Contract Test 失败；必须有原子 Application Command</td></tr><tr><td>同 Run Steer 被映射成 Interrupt Resume</td><td>Contract Test 失败；两种生命周期语义不能混用</td></tr><tr><td>两个客户端同时响应同一 Pending Approval</td><td>只有一个版本检查成功，其他客户端收到已解决状态</td></tr><tr><td>A2UI 动态按钮提交 <code>approve</code></td><td>只能形成不可信 Intent，不能直接追加 <code>approval.resolved</code></td></tr></tbody></table></div>
 <p>测试时用同一组 Canonical Fixture 同时驱动 Native SSE Adapter 与 AG-UI Adapter。两种客户端最终得到的公开 Run State 应一致，Tool、Approval 和 Outcome 语义不得因协议不同而变化。</p>
 <h2 class="rp-toc-include" id="实践给-resolution-desk-增加-ag-ui-adapter"><a href="#实践给-resolution-desk-增加-ag-ui-adapter" class="rp-header-anchor rp-link" aria-hidden="true">#</a>实践：给 Resolution Desk 增加 AG-UI Adapter</h2>
 <h3 class="rp-toc-include" id="进入本章时已有能力"><a href="#进入本章时已有能力" class="rp-header-anchor rp-link" aria-hidden="true">#</a>进入本章时已有能力</h3>
@@ -443,12 +555,13 @@
 <li>加入 Tool Proposal / Result，但只投影已经闭合和脱敏的参数。</li>
 <li>用 <code>STATE_SNAPSHOT</code> 发布最小 <code>PublicAgentState</code>，再增加受限 Delta。</li>
 <li>明确选择稳定基线或中断扩展；若选择扩展，为 Snapshot 顺序、Interrupt ID 和新 <code>runId</code> Resume 建立 Fixture。</li>
-<li>把 Approve、Reject、Cancel 转成服务端 Command，并重新校验当前状态。</li>
-<li>注入重复、Gap、断流、乱序、未知 Event 与 Patch 失败。</li>
+<li>把 Approve、Reject、Queue Follow-up、Steer、Cancel-and-send 与 Side Question 转成服务端 Command，并重新校验当前状态。</li>
+<li>将 Pending Reverse Request 投影为 State；若选择 Interrupts，固定 Snapshot、Finish 与 Resume 顺序。</li>
+<li>注入重复、Gap、断流、乱序、未知 Event、Live Delta 丢失与 Patch 失败。</li>
 <li>用同一 Snapshot + Event 序列对拍 Native UI Reducer 与 AG-UI Client。</li>
 </ol>
 <h3 class="rp-toc-include" id="验收证据"><a href="#验收证据" class="rp-header-anchor rp-link" aria-hidden="true">#</a>验收证据</h3>
-<p>用同一条“订单查询—政策检索—退款 Proposal—等待审批”Event 序列对拍 Native UI Reducer 与 AG-UI Client。协议替换前后，刷新恢复、Proposal 身份、终态、脱敏和故障处理保持一致；AG-UI 客户端不能直接执行退款或伪造审批成功。</p>
+<p>用同一条“订单查询—政策检索—退款 Proposal—等待审批”Event 序列对拍 Native UI Reducer 与 AG-UI Client。协议替换前后，刷新恢复、Proposal 身份、终态、脱敏和故障处理保持一致；实时 Delta 丢失后仍能由闭合 Item 收敛，重复 Command 不产生第二个队列项，多客户端不能重复解决 Approval。AG-UI 或 A2UI 客户端都不能直接执行退款或伪造审批成功。</p>
 <h2 class="rp-toc-include" id="常见误区"><a href="#常见误区" class="rp-header-anchor rp-link" aria-hidden="true">#</a>常见误区</h2>
 <ul>
 <li>AG-UI 是一个完整 Agent Framework。</li>
@@ -457,10 +570,12 @@
 <li><code>STATE_SNAPSHOT</code> 可以直接保存为 Runtime Checkpoint。</li>
 <li>Tool Args 已经显示在 UI，说明 Tool 可以执行。</li>
 <li>前端发送 <code>approve</code> 后可以直接调用外部系统。</li>
+<li>HTTP Stream 被 Abort 就等于领域 Run 已安全取消。</li>
+<li>Capability 声明了 Intervention，就自动拥有 Queue 与 Steer 的 Command Schema。</li>
 <li>AG-UI 与 A2UI 是同一种生成界面协议。</li>
 </ul>
 <h2 class="rp-toc-include" id="本章小结"><a href="#本章小结" class="rp-header-anchor rp-link" aria-hidden="true">#</a>本章小结</h2>
-<p>AG-UI 标准化的是 Agent Backend 与用户界面之间的运行输入和事件流。稳定的应用仍应先拥有 Canonical RunEvent、Public Snapshot、Authorization 与 Event Store，再通过 Adapter 投影 AG-UI。这样既能利用生态客户端，也不会把领域状态、审批和恢复能力绑定到某个 UI Runtime。</p>
+<p>AG-UI 标准化的是 Agent Backend 与用户界面之间的运行输入和事件流。稳定的应用仍应先拥有 Canonical RunEvent、Live Signal、Public Snapshot、幂等 Command、Authorization 与 Event Store，再通过 Adapter 投影 AG-UI。Queue、Steer、Cancel-and-send、Side Question 和多客户端审批继续属于应用控制语义；A2UI 只负责受控渲染与动作采集。这样既能利用生态客户端，也不会把领域状态、审批和恢复能力绑定到某个 UI Runtime。</p>
 <p>下一章进入 <a href="/masterpiece-static-docs/08-安全与治理/05-Agent-UX与可控交互" class="rp-link">Agentic UI 03：Agent UX 与可控交互</a>，把标准事件流转化为能够诚实表达状态、证据、用户控制和失败恢复的产品界面。</p>
 <h2 class="rp-toc-include" id="官方资料"><a href="#官方资料" class="rp-header-anchor rp-link" aria-hidden="true">#</a>官方资料</h2>
 <ul>
@@ -471,7 +586,7 @@
 <li><a href="https://docs.ag-ui.com/sdk/js/core/events" target="_blank" rel="noopener noreferrer" class="rp-link">AG-UI TypeScript SDK Events</a></li>
 <li><a href="https://docs.ag-ui.com/concepts/state" target="_blank" rel="noopener noreferrer" class="rp-link">AG-UI State Management</a></li>
 <li><a href="https://docs.ag-ui.com/concepts/generative-ui-specs" target="_blank" rel="noopener noreferrer" class="rp-link">AG-UI 与 Generative UI Specs</a></li>
-</ul><!--/$--></div><footer class="rp-doc-footer"><div class="rp-doc-footer__edit"><div class="rp-last-updated"><p>最后更新于<!-- -->: <span>2026/7/19 03:31:59</span></p></div></div><div class="rp-doc-footer__divider"></div><div class="rp-prev-next-page"><a href="/masterpiece-static-docs/05-模型接口与Agent内核/09-Agent-Application-Server与UI事件协议" class="rp-prev-next-page__item rp-prev-next-page__prev rp-link"><span class="rp-prev-next-page__item__desc">上一页</span><span class="rp-prev-next-page__item__title"><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon rp-prev-next-page__rotate_180"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg><span>① Application Server 与 UI 事件</span></span></a><a href="/masterpiece-static-docs/08-安全与治理/05-Agent-UX与可控交互" class="rp-prev-next-page__item rp-prev-next-page__next rp-link"><span class="rp-prev-next-page__item__desc">下一页</span><span class="rp-prev-next-page__item__title"><span>③ Agent UX 与可控交互</span><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></span></a></div></footer></main></div><aside class="rp-doc-layout__outline rp-scrollbar"><div class="rp-outline"><div class="rp-outline__title">目录<svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg></div><nav class="rp-outline__toc rp-scrollbar"><a href="#本章目标" class="rp-toc-item rp-link" title="本章目标" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章目标</span></a><a href="#1-先把四层-event-分开" class="rp-toc-item rp-link" title="1. 先把四层 Event 分开" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">1. 先把四层 Event 分开</span></a><a href="#2-ag-ui-的最小运行模型" class="rp-toc-item rp-link" title="2. AG-UI 的最小运行模型" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">2. AG-UI 的最小运行模型</span></a><a href="#3-事件族与闭合边界" class="rp-toc-item rp-link" title="3. 事件族与闭合边界" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">3. 事件族与闭合边界</span></a><a href="#4-从-canonical-runevent-映射到-ag-ui" class="rp-toc-item rp-link" title="4. 从 Canonical RunEvent 映射到 AG-UI" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">4. 从 Canonical RunEvent 映射到 AG-UI</span></a><a href="#41-稳定终态与中断扩展不能混用" class="rp-toc-item rp-link" title="4.1 稳定终态与中断扩展不能混用" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.1 稳定终态与中断扩展不能混用</span></a><a href="#5-shared-state-不是共享数据库" class="rp-toc-item rp-link" title="5. Shared State 不是共享数据库" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">5. Shared State 不是共享数据库</span></a><a href="#6-用户输入与控制是-command不是事实" class="rp-toc-item rp-link" title="6. 用户输入与控制是 Command，不是事实" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">6. 用户输入与控制是 Command，不是事实</span></a><a href="#7-transport断线与重放" class="rp-toc-item rp-link" title="7. Transport、断线与重放" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">7. Transport、断线与重放</span></a><a href="#8-ag-uia2uia2a-与-mcp-不可互换" class="rp-toc-item rp-link" title="8. AG-UI、A2UI、A2A 与 MCP 不可互换" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">8. AG-UI、A2UI、A2A 与 MCP 不可互换</span></a><a href="#9-contract-test-与故障矩阵" class="rp-toc-item rp-link" title="9. Contract Test 与故障矩阵" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">9. Contract Test 与故障矩阵</span></a><a href="#实践给-resolution-desk-增加-ag-ui-adapter" class="rp-toc-item rp-link" title="实践：给 Resolution Desk 增加 AG-UI Adapter" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">实践：给 Resolution Desk 增加 AG-UI Adapter</span></a><a href="#进入本章时已有能力" class="rp-toc-item rp-link" title="进入本章时已有能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">进入本章时已有能力</span></a><a href="#本章增加的能力" class="rp-toc-item rp-link" title="本章增加的能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">本章增加的能力</span></a><a href="#验收证据" class="rp-toc-item rp-link" title="验收证据" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">验收证据</span></a><a href="#常见误区" class="rp-toc-item rp-link" title="常见误区" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">常见误区</span></a><a href="#本章小结" class="rp-toc-item rp-link" title="本章小结" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章小结</span></a><a href="#官方资料" class="rp-toc-item rp-link" title="官方资料" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">官方资料</span></a></nav><div class="rp-outline__divider"></div><div class="rp-outline__bottom"></div></div></aside></div></div>
+</ul><!--/$--></div><footer class="rp-doc-footer"><div class="rp-doc-footer__edit"><div class="rp-last-updated"><p>最后更新于<!-- -->: <span>2026/7/19 05:16:12</span></p></div></div><div class="rp-doc-footer__divider"></div><div class="rp-prev-next-page"><a href="/masterpiece-static-docs/05-模型接口与Agent内核/09-Agent-Application-Server与UI事件协议" class="rp-prev-next-page__item rp-prev-next-page__prev rp-link"><span class="rp-prev-next-page__item__desc">上一页</span><span class="rp-prev-next-page__item__title"><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon rp-prev-next-page__rotate_180"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg><span>① Application Server 与 UI 事件</span></span></a><a href="/masterpiece-static-docs/08-安全与治理/05-Agent-UX与可控交互" class="rp-prev-next-page__item rp-prev-next-page__next rp-link"><span class="rp-prev-next-page__item__desc">下一页</span><span class="rp-prev-next-page__item__title"><span>③ Agent UX 与可控交互</span><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></span></a></div></footer></main></div><aside class="rp-doc-layout__outline rp-scrollbar"><div class="rp-outline"><div class="rp-outline__title">目录<svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg></div><nav class="rp-outline__toc rp-scrollbar"><a href="#本章目标" class="rp-toc-item rp-link" title="本章目标" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章目标</span></a><a href="#1-先把四层-event-分开" class="rp-toc-item rp-link" title="1. 先把四层 Event 分开" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">1. 先把四层 Event 分开</span></a><a href="#2-ag-ui-的最小运行模型" class="rp-toc-item rp-link" title="2. AG-UI 的最小运行模型" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">2. AG-UI 的最小运行模型</span></a><a href="#3-事件族与闭合边界" class="rp-toc-item rp-link" title="3. 事件族与闭合边界" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">3. 事件族与闭合边界</span></a><a href="#4-从-canonical-runevent-映射到-ag-ui" class="rp-toc-item rp-link" title="4. 从 Canonical RunEvent 映射到 AG-UI" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">4. 从 Canonical RunEvent 映射到 AG-UI</span></a><a href="#41-稳定终态与中断扩展不能混用" class="rp-toc-item rp-link" title="4.1 稳定终态与中断扩展不能混用" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.1 稳定终态与中断扩展不能混用</span></a><a href="#42-应用控制语义不能伪装成标准字段" class="rp-toc-item rp-link" title="4.2 应用控制语义不能伪装成标准字段" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.2 应用控制语义不能伪装成标准字段</span></a><a href="#5-shared-state-不是共享数据库" class="rp-toc-item rp-link" title="5. Shared State 不是共享数据库" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">5. Shared State 不是共享数据库</span></a><a href="#6-用户输入与控制是-command不是事实" class="rp-toc-item rp-link" title="6. 用户输入与控制是 Command，不是事实" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">6. 用户输入与控制是 Command，不是事实</span></a><a href="#61-pending-reverse-request-不是连接内-promise" class="rp-toc-item rp-link" title="6.1 Pending Reverse Request 不是连接内 Promise" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">6.1 Pending Reverse Request 不是连接内 Promise</span></a><a href="#7-transport断线与重放" class="rp-toc-item rp-link" title="7. Transport、断线与重放" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">7. Transport、断线与重放</span></a><a href="#71-多客户端不能依赖最后到达者获胜" class="rp-toc-item rp-link" title="7.1 多客户端不能依赖“最后到达者获胜”" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">7.1 多客户端不能依赖“最后到达者获胜”</span></a><a href="#8-ag-uia2uia2a-与-mcp-不可互换" class="rp-toc-item rp-link" title="8. AG-UI、A2UI、A2A 与 MCP 不可互换" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">8. AG-UI、A2UI、A2A 与 MCP 不可互换</span></a><a href="#9-contract-test-与故障矩阵" class="rp-toc-item rp-link" title="9. Contract Test 与故障矩阵" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">9. Contract Test 与故障矩阵</span></a><a href="#实践给-resolution-desk-增加-ag-ui-adapter" class="rp-toc-item rp-link" title="实践：给 Resolution Desk 增加 AG-UI Adapter" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">实践：给 Resolution Desk 增加 AG-UI Adapter</span></a><a href="#进入本章时已有能力" class="rp-toc-item rp-link" title="进入本章时已有能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">进入本章时已有能力</span></a><a href="#本章增加的能力" class="rp-toc-item rp-link" title="本章增加的能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">本章增加的能力</span></a><a href="#验收证据" class="rp-toc-item rp-link" title="验收证据" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">验收证据</span></a><a href="#常见误区" class="rp-toc-item rp-link" title="常见误区" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">常见误区</span></a><a href="#本章小结" class="rp-toc-item rp-link" title="本章小结" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章小结</span></a><a href="#官方资料" class="rp-toc-item rp-link" title="官方资料" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">官方资料</span></a></nav><div class="rp-outline__divider"></div><div class="rp-outline__bottom"></div></div></aside></div></div>
     <div id="__rspress_modal_container"></div>
   </body>
 </html>

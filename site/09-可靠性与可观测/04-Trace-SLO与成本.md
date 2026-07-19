@@ -38,8 +38,8 @@ worker.lease.acquired
   ownership_epoch=8 queue_time_ms=...
 reconciliation.completed
   receipt_ref=receipt_789 effect_status=committed
-run.completed
-  outcome=completed_with_effect_after_cancel
+run.state_changed
+  state=completed_with_effect_after_cancel effect_status=committed
 ```
 
 这条记录没有保存模型原始 Chain-of-Thought，却足以还原 Context 选择、提案、审批、调用、Cancel、接管和真实 Outcome。

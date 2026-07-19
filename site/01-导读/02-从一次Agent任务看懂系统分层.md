@@ -141,7 +141,7 @@ Agent UX 不只是展示 Streaming 文本，还要让用户区分：
 
 ### 4.4 A2UI：受控的声明式界面平面
 
-Agent-to-User Interface（A2UI）允许 Agent 或服务端发送受 Catalog 约束的 Surface、Component、Data Model 与 Action 描述，由宿主使用本地可信组件渲染。它适合动态澄清表单、证据选择器和低风险信息收集。
+Agent to UI Protocol（A2UI）允许 Agent 或服务端发送受 Catalog 约束的 Surface、Component、Data Model 与 Action 描述，由宿主使用本地可信组件渲染。它适合动态澄清表单、证据选择器和低风险信息收集。
 
 A2UI Payload 可以经 AG-UI 等传输通道到达客户端，但两者职责不同：AG-UI 处理运行时交互，A2UI 描述界面。未知 Component、URL 与 Action 必须被 Trusted Renderer 拒绝；所有 Action 还要经过服务端 Action Gateway。退款金额、目标账户和最终 Approval 继续使用固定的受信原生 UI。
 

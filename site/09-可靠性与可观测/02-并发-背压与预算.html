@@ -9,7 +9,7 @@
 <script defer src="/masterpiece-static-docs/static/js/lib-react.153111d74d.js"></script>
 <script defer src="/masterpiece-static-docs/static/js/lib-router.575081ccc8.js"></script>
 <script defer src="/masterpiece-static-docs/static/js/5193.f8417e4998.js"></script>
-<script defer src="/masterpiece-static-docs/static/js/index.dd6441ccc4.js"></script>
+<script defer src="/masterpiece-static-docs/static/js/index.66035edb4b.js"></script>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="generator" content="Rspress v2.0.17">
 <meta property="og:type" content="website">
@@ -48,6 +48,46 @@
 </ul>
 <p>队列满时必须定义产品语义：等待到 Deadline、持久排队、返回部分结果、降级为只读、拒绝新任务或转人工。让请求继续堆积不是一种语义。</p>
 <p>Agentic UI 也需要背压。Application Server 可以合并高频 Text Delta、限制每秒公开事件数，并让落后客户端通过 Snapshot + Cursor 重新同步；合并不能跨越 Item、Tool、Approval 或终态边界。A2UI Renderer 还要限制单次 Envelope、Component 数、图深、Data Model 大小和更新频率。慢浏览器不能反向占满 Runtime 的执行队列，也不能迫使服务端无限保留未确认的界面 Delta。</p>
+<h3 class="rp-toc-include" id="21-截断后再交给模型只保护了最后一层"><a href="#21-截断后再交给模型只保护了最后一层" class="rp-header-anchor rp-link" aria-hidden="true">#</a>2.1 “截断后再交给模型”只保护了最后一层</h3>
+<p>Tool 输出可能依次经过 Network Frame、进程内 Buffer、持久 Artifact、模型 Context 和遥测系统。只在放入 Context 前截断，无法防止远端超大响应先耗尽内存，也无法限制完整明文落盘后的隐私风险。</p>
+<p>每层都需要独立预算和失败语义：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>层次</th><th>预算或机制</th><th>超限后的语义</th></tr></thead><tbody><tr><td>Transport</td><td>单 Frame、累计字节、速率、Deadline</td><td>终止传输并产生类型化错误</td></tr><tr><td>Runtime Memory</td><td>有界 Channel、Ring Buffer、流式解析</td><td>Backpressure、丢弃可合并 Delta 或终止</td></tr><tr><td>Artifact Storage</td><td>单文件、单 Run、Retention 与加密策略</td><td>保存受控摘要或拒绝继续写入</td></tr><tr><td>Model Context</td><td>Item、Tool Result 与总 Token Budget</td><td>引用 Artifact、压缩或返回 Partial</td></tr><tr><td>UI / Telemetry</td><td>Event 频率、字段白名单、保留窗口</td><td>合并瞬时事件，不丢失 Canonical Terminal Event</td></tr></tbody></table></div>
+<p>“完整结果已保存到某处”也不是默认安全方案。Artifact 必须具有访问控制、生命周期、内容类型和敏感信息处理策略；否则 Context 变短了，攻击面却转移到了磁盘。</p>
 <h2 class="rp-toc-include" id="3-nodejs-中的有界并发"><a href="#3-nodejs-中的有界并发" class="rp-header-anchor rp-link" aria-hidden="true">#</a>3. Node.js 中的有界并发</h2>
 <p>下面的 Semaphore 展示取消感知的核心结构；生产实现还需补充公平性、Timeout、指标和服务关闭语义：</p>
 <div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> Waiter</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
@@ -166,6 +206,13 @@
 <li><strong>Quorum</strong>：达到法定数量后继续，同时保留分歧。</li>
 </ul>
 <p>对同一订单、同一文件或同一审批的写操作，通常不应并行发出多个候选再“选一个成功的”。共享资源应由版本检查、锁或权威服务原子裁决。</p>
+<p>执行完成顺序与权威提交顺序也要分开。两个只读 Tool 可以并发并按完成时间向 UI 展示瞬时 Progress，但预检阶段必须按模型声明顺序冻结显式 <code>ordinal</code>；写入 Event Log 和重新构建下一轮 Context 时按该 <code>ordinal</code> 归并 Canonical Result。<code>call_id</code> 只负责关联、去重和追踪，不能被假定为可排序标识。否则相同输入只因网络抖动就形成不同历史前缀，影响 Replay、缓存和问题复现。</p>
+<div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>preflight in model order</span></span>
+<span class="line"><span>→ execute under bounded concurrency</span></span>
+<span class="line"><span>→ collect by call_id, retain frozen ordinal</span></span>
+<span class="line"><span>→ apply declared join rule</span></span>
+<span class="line"><span>→ commit canonical results by ordinal</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>如果业务确实需要“谁先完成就先推动下一步”，这种 Completion-order Semantics 必须成为显式协议，并在 Trace 中记录，而不能由 <code>Promise.race()</code> 或异步调度偶然决定。</p>
 <h2 class="rp-toc-include" id="7-过载降级必须保持任务语义"><a href="#7-过载降级必须保持任务语义" class="rp-header-anchor rp-link" aria-hidden="true">#</a>7. 过载降级必须保持任务语义</h2>
 <p>假设 Model Provider 延迟升高，同时支付系统不稳定：</p>
 <div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>Circuit / Quota 停止新的低优先级 Planning</span></span>
@@ -187,9 +234,11 @@
 <li>Provider 限流时 Circuit Breaker 是否停止新工作；</li>
 <li>用户 Cancel 后，排队项是否被移除、在途信号是否传播；</li>
 <li>Planning 过载时，Reconciliation 是否仍能在自身预算内完成。</li>
+<li>Tool Server 连续输出超大响应时，Transport、Memory、Artifact 与 Context 各层是否独立受限。</li>
+<li>调换两个并发只读 Tool 的完成顺序后，Canonical Event 与下一轮 Context 是否保持等价。</li>
 </ol>
 <h3 class="rp-toc-include" id="验收证据"><a href="#验收证据" class="rp-header-anchor rp-link" aria-hidden="true">#</a>验收证据</h3>
-<p>用指标断言最大在途调用、最大队列深度、拒绝数、各 Tenant 占用、P95/P99 Queue Time、Token/费用上界与 Reconciliation Time to Truth。Provider 限流和 Planning 洪峰期间，新任务只能有界等待、降级或拒绝；已提交 Command 不被误报为取消，Reconciliation 不被饿死，恢复后也不会瞬间清空积压形成第二次洪峰。</p>
+<p>用指标断言最大在途调用、最大队列深度、拒绝数、各 Tenant 占用、P95/P99 Queue Time、Token/费用上界、各层输出字节上限与 Reconciliation Time to Truth。Provider 限流和 Planning 洪峰期间，新任务只能有界等待、降级或拒绝；已提交 Command 不被误报为取消，Reconciliation 不被饿死，恢复后也不会瞬间清空积压形成第二次洪峰。并发完成顺序变化不能改变采用稳定 Join 语义后的 Canonical Result。</p>
 <h2 class="rp-toc-include" id="本章小结"><a href="#本章小结" class="rp-header-anchor rp-link" aria-hidden="true">#</a>本章小结</h2>
 <p>Backpressure 把“模型还想继续”转换成“系统是否有能力创建下一项工作”。有界队列、Bulkhead、Quota、Admission Control 和多维预算共同限制 Fan-out，也为未知效果保留有限的收尾容量。下一章将继续处理进程退出后的恢复：<a href="/masterpiece-static-docs/09-可靠性与可观测/03-持久执行-Checkpoint与Exactly-Once" class="rp-link">持久执行、Checkpoint 与 Exactly-Once</a>。</p>
 <h2 class="rp-toc-include" id="一手资料"><a href="#一手资料" class="rp-header-anchor rp-link" aria-hidden="true">#</a>一手资料</h2>
@@ -198,7 +247,7 @@
 <li><a href="https://nodejs.org/api/stream.html" target="_blank" rel="noopener noreferrer" class="rp-link">Node.js Streams and backpressure</a></li>
 <li><a href="https://sre.google/sre-book/addressing-cascading-failures/" target="_blank" rel="noopener noreferrer" class="rp-link">Google SRE: Addressing Cascading Failures</a></li>
 <li><a href="https://aws.amazon.com/builders-library/using-load-shedding-to-avoid-overload/" target="_blank" rel="noopener noreferrer" class="rp-link">AWS Using load shedding to avoid overload</a></li>
-</ul><!--/$--></div><footer class="rp-doc-footer"><div class="rp-doc-footer__edit"><div class="rp-last-updated"><p>最后更新于<!-- -->: <span>2026/7/19 03:31:59</span></p></div></div><div class="rp-doc-footer__divider"></div><div class="rp-prev-next-page"><a href="/masterpiece-static-docs/09-可靠性与可观测/01-失败分类-超时-重试与取消" class="rp-prev-next-page__item rp-prev-next-page__prev rp-link"><span class="rp-prev-next-page__item__desc">上一页</span><span class="rp-prev-next-page__item__title"><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon rp-prev-next-page__rotate_180"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg><span>01 · Timeout 之后：Retry、Cancellation 与未知效果</span></span></a><a href="/masterpiece-static-docs/09-可靠性与可观测/03-持久执行-Checkpoint与Exactly-Once" class="rp-prev-next-page__item rp-prev-next-page__next rp-link"><span class="rp-prev-next-page__item__desc">下一页</span><span class="rp-prev-next-page__item__title"><span>03 · 持久执行：Checkpoint、Replay 与 Exactly-Once 边界</span><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></span></a></div></footer></main></div><aside class="rp-doc-layout__outline rp-scrollbar"><div class="rp-outline"><div class="rp-outline__title">目录<svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg></div><nav class="rp-outline__toc rp-scrollbar"><a href="#1-先计算-fan-out-上界" class="rp-toc-item rp-link" title="1. 先计算 Fan-out 上界" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">1. 先计算 Fan-out 上界</span></a><a href="#2-backpressure-要在生产者一侧生效" class="rp-toc-item rp-link" title="2. Backpressure 要在生产者一侧生效" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">2. Backpressure 要在生产者一侧生效</span></a><a href="#3-nodejs-中的有界并发" class="rp-toc-item rp-link" title="3. Node.js 中的有界并发" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">3. Node.js 中的有界并发</span></a><a href="#4-用-bulkhead-隔离不同责任的工作" class="rp-toc-item rp-link" title="4. 用 Bulkhead 隔离不同责任的工作" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">4. 用 Bulkhead 隔离不同责任的工作</span></a><a href="#5-任务预算是一组确定性约束" class="rp-toc-item rp-link" title="5. 任务预算是一组确定性约束" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">5. 任务预算是一组确定性约束</span></a><a href="#6-并行执行必须先定义-join-语义" class="rp-toc-item rp-link" title="6. 并行执行必须先定义 Join 语义" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">6. 并行执行必须先定义 Join 语义</span></a><a href="#7-过载降级必须保持任务语义" class="rp-toc-item rp-link" title="7. 过载降级必须保持任务语义" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">7. 过载降级必须保持任务语义</span></a><a href="#实践在过载中保住退款核对通道" class="rp-toc-item rp-link" title="实践：在过载中保住退款核对通道" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">实践：在过载中保住退款核对通道</span></a><a href="#进入本章时已有能力" class="rp-toc-item rp-link" title="进入本章时已有能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">进入本章时已有能力</span></a><a href="#本章增加的能力" class="rp-toc-item rp-link" title="本章增加的能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">本章增加的能力</span></a><a href="#验收证据" class="rp-toc-item rp-link" title="验收证据" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">验收证据</span></a><a href="#本章小结" class="rp-toc-item rp-link" title="本章小结" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章小结</span></a><a href="#一手资料" class="rp-toc-item rp-link" title="一手资料" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">一手资料</span></a></nav><div class="rp-outline__divider"></div><div class="rp-outline__bottom"></div></div></aside></div></div>
+</ul><!--/$--></div><footer class="rp-doc-footer"><div class="rp-doc-footer__edit"><div class="rp-last-updated"><p>最后更新于<!-- -->: <span>2026/7/19 05:16:12</span></p></div></div><div class="rp-doc-footer__divider"></div><div class="rp-prev-next-page"><a href="/masterpiece-static-docs/09-可靠性与可观测/01-失败分类-超时-重试与取消" class="rp-prev-next-page__item rp-prev-next-page__prev rp-link"><span class="rp-prev-next-page__item__desc">上一页</span><span class="rp-prev-next-page__item__title"><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon rp-prev-next-page__rotate_180"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg><span>01 · Timeout 之后：Retry、Cancellation 与未知效果</span></span></a><a href="/masterpiece-static-docs/09-可靠性与可观测/03-持久执行-Checkpoint与Exactly-Once" class="rp-prev-next-page__item rp-prev-next-page__next rp-link"><span class="rp-prev-next-page__item__desc">下一页</span><span class="rp-prev-next-page__item__title"><span>03 · 持久执行：Checkpoint、Replay 与 Exactly-Once 边界</span><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></span></a></div></footer></main></div><aside class="rp-doc-layout__outline rp-scrollbar"><div class="rp-outline"><div class="rp-outline__title">目录<svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg></div><nav class="rp-outline__toc rp-scrollbar"><a href="#1-先计算-fan-out-上界" class="rp-toc-item rp-link" title="1. 先计算 Fan-out 上界" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">1. 先计算 Fan-out 上界</span></a><a href="#2-backpressure-要在生产者一侧生效" class="rp-toc-item rp-link" title="2. Backpressure 要在生产者一侧生效" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">2. Backpressure 要在生产者一侧生效</span></a><a href="#21-截断后再交给模型只保护了最后一层" class="rp-toc-item rp-link" title="2.1 “截断后再交给模型”只保护了最后一层" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">2.1 “截断后再交给模型”只保护了最后一层</span></a><a href="#3-nodejs-中的有界并发" class="rp-toc-item rp-link" title="3. Node.js 中的有界并发" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">3. Node.js 中的有界并发</span></a><a href="#4-用-bulkhead-隔离不同责任的工作" class="rp-toc-item rp-link" title="4. 用 Bulkhead 隔离不同责任的工作" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">4. 用 Bulkhead 隔离不同责任的工作</span></a><a href="#5-任务预算是一组确定性约束" class="rp-toc-item rp-link" title="5. 任务预算是一组确定性约束" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">5. 任务预算是一组确定性约束</span></a><a href="#6-并行执行必须先定义-join-语义" class="rp-toc-item rp-link" title="6. 并行执行必须先定义 Join 语义" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">6. 并行执行必须先定义 Join 语义</span></a><a href="#7-过载降级必须保持任务语义" class="rp-toc-item rp-link" title="7. 过载降级必须保持任务语义" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">7. 过载降级必须保持任务语义</span></a><a href="#实践在过载中保住退款核对通道" class="rp-toc-item rp-link" title="实践：在过载中保住退款核对通道" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">实践：在过载中保住退款核对通道</span></a><a href="#进入本章时已有能力" class="rp-toc-item rp-link" title="进入本章时已有能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">进入本章时已有能力</span></a><a href="#本章增加的能力" class="rp-toc-item rp-link" title="本章增加的能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">本章增加的能力</span></a><a href="#验收证据" class="rp-toc-item rp-link" title="验收证据" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">验收证据</span></a><a href="#本章小结" class="rp-toc-item rp-link" title="本章小结" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章小结</span></a><a href="#一手资料" class="rp-toc-item rp-link" title="一手资料" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">一手资料</span></a></nav><div class="rp-outline__divider"></div><div class="rp-outline__bottom"></div></div></aside></div></div>
     <div id="__rspress_modal_container"></div>
   </body>
 </html>

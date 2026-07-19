@@ -9,7 +9,7 @@
 <script defer src="/masterpiece-static-docs/static/js/lib-react.153111d74d.js"></script>
 <script defer src="/masterpiece-static-docs/static/js/lib-router.575081ccc8.js"></script>
 <script defer src="/masterpiece-static-docs/static/js/5193.f8417e4998.js"></script>
-<script defer src="/masterpiece-static-docs/static/js/index.dd6441ccc4.js"></script>
+<script defer src="/masterpiece-static-docs/static/js/index.66035edb4b.js"></script>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="generator" content="Rspress v2.0.17">
 <meta property="og:type" content="website">
@@ -32,6 +32,7 @@
 <li>沿复杂度阶梯判断何时需要 Multi-Agent。</li>
 <li>区分 Router、Agent-as-Tool、Handoff、Orchestrator-Workers 与跨系统 A2A。</li>
 <li>为 Parent Run、Child Run、Artifact、权限和外部副作用建立清晰所有权。</li>
+<li>划分 Planner、Worker、Strategist、Verifier 的能力与状态写入边界。</li>
 <li>设计汇合、取消、恢复与冲突裁决，而不是依赖 Agent 自行协商。</li>
 <li>用同一 Dataset 和预算验证 Multi-Agent 的净收益。</li>
 </ul>
@@ -190,10 +191,15 @@
 <span class="line"><span style="color:var(--shiki-foreground)">  attemptId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  goal</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  constraints</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
-<span class="line"><span style="color:var(--shiki-foreground)">  successCriteria</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  acceptanceBaseline</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    revision</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    digest</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    criterionIds</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  };</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  inputRefs</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> Array</span><span style="color:var(--shiki-foreground)">&lt;{ uri</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">; digest</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">; trust</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)"> }&gt;;</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  allowedCapabilities</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  expectedResultSchema</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  evidencePolicyRef</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  deadline</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  budget</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-foreground)"> { steps</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">; tokens</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">; moneyUsd</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)"> };</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  traceparent</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
@@ -221,6 +227,91 @@
 <li><strong>Domain State</strong>：由确定性 Reducer 或 Compare-and-Swap 更新，不由多个 Agent 共同维护一段“当前事实”。</li>
 </ul>
 <p>对订单、支付、发布等外部副作用，应维持 Single Writer（单写者）原则。Worker 可以提出 Proposal，只有持有资源服务授权和幂等语义的 Executor 可以提交 Command。</p>
+<h3 class="rp-toc-include" id="61-goal-contract计划和预算属于不同状态"><a href="#61-goal-contract计划和预算属于不同状态" class="rp-header-anchor rp-link" aria-hidden="true">#</a>6.1 Goal Contract、计划和预算属于不同状态</h3>
+<p><a href="/masterpiece-static-docs/05-模型接口与Agent内核/06-Agent-Loop与状态机" class="rp-link">Agent Loop 与状态机</a>已经定义 Goal Contract、验收基线（Acceptance Baseline）和 Evidence Packet。进入 Multi-Agent 后，关键变化是这些对象必须跨 Parent 与 Child 保持同一版本。Parent 在 Fan-out 前冻结基线；计划可以随新证据产生 <code>plan_revision</code>，但每个 Child Envelope 都要携带同一 <code>baseline revision + digest</code>。Child 若收到不匹配的 Digest，应拒绝执行，而不是自行选择一个版本。</p>
+<p>三类对象的可变性不同：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>对象</th><th>谁能提出变化</th><th>谁能提交变化</th><th>规则</th></tr></thead><tbody><tr><td>Acceptance Baseline</td><td>用户或上层业务流程</td><td>Parent Harness</td><td>一个 Attempt 内不可变；目标变化产生新 Revision</td></tr><tr><td>Plan</td><td>Planner、Strategist Advice</td><td>Parent Harness</td><td>可以修订路径，不能删除未满足 Criterion</td></tr><tr><td>Evidence</td><td>Worker</td><td>Artifact Store</td><td>只追加新版本；已有 Artifact 不原地覆盖</td></tr></tbody></table></div>
+<p>Parent Budget 是所有 Child Budget 的硬上限。创建 Child 时先预留步骤、Token、费用、Deadline 和并发额度；Child 未使用的额度可以归还，已经消耗的高水位不能因 Context Compaction、Child Retry 或 Parent 恢复而清零。否则，一个表面有界的父任务会通过反复委派变成无界执行。</p>
+<h3 class="rp-toc-include" id="62-角色名称必须落到-capability-与写权限"><a href="#62-角色名称必须落到-capability-与写权限" class="rp-header-anchor rp-link" aria-hidden="true">#</a>6.2 角色名称必须落到 Capability 与写权限</h3>
+<p><a href="/masterpiece-static-docs/05-模型接口与Agent内核/07-架构模式与多Agent边界" class="rp-link">Harness Engineering、架构模式与 Multi-Agent 边界</a>已经说明不同职责不能共享权威状态写权限。具体到 Multi-Agent 拓扑，角色还必须成为可执行的能力信封（Capability Envelope），而不是人格设定：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>角色</th><th>最小能力</th><th>可提交的结果</th><th>禁止写入</th></tr></thead><tbody><tr><td>Planner</td><td>读取 Goal、约束、可用能力和已有 Gap</td><td>Candidate Plan</td><td>Acceptance Baseline、Domain State、完成终态</td></tr><tr><td>Worker</td><td>仅本子任务需要的 Tool、数据和隔离工作区</td><td>Artifact、Evidence Packet</td><td>Goal 状态、其他 Child 状态、Verifier Verdict</td></tr><tr><td>Strategist</td><td>读取基线、计划、Gap 历史和脱敏 Trace；可使用私有 Scratch Space</td><td>Strategy Advice</td><td>当前 Plan、生产数据、预算和权限</td></tr><tr><td>Verifier</td><td>读取冻结基线、Evidence Packet 和权威只读来源</td><td>Verdict、Structured Gap</td><td>被验收 Artifact、计划、领域副作用</td></tr><tr><td>Parent Harness</td><td>状态 Reducer、预算账本、Capability Gate</td><td>权威 Transition</td><td>绕过策略直接执行模型建议</td></tr></tbody></table></div>
+<p>“私有”不仅指独立消息数组。Child 应拥有独立 Context Manifest、临时工作区、凭证和取消句柄；Verifier 不应继承 Worker 的可写工具，Strategist 也不能因为负责“提出新办法”而获得更高权限。权限沿委派链只能衰减；这里的交集必须同时作用于 Tool、Canonical Resource、Path、Network Origin、额度和期限，不能只比较能力名称：</p>
+<div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>child capability</span></span>
+<span class="line"><span>  = parent delegated ceiling</span></span>
+<span class="line"><span>  ∩ role capability</span></span>
+<span class="line"><span>  ∩ task allowlist</span></span>
+<span class="line"><span>  ∩ current resource policy</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>四种职责不一定对应四个长期运行的 Agent。系统可以按风险使用确定性 Planner 或 Verifier，也可以让同一模型在隔离调用中承担不同职责；但不能让同一段未隔离的生成过程既创作证据，又修改标准并批准自己。</p>
 <h2 class="rp-toc-include" id="7-汇合不是把回答拼在一起"><a href="#7-汇合不是把回答拼在一起" class="rp-header-anchor rp-link" aria-hidden="true">#</a>7. 汇合不是把回答拼在一起</h2>
 <p>Join（汇合）必须在启动 Worker 前确定基本策略：</p>
 
@@ -271,7 +362,36 @@
 
 
 <div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>策略</th><th>何时结束</th><th>适用情况</th><th>主要风险</th></tr></thead><tbody><tr><td>All</td><td>所有必需结果终态</td><td>每个分片都不可缺失</td><td>尾延迟被最慢 Worker 决定</td></tr><tr><td>Partial</td><td>达到最低覆盖后结束</td><td>可容忍部分缺失</td><td>需要标明未覆盖范围</td></tr><tr><td>First Valid</td><td>首个通过 Verifier 的结果</td><td>多个等价候选</td><td>必须取消其余工作</td></tr><tr><td>Quorum</td><td>达到独立多数</td><td>判断源确实独立</td><td>相关错误形成伪共识</td></tr><tr><td>Deterministic Verifier</td><td>契约、证据或测试通过</td><td>有客观验收标准</td><td>Verifier 可能覆盖不全</td></tr><tr><td>Human Escalation</td><td>冲突或风险超过阈值</td><td>高风险、证据冲突</td><td>人工队列与响应时间</td></tr></tbody></table></div>
+<p>Worker 返回的 Artifact 只有进入 Evidence Packet 后，才具备可验收语义。Multi-Agent 场景至少还要记录 Producer 和输入版本：</p>
+<div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> ChildEvidence</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  childRunId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  taskId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  attemptId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  baselineDigest</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  inputDigests</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  artifactDigest</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  criterionClaims</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> Array</span><span style="color:var(--shiki-foreground)">&lt;{</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    criterionId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    claim</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    evidenceRefs</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">    limitations</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  }&gt;;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  observedStateVersions</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> Record</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-constant)">string</span><span style="color:var(--shiki-token-punctuation)">,</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">&gt;;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">};</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>Verifier 先验证 Envelope、Digest、版本和引用完整性，再判断内容是否满足 Criterion。它只能依据 Worker 已提交的证据和权威只读事实作出判断，不能为缺失论据“顺手补证”；否则 Worker 的失败会被 Verifier 隐藏，系统也无法测量真实缺口。</p>
 <p>迟到结果只能作为新版本的候选 Artifact，不能覆盖已经关闭的 Parent Run。取消也必须向 Child Run、工具调用和远端 A2A Task 传播；系统同时记录 <code>cancel_requested_at</code> 与各执行单元实际停止时间，才能识别取消竞态。</p>
+<h3 class="rp-toc-include" id="71-structured-gap-让协作循环可以收敛"><a href="#71-structured-gap-让协作循环可以收敛" class="rp-header-anchor rp-link" aria-hidden="true">#</a>7.1 Structured Gap 让协作循环可以收敛</h3>
+<p>验收失败不应返回一篇泛泛的批评。Structured Gap 至少包含：</p>
+<div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>criterion_id</span></span>
+<span class="line"><span>gap_code</span></span>
+<span class="line"><span>expected vs observed</span></span>
+<span class="line"><span>missing_evidence</span></span>
+<span class="line"><span>related artifact and state versions</span></span>
+<span class="line"><span>fixability</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>Parent Harness 只把 <code>model_fixable</code> Gap 重新交给 Worker；外部阻塞、契约冲突和不可验证状态分别进入等待、澄清或人工门禁。下一轮可以产生新的 Plan Revision，却继续使用同一 Acceptance Baseline，这能防止 Coordinator 通过降低标准让循环“看起来已经收敛”。</p>
+<p>Harness 应为 Gap 生成稳定指纹，例如：</p>
+<div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>hash(criterion_id + gap_code + missing_evidence + relevant_versions)</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>若同一指纹重复出现且没有新增 Artifact、Observation 或状态版本，Parent 将其计为停滞（Stall），而不是普通重试。第一次停滞可以调用只读 Strategist 提供替代路径；达到配置阈值后进入 Backoff、暂停或人工升级。Strategist 的输出只是 Advice，必须由 Parent 重新验证预算和 Capability 后，才能形成新的 Worker Task。</p>
 <h2 class="rp-toc-include" id="8-multi-agent-特有的失败模式"><a href="#8-multi-agent-特有的失败模式" class="rp-header-anchor rp-link" aria-hidden="true">#</a>8. Multi-Agent 特有的失败模式</h2>
 <p>MAST 研究从 1,600 多条运行轨迹中归纳了多智能体系统的 14 类失败，并将其组织为系统设计与规格、Agent 间失配、任务验证与终止三组。这类分类适合作为故障审查起点，但具体系统还要叠加分布式执行问题：</p>
 <ul>
@@ -280,11 +400,13 @@
 <li><strong>通信失败</strong>：结果缺少来源、版本或结构，Coordinator 只能再次猜测。</li>
 <li><strong>协作失配</strong>：各 Agent 对术语、目标或完成条件理解不一致。</li>
 <li><strong>验证失败</strong>：Coordinator 接受形式完整但事实错误的 Artifact。</li>
+<li><strong>验证循环停滞</strong>：多个角色反复改写相同结论，没有产生新的证据或状态版本。</li>
 <li><strong>级联失败</strong>：上游错误被多个下游当成共享事实，投票反而放大置信度。</li>
 <li><strong>运行时失败</strong>：重复、迟到、乱序、部分完成、孤儿任务和取消丢失。</li>
 <li><strong>恢复失败</strong>：Coordinator 崩溃后重复创建 Child Run，或新 Owner 接受旧 Epoch 的写入。</li>
 </ul>
 <p>Trace 必须保留 <code>parent_run_id</code>、<code>child_run_id</code>、<code>task_id</code>、<code>attempt_id</code>、<code>artifact_digest</code>、<code>delegation_depth</code> 与 <code>ownership_epoch</code>，否则成本和错误无法归因。</p>
+<p>恢复时不能把持久化的 <code>active</code> 当成继续执行的充分条件。未知枚举值、缺失预算高水位（Budget High-water）、无法确认的 Child、在途 Tool Call 或旧 Ownership Epoch，都应让 Parent 进入 <code>paused_recovery</code>。Runtime 完成 Schema 迁移、子任务盘点、副作用对账和权限复核后，再由显式 Event 恢复；默认自动运行会制造重复 Child 和失去所有者的“僵尸任务”。</p>
 <h2 class="rp-toc-include" id="9-安全边界会随委派扩张"><a href="#9-安全边界会随委派扩张" class="rp-header-anchor rp-link" aria-hidden="true">#</a>9. 安全边界会随委派扩张</h2>
 <p>Multi-Agent 会新增两类攻击面。第一类是权限放大：父级把自己无权使用或本不需要的能力传给 Worker。第二类是下游 Prompt Injection：恶意内容被包装成“另一个 Agent 的结论”，获得了不应有的信任。</p>
 <p>应采用以下约束：</p>
@@ -335,14 +457,14 @@
 <h3 class="rp-toc-include" id="进入本章时已有能力"><a href="#进入本章时已有能力" class="rp-header-anchor rp-link" aria-hidden="true">#</a>进入本章时已有能力</h3>
 <p>Resolution Desk 已能由单 Agent 查询订单和政策、生成退款 Proposal，并由确定性 Policy 与审批链控制外部动作。这条单 Agent 路径是对照组，不应删除。</p>
 <h3 class="rp-toc-include" id="本章增加的能力"><a href="#本章增加的能力" class="rp-header-anchor rp-link" aria-hidden="true">#</a>本章增加的能力</h3>
-<p>只对“证据冲突或高金额”Fixture 启动两个只读 Worker：</p>
+<p>只对“证据冲突或高金额”Fixture 启动两个只读 Worker。Parent Harness 先冻结 Acceptance Baseline；Planner 只能提交候选分解方案，Parent 校验任务无遗漏、预算可容纳且能力已经衰减后，才创建 Child：</p>
 <ul>
 <li><strong>Policy Evidence Worker</strong>：只读取版本化政策，输出适用条款、有效时间和冲突。</li>
 <li><strong>Case Evidence Worker</strong>：只读取工单、订单与物流事实，输出事件时间线和缺失字段。</li>
 </ul>
-<p>Coordinator 是唯一的 Parent Owner。两个 Worker 不共享可写状态、不互相调用，也没有退款执行权限；它们只返回不可变 Artifact。Join 按订单版本、政策有效时间和引用完整性运行确定性检查，再决定是否允许 Coordinator 生成 <code>RefundProposal</code>。</p>
+<p>Coordinator 是唯一的 Parent Owner。两个 Worker 不共享可写状态、不互相调用，也没有退款执行权限；它们只返回不可变 Artifact 和 Child Evidence。Join 按订单版本、政策有效时间和引用完整性运行确定性检查，Verifier 再输出 <code>passed</code>、Structured Gap 或 <code>unverifiable</code>，Parent 据此决定是否允许生成 <code>RefundProposal</code>。只有同一 Gap 在没有证据增量的情况下重复出现时，才允许只读 Strategist 提交替代方案。</p>
 <div></div>
-<p>故障注入至少包括：重复结果、迟到结果、相互冲突的证据、恶意 Artifact 内容、一个 Worker 超时、Parent cancel、政策版本在汇合前变化，以及 Coordinator 在创建 Child 后崩溃恢复。</p>
+<p>故障注入至少包括：重复结果、迟到结果、相互冲突的证据、恶意 Artifact 内容、一个 Worker 超时、Parent cancel、政策版本在汇合前变化、Verifier 尝试补写证据、相同 Gap 无进展地重复，以及 Coordinator 在创建 Child 后崩溃恢复。恢复出的未知 Child 状态必须停在 <code>paused_recovery</code>，不能自动重新委派。</p>
 <p>最后可以把一个 Worker 替换为 A2A 远端系统，验证 Adapter 是否保持相同领域契约。这个步骤属于跨系统互操作实验，不是默认产品路径。</p>
 <h3 class="rp-toc-include" id="验收证据"><a href="#验收证据" class="rp-header-anchor rp-link" aria-hidden="true">#</a>验收证据</h3>
 <p>在相同 Dataset、模型家族和总预算约束下，比较：</p>
@@ -353,7 +475,7 @@
 <li>Coordinator + 双 Worker；</li>
 <li>启用跨系统互操作实验时，再加入一个 Worker 经 A2A 调用的版本。</li>
 </ol>
-<p>至少报告：任务成功率、证据覆盖率、重复工作率、契约违规率、冲突识别率、P50/P95 延迟、总 Token、单位成功任务成本、Fan-out、取消收敛时间和各类失败占比。Multi-Agent 只有在目标切片上持续改善结果，并且恢复与权限测试通过时才保留；否则应删除这条路径。</p>
+<p>至少报告：任务成功率、错误完成率、证据覆盖率、重复工作率、契约违规率、Gap 修复率、停滞率、冲突识别率、P50/P95 延迟、总 Token、单位成功任务成本、Fan-out、取消收敛时间和各类失败占比。所有路径使用同一 Acceptance Baseline 和总预算；Multi-Agent 只有在目标切片上持续改善结果，并且恢复与权限测试通过时才保留，否则应删除这条路径。</p>
 <h2 class="rp-toc-include" id="常见误区"><a href="#常见误区" class="rp-header-anchor rp-link" aria-hidden="true">#</a>常见误区</h2>
 <ul>
 <li>给同一个模型三个角色名称，就获得了三个独立专家。</li>
@@ -361,10 +483,13 @@
 <li>多数投票可以抵消事实错误。</li>
 <li>Parent 的权限可以原样传给所有 Child。</li>
 <li>Child Run 完成等于业务结果已经被接受。</li>
+<li>Planner 修改计划时可以顺便删除难以满足的验收项。</li>
+<li>Verifier 可以生成缺失证据，再批准自己补全后的结果。</li>
+<li>Context Compaction 或进程重启后，Parent 与 Child Budget 可以重新计算。</li>
 <li>A2A 或框架会自动解决循环、预算、取消和状态一致性。</li>
 </ul>
 <h2 class="rp-toc-include" id="本章小结"><a href="#本章小结" class="rp-header-anchor rp-link" aria-hidden="true">#</a>本章小结</h2>
-<p>Multi-Agent 的核心不是角色编排，而是控制权、状态所有权、能力衰减和结果验证。可靠系统通常以确定性 Workflow 为骨架，让 Agent 在可隔离、可并行、可验收的局部执行，再通过版本化 Artifact 与明确 Join 收敛。下一章进入 <a href="/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议" class="rp-link">A2A 与跨 Agent 协作协议</a>，把同一组 Parent、Task、Artifact、权限与恢复语义扩展到跨系统 Wire Contract；<a href="/masterpiece-static-docs/05-模型接口与Agent内核/12-AI-SDK与LangGraph对照实践" class="rp-link">AI SDK 与 LangGraph 的 Runtime 实现对照</a>可在主线完成后查阅。</p>
+<p>Multi-Agent 的核心不是角色编排，而是控制权、状态所有权、能力衰减和结果验证。Parent Harness 持有不可静默退化的 Goal Contract、总预算和终态；Planner、Worker、Strategist、Verifier 只提交各自权限范围内的候选产物。可靠系统通常以确定性 Workflow 为骨架，让 Agent 在可隔离、可并行、可验收的局部执行，再通过 Evidence Packet、Structured Gap、版本化 Artifact 与明确 Join 收敛。下一章进入 <a href="/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议" class="rp-link">A2A 与跨 Agent 协作协议</a>，把同一组 Parent、Task、Artifact、权限与恢复语义扩展到跨系统 Wire Contract；<a href="/masterpiece-static-docs/05-模型接口与Agent内核/12-AI-SDK与LangGraph对照实践" class="rp-link">AI SDK 与 LangGraph 的 Runtime 实现对照</a>可在主线完成后查阅。</p>
 <h2 class="rp-toc-include" id="官方资料与研究"><a href="#官方资料与研究" class="rp-header-anchor rp-link" aria-hidden="true">#</a>官方资料与研究</h2>
 <ul>
 <li><a href="https://openai.github.io/openai-agents-js/guides/multi-agent/" target="_blank" rel="noopener noreferrer" class="rp-link">OpenAI Agents SDK: Multi-agent orchestration</a></li>
@@ -375,7 +500,7 @@
 <li><a href="https://a2a-protocol.org/v1.0.0/specification/" target="_blank" rel="noopener noreferrer" class="rp-link">A2A Protocol v1.0.0</a></li>
 <li><a href="https://www.anthropic.com/engineering/multi-agent-research-system" target="_blank" rel="noopener noreferrer" class="rp-link">Anthropic: How we built our multi-agent research system</a></li>
 <li><a href="https://arxiv.org/abs/2503.13657" target="_blank" rel="noopener noreferrer" class="rp-link">MAST: Why Do Multi-Agent LLM Systems Fail?</a></li>
-</ul><!--/$--></div><footer class="rp-doc-footer"><div class="rp-doc-footer__edit"><div class="rp-last-updated"><p>最后更新于<!-- -->: <span>2026/7/19 03:31:59</span></p></div></div><div class="rp-doc-footer__divider"></div><div class="rp-prev-next-page"><a href="/masterpiece-static-docs/07-工具-协议与行动控制/04-幂等-补偿与沙箱" class="rp-prev-next-page__item rp-prev-next-page__prev rp-link"><span class="rp-prev-next-page__item__desc">上一页</span><span class="rp-prev-next-page__item__title"><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon rp-prev-next-page__rotate_180"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg><span>04 · Idempotency、Compensation 与 Sandbox</span></span></a><a href="/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议" class="rp-prev-next-page__item rp-prev-next-page__next rp-link"><span class="rp-prev-next-page__item__desc">下一页</span><span class="rp-prev-next-page__item__title"><span>A2A：跨 Agent 系统协作</span><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></span></a></div></footer></main></div><aside class="rp-doc-layout__outline rp-scrollbar"><div class="rp-outline"><div class="rp-outline__title">目录<svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg></div><nav class="rp-outline__toc rp-scrollbar"><a href="#本章目标" class="rp-toc-item rp-link" title="本章目标" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章目标</span></a><a href="#1-先沿复杂度阶梯做选择" class="rp-toc-item rp-link" title="1. 先沿复杂度阶梯做选择" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">1. 先沿复杂度阶梯做选择</span></a><a href="#2-多次模型调用不等于多个-agent" class="rp-toc-item rp-link" title="2. 多次模型调用不等于多个 Agent" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">2. 多次模型调用不等于多个 Agent</span></a><a href="#3-用五个坐标描述拓扑" class="rp-toc-item rp-link" title="3. 用五个坐标描述拓扑" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">3. 用五个坐标描述拓扑</span></a><a href="#4-九种常见模式及其边界" class="rp-toc-item rp-link" title="4. 九种常见模式及其边界" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">4. 九种常见模式及其边界</span></a><a href="#41-router" class="rp-toc-item rp-link" title="4.1 Router" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.1 Router</span></a><a href="#42-manager--agent-as-tool" class="rp-toc-item rp-link" title="4.2 Manager + Agent-as-Tool" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.2 Manager + Agent-as-Tool</span></a><a href="#43-orchestrator-workers" class="rp-toc-item rp-link" title="4.3 Orchestrator-Workers" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.3 Orchestrator-Workers</span></a><a href="#44-scatter-gather" class="rp-toc-item rp-link" title="4.4 Scatter-Gather" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.4 Scatter-Gather</span></a><a href="#45-handoff" class="rp-toc-item rp-link" title="4.5 Handoff" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.5 Handoff</span></a><a href="#46-evaluator-optimizer" class="rp-toc-item rp-link" title="4.6 Evaluator-Optimizer" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.6 Evaluator-Optimizer</span></a><a href="#47-debate--voting" class="rp-toc-item rp-link" title="4.7 Debate / Voting" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.7 Debate / Voting</span></a><a href="#48-blackboard" class="rp-toc-item rp-link" title="4.8 Blackboard" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.8 Blackboard</span></a><a href="#49-hybrid" class="rp-toc-item rp-link" title="4.9 Hybrid" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.9 Hybrid</span></a><a href="#5-delegationhandoff-与-a2a-task-不是同一件事" class="rp-toc-item rp-link" title="5. Delegation、Handoff 与 A2A Task 不是同一件事" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">5. Delegation、Handoff 与 A2A Task 不是同一件事</span></a><a href="#6-状态所有权四类对象不能混在一起" class="rp-toc-item rp-link" title="6. 状态所有权：四类对象不能混在一起" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">6. 状态所有权：四类对象不能混在一起</span></a><a href="#7-汇合不是把回答拼在一起" class="rp-toc-item rp-link" title="7. 汇合不是把回答拼在一起" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">7. 汇合不是把回答拼在一起</span></a><a href="#8-multi-agent-特有的失败模式" class="rp-toc-item rp-link" title="8. Multi-Agent 特有的失败模式" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">8. Multi-Agent 特有的失败模式</span></a><a href="#9-安全边界会随委派扩张" class="rp-toc-item rp-link" title="9. 安全边界会随委派扩张" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">9. 安全边界会随委派扩张</span></a><a href="#10-框架如何映射这些语义" class="rp-toc-item rp-link" title="10. 框架如何映射这些语义" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">10. 框架如何映射这些语义</span></a><a href="#实践为-resolution-desk-增加可删除的双-worker-路径" class="rp-toc-item rp-link" title="实践：为 Resolution Desk 增加可删除的双 Worker 路径" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">实践：为 Resolution Desk 增加可删除的双 Worker 路径</span></a><a href="#进入本章时已有能力" class="rp-toc-item rp-link" title="进入本章时已有能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">进入本章时已有能力</span></a><a href="#本章增加的能力" class="rp-toc-item rp-link" title="本章增加的能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">本章增加的能力</span></a><a href="#验收证据" class="rp-toc-item rp-link" title="验收证据" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">验收证据</span></a><a href="#常见误区" class="rp-toc-item rp-link" title="常见误区" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">常见误区</span></a><a href="#本章小结" class="rp-toc-item rp-link" title="本章小结" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章小结</span></a><a href="#官方资料与研究" class="rp-toc-item rp-link" title="官方资料与研究" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">官方资料与研究</span></a></nav><div class="rp-outline__divider"></div><div class="rp-outline__bottom"></div></div></aside></div></div>
+</ul><!--/$--></div><footer class="rp-doc-footer"><div class="rp-doc-footer__edit"><div class="rp-last-updated"><p>最后更新于<!-- -->: <span>2026/7/19 05:16:12</span></p></div></div><div class="rp-doc-footer__divider"></div><div class="rp-prev-next-page"><a href="/masterpiece-static-docs/07-工具-协议与行动控制/04-幂等-补偿与沙箱" class="rp-prev-next-page__item rp-prev-next-page__prev rp-link"><span class="rp-prev-next-page__item__desc">上一页</span><span class="rp-prev-next-page__item__title"><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon rp-prev-next-page__rotate_180"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg><span>04 · Idempotency、Compensation 与 Sandbox</span></span></a><a href="/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议" class="rp-prev-next-page__item rp-prev-next-page__next rp-link"><span class="rp-prev-next-page__item__desc">下一页</span><span class="rp-prev-next-page__item__title"><span>A2A：跨 Agent 系统协作</span><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></span></a></div></footer></main></div><aside class="rp-doc-layout__outline rp-scrollbar"><div class="rp-outline"><div class="rp-outline__title">目录<svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg></div><nav class="rp-outline__toc rp-scrollbar"><a href="#本章目标" class="rp-toc-item rp-link" title="本章目标" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章目标</span></a><a href="#1-先沿复杂度阶梯做选择" class="rp-toc-item rp-link" title="1. 先沿复杂度阶梯做选择" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">1. 先沿复杂度阶梯做选择</span></a><a href="#2-多次模型调用不等于多个-agent" class="rp-toc-item rp-link" title="2. 多次模型调用不等于多个 Agent" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">2. 多次模型调用不等于多个 Agent</span></a><a href="#3-用五个坐标描述拓扑" class="rp-toc-item rp-link" title="3. 用五个坐标描述拓扑" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">3. 用五个坐标描述拓扑</span></a><a href="#4-九种常见模式及其边界" class="rp-toc-item rp-link" title="4. 九种常见模式及其边界" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">4. 九种常见模式及其边界</span></a><a href="#41-router" class="rp-toc-item rp-link" title="4.1 Router" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.1 Router</span></a><a href="#42-manager--agent-as-tool" class="rp-toc-item rp-link" title="4.2 Manager + Agent-as-Tool" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.2 Manager + Agent-as-Tool</span></a><a href="#43-orchestrator-workers" class="rp-toc-item rp-link" title="4.3 Orchestrator-Workers" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.3 Orchestrator-Workers</span></a><a href="#44-scatter-gather" class="rp-toc-item rp-link" title="4.4 Scatter-Gather" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.4 Scatter-Gather</span></a><a href="#45-handoff" class="rp-toc-item rp-link" title="4.5 Handoff" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.5 Handoff</span></a><a href="#46-evaluator-optimizer" class="rp-toc-item rp-link" title="4.6 Evaluator-Optimizer" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.6 Evaluator-Optimizer</span></a><a href="#47-debate--voting" class="rp-toc-item rp-link" title="4.7 Debate / Voting" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.7 Debate / Voting</span></a><a href="#48-blackboard" class="rp-toc-item rp-link" title="4.8 Blackboard" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.8 Blackboard</span></a><a href="#49-hybrid" class="rp-toc-item rp-link" title="4.9 Hybrid" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">4.9 Hybrid</span></a><a href="#5-delegationhandoff-与-a2a-task-不是同一件事" class="rp-toc-item rp-link" title="5. Delegation、Handoff 与 A2A Task 不是同一件事" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">5. Delegation、Handoff 与 A2A Task 不是同一件事</span></a><a href="#6-状态所有权四类对象不能混在一起" class="rp-toc-item rp-link" title="6. 状态所有权：四类对象不能混在一起" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">6. 状态所有权：四类对象不能混在一起</span></a><a href="#61-goal-contract计划和预算属于不同状态" class="rp-toc-item rp-link" title="6.1 Goal Contract、计划和预算属于不同状态" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">6.1 Goal Contract、计划和预算属于不同状态</span></a><a href="#62-角色名称必须落到-capability-与写权限" class="rp-toc-item rp-link" title="6.2 角色名称必须落到 Capability 与写权限" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">6.2 角色名称必须落到 Capability 与写权限</span></a><a href="#7-汇合不是把回答拼在一起" class="rp-toc-item rp-link" title="7. 汇合不是把回答拼在一起" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">7. 汇合不是把回答拼在一起</span></a><a href="#71-structured-gap-让协作循环可以收敛" class="rp-toc-item rp-link" title="7.1 Structured Gap 让协作循环可以收敛" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">7.1 Structured Gap 让协作循环可以收敛</span></a><a href="#8-multi-agent-特有的失败模式" class="rp-toc-item rp-link" title="8. Multi-Agent 特有的失败模式" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">8. Multi-Agent 特有的失败模式</span></a><a href="#9-安全边界会随委派扩张" class="rp-toc-item rp-link" title="9. 安全边界会随委派扩张" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">9. 安全边界会随委派扩张</span></a><a href="#10-框架如何映射这些语义" class="rp-toc-item rp-link" title="10. 框架如何映射这些语义" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">10. 框架如何映射这些语义</span></a><a href="#实践为-resolution-desk-增加可删除的双-worker-路径" class="rp-toc-item rp-link" title="实践：为 Resolution Desk 增加可删除的双 Worker 路径" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">实践：为 Resolution Desk 增加可删除的双 Worker 路径</span></a><a href="#进入本章时已有能力" class="rp-toc-item rp-link" title="进入本章时已有能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">进入本章时已有能力</span></a><a href="#本章增加的能力" class="rp-toc-item rp-link" title="本章增加的能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">本章增加的能力</span></a><a href="#验收证据" class="rp-toc-item rp-link" title="验收证据" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">验收证据</span></a><a href="#常见误区" class="rp-toc-item rp-link" title="常见误区" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">常见误区</span></a><a href="#本章小结" class="rp-toc-item rp-link" title="本章小结" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章小结</span></a><a href="#官方资料与研究" class="rp-toc-item rp-link" title="官方资料与研究" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">官方资料与研究</span></a></nav><div class="rp-outline__divider"></div><div class="rp-outline__bottom"></div></div></aside></div></div>
     <div id="__rspress_modal_container"></div>
   </body>
 </html>

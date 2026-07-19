@@ -110,17 +110,36 @@ Node 工程师熟悉 Event Loop，但 Tokio 仍有不同的并发边界：
 
 “Future 被 Drop”并不自动意味着外部请求已撤销。与 Node 的 `AbortSignal` 类似，取消只传播控制意图；有副作用的外部调用仍需 Receipt 与 Reconciliation。
 
+### 6.1 单写者 Actor：状态串行化，工作并行化
+
+复杂 Agent Runtime 同时处理模型流、Tool Result、用户取消、审批和后台任务。如果每个异步任务都直接修改 Session，锁数量会持续增长，事件顺序也难以重放。更稳健的结构是让一个 Actor 独占可变状态：
+
+```text
+Session Actor
+  ├─ owns queue, run state and event sequence
+  ├─ starts model/tool futures outside the state owner
+  └─ receives typed completion messages and commits transitions serially
+```
+
+Rust 可以用所有权、`mpsc` 和穷尽 `match` 表达这种边界；TypeScript 同样可以使用单消费者队列、Reducer 和 Discriminated Union。关键原则不是“使用 Actor Framework”，而是让可变状态只有一个提交者，同时允许纯计算和 I/O 在受控预算内并行。
+
+### 6.2 RAII Guard 用于恢复不变量
+
+异步流程可能正常完成、超时、取消、`panic` 或在持有临时状态时提前返回。Rust 的 RAII（Resource Acquisition Is Initialization）可以在正常离开作用域、Future 被 Drop，以及采用 `panic=unwind` 时的栈展开路径中，通过 Guard 的 `Drop` 清理 `in_flight` 标记、锁文件、临时目录或注册表条目，减少“受支持退出路径忘记恢复”的机会。`panic=abort`、进程崩溃、`SIGKILL` 与主机断电不会执行 `Drop`，因此进程级恢复仍需 Lease、Checkpoint、幂等 Cleanup 和启动时 Reconciliation。
+
+不过 `Drop` 不能执行任意异步补偿，也不能证明远端副作用已撤销。适合由 Guard 恢复的是进程仍能执行清理代码时的本地不变量；外部 Command 仍然需要持久状态、Receipt 和 Reconciliation。TypeScript 中对应的是范围明确的 `try/finally`、幂等 Cleanup 与进程级 Crash Recovery，而不是依赖垃圾回收时机。
+
 ## 7. 一条渐进的 Rust 能力路径
 
 为便于安排学习，本书使用 R0–R4 表示 Rust 能力递进；它们不是行业标准，也不要求最终走到 R4。
 
-| 阶段                   | 学习重点                                                   | 合适产出                                   |
-| -------------------- | ------------------------------------------------------ | -------------------------------------- |
-| R0 · 纯逻辑             | Cargo、Ownership、Result、Enum、Trait、Test、Clippy          | 用相同 JSON Fixture 对拍一个 Reducer 或 Parser |
-| R1 · 异步与只读           | Tokio、Serde、reqwest、Stream、Timeout、Cancel、Backpressure | 只读 Tool 或流解析服务                         |
-| R2 · 协议 Sidecar      | Axum/Tower、Tracing、SQLx、HTTP/JSON-RPC/SSE/gRPC         | 可独立部署和回滚的 Sidecar                      |
-| R3 · 受控执行面           | MCP、Policy Context、幂等、限流、审计、Sandbox Supervisor         | Gateway 或 Tool Executor                |
-| R4 · 可选 Runtime Core | Event Store、Checkpoint、Recovery、Scheduler、版本迁移         | 仅在契约稳定且收益持续成立时评估                       |
+| 阶段                   | 学习重点                                                                    | 合适产出                                   |
+| -------------------- | ----------------------------------------------------------------------- | -------------------------------------- |
+| R0 · 纯逻辑             | Cargo、Ownership、Result、Enum、Trait、Test、Clippy                           | 用相同 JSON Fixture 对拍一个 Reducer 或 Parser |
+| R1 · 异步与只读           | Tokio、Serde、reqwest、Stream、Actor、RAII Guard、Timeout、Cancel、Backpressure | 只读 Tool 或流解析服务                         |
+| R2 · 协议 Sidecar      | Axum/Tower、Tracing、SQLx、HTTP/JSON-RPC/SSE/gRPC                          | 可独立部署和回滚的 Sidecar                      |
+| R3 · 受控执行面           | MCP、Policy Context、幂等、限流、审计、Sandbox Supervisor                          | Gateway 或 Tool Executor                |
+| R4 · 可选 Runtime Core | Event Store、Checkpoint、Recovery、Scheduler、版本迁移                          | 仅在契约稳定且收益持续成立时评估                       |
 
 R0/R1 可以与 TypeScript Agent 学习并行，但“用 Rust 做练习”不等于“替换真实组件”。真实迁移还需要下一章的跨语言契约和发布准入条件。
 

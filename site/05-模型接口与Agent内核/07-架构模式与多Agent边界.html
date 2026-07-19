@@ -9,7 +9,7 @@
 <script defer src="/masterpiece-static-docs/static/js/lib-react.153111d74d.js"></script>
 <script defer src="/masterpiece-static-docs/static/js/lib-router.575081ccc8.js"></script>
 <script defer src="/masterpiece-static-docs/static/js/5193.f8417e4998.js"></script>
-<script defer src="/masterpiece-static-docs/static/js/index.dd6441ccc4.js"></script>
+<script defer src="/masterpiece-static-docs/static/js/index.66035edb4b.js"></script>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="generator" content="Rspress v2.0.17">
 <meta property="og:type" content="website">
@@ -26,6 +26,7 @@
 <li>识别 Agent Harness 与 Evaluation Harness 的职责边界。</li>
 <li>理解 Skill、Hook、Subagent 和 Workflow 如何组合。</li>
 <li>比较常见 Agent 架构模式的控制权、成本和失败方式。</li>
+<li>划分 Planner、Worker、Strategist、Verifier 与 Harness 的权限和状态所有权。</li>
 <li>区分 Inner Agent Loop、持久恢复（Durable Resume）与 Outer Orchestration Loop。</li>
 <li>用 Baseline 和 Eval 决定是否引入 Multi-Agent。</li>
 </ul>
@@ -268,12 +269,101 @@
 <p>不需要把原始 Chain-of-Thought 作为协议或审计数据。可观测对象是计划摘要、动作、参数、证据、结果和状态转移。</p>
 <p>Plan 也不是一段一次性生成的文本。可执行计划至少包含：</p>
 <div class="rp-codeblock language-text"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="text"><code><span class="line"><span>step_id, goal, dependencies, status,</span></span>
-<span class="line"><span>completion_criteria, evidence_refs</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
-<p>新证据、权限变化、预算变化、工具失败或用户调整目标，都可能触发重新规划（Replanning）。Plan 描述意图，不能替代 Tool Gate 和 Approval。</p>
-<h2 class="rp-toc-include" id="9-inner-loopdurable-runtime-与-loop-engineering"><a href="#9-inner-loopdurable-runtime-与-loop-engineering" class="rp-header-anchor rp-link" aria-hidden="true">#</a>9. Inner Loop、Durable Runtime 与 Loop Engineering</h2>
-<p>实践社区使用 “Loop Engineering” 描述更外层的自动工作闭环：系统从任务源发现工作，创建隔离环境，启动 Agent，独立验证，并在失败时创建下一次尝试。这个术语还不是边界统一的正式规范；更精确的名称是 Outer Orchestration Loop。</p>
+<span class="line"><span>completion_criteria, evidence_refs,</span></span>
+<span class="line"><span>acceptance_baseline_ref, plan_revision</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>新证据、权限变化、预算变化或工具失败，都可能触发重新规划（Replanning）。Plan Revision 可以改变路径和步骤，却不能修改它引用的验收基线。若用户调整目标，应先产生新的 Goal Contract Revision，再判断旧计划和旧证据是否仍然适用。Plan 描述意图，不能替代 Tool Gate、Approval 或完成验收。</p>
+<h2 class="rp-toc-include" id="9-loop-engineeringharness-持有目标与终止"><a href="#9-loop-engineeringharness-持有目标与终止" class="rp-header-anchor rp-link" aria-hidden="true">#</a>9. Loop Engineering：Harness 持有目标与终止</h2>
+<p>Context Engineering 决定一次模型调用能看到什么；Harness Engineering 决定模型如何受控行动；Loop Engineering 则进一步处理长任务如何持续推进、证明完成并在无进展时停止。</p>
+<p>Goal Loop 位于单次动作循环之上，但仍属于 Harness：</p>
 <div></div>
-<p>同一 Run 的 Checkpoint / Resume 属于 Durable Runtime；验收失败后创建新 Attempt 属于 Outer Orchestration。两者必须分别设置预算、终止和幂等策略。</p>
+<p>把四个角色写进 Prompt，并不会自动产生可靠分工。角色必须对应不同的能力边界和状态写权限：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>参与者</th><th>可以做什么</th><th>不能做什么</th><th>产物</th></tr></thead><tbody><tr><td>Harness</td><td>冻结 Goal Contract、提交状态转移、划拨预算、授权和停止</td><td>把模型文本当作权威状态</td><td>Snapshot、Transition、最终终态</td></tr><tr><td>Planner</td><td>读取目标与可用能力，提出或修订执行计划</td><td>修改 Acceptance Baseline、授予权限、提交领域写入</td><td>Candidate Plan</td></tr><tr><td>Worker</td><td>在衰减后的能力范围内执行有界任务</td><td>自行宣布 Goal 完成、扩大工具权限</td><td>Artifact、Evidence Packet</td></tr><tr><td>Strategist</td><td>在停滞或反复失败时分析 Gap，提出替代路径</td><td>直接改写当前 Plan、执行副作用、覆盖 Verifier Verdict</td><td>Strategy Advice</td></tr><tr><td>Verifier</td><td>对冻结基线、Evidence Packet 和权威只读事实进行验收</td><td>生成被验收证据、修改基线、调用有副作用的工具</td><td>Verdict、Structured Gaps</td></tr></tbody></table></div>
+<p>Planner、Worker、Strategist 和 Verifier 是职责，不必永久对应四个模型实例。低风险任务可以由同一模型在相互隔离的调用中承担不同职责；高风险任务则应增强独立性，例如分离 Context、工具权限、系统指令、数据来源或模型，并优先使用确定性 Verifier。无论采用哪种实现，Harness 都是唯一能够提交 Goal 状态、预算高水位和完成终态的参与者。</p>
+<p>Strategist 也不应成为每轮必经节点。它适合在相同 Stall Fingerprint 重复出现、常规 Replanning 没有带来新证据时介入。其建议先作为不可执行的 Advice 保存，再由 Harness 选择是否产生新的 Plan Revision；这样，即使建议受到错误上下文影响，也不能绕过 Tool Gate 和 Acceptance Baseline。</p>
+<h3 class="rp-toc-include" id="91-四层-loop-不应混用预算和身份"><a href="#91-四层-loop-不应混用预算和身份" class="rp-header-anchor rp-link" aria-hidden="true">#</a>9.1 四层 Loop 不应混用预算和身份</h3>
+<p>“循环”至少可能指四个不同层次：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>层次</th><th>一次迭代是什么</th><th>状态所有者</th><th>典型终止条件</th></tr></thead><tbody><tr><td>Model / Tool Loop</td><td>Proposal → Tool → Observation</td><td>Run Reducer</td><td>Final Item、等待输入、步骤预算</td></tr><tr><td>Goal Loop</td><td>Plan → Work → Evidence → Verify</td><td>Goal Orchestrator</td><td>Baseline 通过、阻塞、停滞、Goal 预算</td></tr><tr><td>Durable Resume</td><td>从 Checkpoint 恢复同一 Attempt</td><td>Runtime</td><td>原 Attempt 继续或进入恢复暂停</td></tr><tr><td>Outer Orchestration</td><td>创建并验收一个新 Attempt</td><td>Task Orchestrator</td><td>发布、人工门禁、总尝试预算</td></tr></tbody></table></div>
+<p>Context Compaction 不能重置 Run 或 Goal 的 Token 高水位；进程恢复不能创建新的自主身份；外层重试也不能复用旧 Attempt 的 Idempotency Key 冒充同一次提交。每层都应有自己的 ID、预算和终止 Event。</p>
+<h3 class="rp-toc-include" id="92-durable-runtime-与-outer-orchestration"><a href="#92-durable-runtime-与-outer-orchestration" class="rp-header-anchor rp-link" aria-hidden="true">#</a>9.2 Durable Runtime 与 Outer Orchestration</h3>
+<p>在部分实践语境中，“Loop Engineering” 也专指更外层的自动工作闭环：系统从任务源发现工作，创建隔离环境，启动 Agent，独立验证，并在失败时创建下一次尝试。这个术语还没有统一边界；本书把这层明确称为 Outer Orchestration Loop，避免它与一次 Run 内的 Goal Loop 混淆。</p>
+<div></div>
+<p>同一 Run 的 Checkpoint / Resume 属于 Durable Runtime；验收失败后创建新 Attempt 属于 Outer Orchestration。恢复出的未知状态默认进入 <code>paused_recovery</code>，只有完成 Schema、预算、权限和在途副作用对账后才允许继续。两层必须分别设置预算、终止和幂等策略。</p>
 <h2 class="rp-toc-include" id="10-multi-agent-的准入条件"><a href="#10-multi-agent-的准入条件" class="rp-header-anchor rp-link" aria-hidden="true">#</a>10. Multi-Agent 的准入条件</h2>
 <p>Multi-Agent 可能有价值的情况：</p>
 <ul>
@@ -342,15 +432,22 @@
 
 
 
-<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>组件</th><th>它补偿的风险</th><th>收益指标</th><th>成本</th><th>删除条件</th></tr></thead><tbody><tr><td>Context Builder</td><td>全量历史污染判断</td><td>成功率、Token、证据覆盖</td><td>选择错误、实现复杂</td><td>简化后无退化</td></tr><tr><td>Tool Gate</td><td>模型提出越界参数</td><td>策略违规率</td><td>额外延迟</td><td>安全边界不可删除，只能下沉</td></tr><tr><td>Independent Reviewer</td><td>Generator 自评偏宽</td><td>缺陷召回率</td><td>Token 与延迟</td><td>单 Agent 已稳定覆盖</td></tr></tbody></table></div>
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>组件</th><th>它补偿的风险</th><th>收益指标</th><th>成本</th><th>删除条件</th></tr></thead><tbody><tr><td>Context Builder</td><td>全量历史污染判断</td><td>成功率、Token、证据覆盖</td><td>选择错误、实现复杂</td><td>简化后无退化</td></tr><tr><td>Tool Gate</td><td>模型提出越界参数</td><td>策略违规率</td><td>额外延迟</td><td>安全边界不可删除，只能下沉</td></tr><tr><td>Goal Orchestrator</td><td>目标、预算与完成状态由模型自报</td><td>收敛率、停滞率、恢复正确率</td><td>状态与迁移复杂度</td><td>任务退化为单次确定性调用</td></tr><tr><td>Independent Verifier</td><td>Worker 自评偏宽</td><td>缺陷召回率、错误完成率</td><td>Token 与延迟</td><td>确定性规则已完整覆盖</td></tr></tbody></table></div>
 <p>然后完成三组实验：</p>
 <ol>
 <li>Skill 超出 Context Budget 或 Digest 变化时，Harness 拒绝静默加载。</li>
 <li>Blocking Hook 发生 Timeout 时，高风险 Command 不得进入 Executor；Observation Hook 发生 Timeout 时，不回滚已经产生的业务结果。</li>
-<li>对同一批退款工单比较固定 Workflow、单 Agent 和本地 Reviewer；本章不引入跨系统 Agent，风险复核的 A2A 路径留到 <a href="/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议" class="rp-link">A2A 与跨 Agent 协作协议</a>。</li>
+<li>对同一批退款工单冻结 Acceptance Baseline，比较固定 Workflow、单 Agent 和受限 Verifier；重复 Gap 只允许触发 Plan Revision，不能改写基线。本章不引入跨系统 Agent，风险复核的 A2A 路径留到 <a href="/masterpiece-static-docs/07-工具-协议与行动控制/05-A2A与跨Agent协作协议" class="rp-link">A2A 与跨 Agent 协作协议</a>。</li>
 </ol>
 <h3 class="rp-toc-include" id="验收证据"><a href="#验收证据" class="rp-header-anchor rp-link" aria-hidden="true">#</a>验收证据</h3>
-<p>保存三组消融测试结果：Skill 超预算被拒绝、阻断型 Hook 失败时退款 Proposal 不进入后续执行路径、观察型 Hook 失败时既有结果不被回滚。固定 Workflow 与单 Agent 使用同一 Dataset 和预算；没有可测收益的 Reviewer 不进入默认路径。</p>
+<p>保存三组消融测试结果：Skill 超预算被拒绝、阻断型 Hook 失败时退款 Proposal 不进入后续执行路径、观察型 Hook 失败时既有结果不被回滚。固定 Workflow 与单 Agent 使用同一 Dataset、Acceptance Baseline 和总预算；Verifier 不能生成被验收证据，Strategist Advice 不能直接改变计划或状态。没有可测收益的额外角色不进入默认路径。</p>
 <h2 class="rp-toc-include" id="常见误区"><a href="#常见误区" class="rp-header-anchor rp-link" aria-hidden="true">#</a>常见误区</h2>
 <ul>
 <li>使用 Tool 就等于拥有完整 Agent Harness。</li>
@@ -358,10 +455,12 @@
 <li>所有 Hook 都是安全强制控制点（Enforcement Point）。</li>
 <li>多次调用模型自然构成 Multi-Agent。</li>
 <li>完整 Plan 一旦生成就不需要修改。</li>
+<li>Planner、Strategist 或 Verifier 可以直接更新 Goal 的权威状态。</li>
+<li>只要调用另一个模型复核，Verifier 就天然独立。</li>
 <li>Multi-Agent 天然比单 Agent 更全面。</li>
 </ul>
 <h2 class="rp-toc-include" id="本章小结"><a href="#本章小结" class="rp-header-anchor rp-link" aria-hidden="true">#</a>本章小结</h2>
-<p>Harness Engineering 把 Context、Loop、Tool、Policy、State、Sandbox、Extension 和 Trace 组织为可测试系统。Workflow、单 Agent、Outer Loop 与 Multi-Agent 解决的是不同控制问题，不是从旧到新的技术代际。下一章将据此评估<a href="/masterpiece-static-docs/05-模型接口与Agent内核/08-框架与SDK学习优先级" class="rp-link">框架与 SDK 的学习优先级</a>：先理解抽象替代了哪些 Harness 组件，再决定是否采用。</p>
+<p>Harness Engineering 把 Context、Loop、Tool、Policy、State、Sandbox、Extension 和 Trace 组织为可测试系统。Goal Contract、Evidence Packet、独立 Verifier 和停滞检测让“持续执行”收敛为可证明的终止，而 Planner、Worker、Strategist 只在 Harness 授权的边界内提供候选输入。Workflow、单 Agent、Outer Loop 与 Multi-Agent 解决的是不同控制问题，不是从旧到新的技术代际。下一章将据此评估<a href="/masterpiece-static-docs/05-模型接口与Agent内核/08-框架与SDK学习优先级" class="rp-link">框架与 SDK 的学习优先级</a>：先理解抽象替代了哪些 Harness 组件，再决定是否采用。</p>
 <h2 class="rp-toc-include" id="延伸阅读"><a href="#延伸阅读" class="rp-header-anchor rp-link" aria-hidden="true">#</a>延伸阅读</h2>
 <ul>
 <li><a href="https://www.anthropic.com/engineering/building-effective-agents" target="_blank" rel="noopener noreferrer" class="rp-link">Anthropic: Building effective agents</a></li>
@@ -377,7 +476,7 @@
 <li><a href="https://addyosmani.com/blog/loop-engineering/" target="_blank" rel="noopener noreferrer" class="rp-link">Addy Osmani: Loop Engineering</a></li>
 <li><a href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener noreferrer" class="rp-link">ReAct</a></li>
 <li><a href="https://arxiv.org/abs/2503.13657" target="_blank" rel="noopener noreferrer" class="rp-link">MAST: Why Do Multi-Agent LLM Systems Fail?</a></li>
-</ul><!--/$--></div><footer class="rp-doc-footer"><div class="rp-doc-footer__edit"><div class="rp-last-updated"><p>最后更新于<!-- -->: <span>2026/7/19 04:20:17</span></p></div></div><div class="rp-doc-footer__divider"></div><div class="rp-prev-next-page"><a href="/masterpiece-static-docs/05-模型接口与Agent内核/06-Agent-Loop与状态机" class="rp-prev-next-page__item rp-prev-next-page__prev rp-link"><span class="rp-prev-next-page__item__desc">上一页</span><span class="rp-prev-next-page__item__title"><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon rp-prev-next-page__rotate_180"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg><span>06 · Agent Loop 与状态机</span></span></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/08-框架与SDK学习优先级" class="rp-prev-next-page__item rp-prev-next-page__next rp-link"><span class="rp-prev-next-page__item__desc">下一页</span><span class="rp-prev-next-page__item__title"><span>08 · 如何学习和选择 Agent SDK</span><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></span></a></div></footer></main></div><aside class="rp-doc-layout__outline rp-scrollbar"><div class="rp-outline"><div class="rp-outline__title">目录<svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg></div><nav class="rp-outline__toc rp-scrollbar"><a href="#本章目标" class="rp-toc-item rp-link" title="本章目标" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章目标</span></a><a href="#1-agent-harness-包含什么" class="rp-toc-item rp-link" title="1. Agent Harness 包含什么" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">1. Agent Harness 包含什么</span></a><a href="#2-agent-harness-与-evaluation-harness" class="rp-toc-item rp-link" title="2. Agent Harness 与 Evaluation Harness" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">2. Agent Harness 与 Evaluation Harness</span></a><a href="#3-skill-是按需加载的程序性知识" class="rp-toc-item rp-link" title="3. Skill 是按需加载的程序性知识" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">3. Skill 是按需加载的程序性知识</span></a><a href="#4-hook-必须区分阻断与观察" class="rp-toc-item rp-link" title="4. Hook 必须区分阻断与观察" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">4. Hook 必须区分阻断与观察</span></a><a href="#5-从-context-engineering-到-harness-engineering" class="rp-toc-item rp-link" title="5. 从 Context Engineering 到 Harness Engineering" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">5. 从 Context Engineering 到 Harness Engineering</span></a><a href="#6-复杂度应按问题逐层增加" class="rp-toc-item rp-link" title="6. 复杂度应按问题逐层增加" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">6. 复杂度应按问题逐层增加</span></a><a href="#7-常见架构模式" class="rp-toc-item rp-link" title="7. 常见架构模式" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">7. 常见架构模式</span></a><a href="#反思不是一种单独的架构" class="rp-toc-item rp-link" title="反思不是一种单独的架构" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">反思不是一种单独的架构</span></a><a href="#8-react-与-plan-的工程化表达" class="rp-toc-item rp-link" title="8. ReAct 与 Plan 的工程化表达" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">8. ReAct 与 Plan 的工程化表达</span></a><a href="#9-inner-loopdurable-runtime-与-loop-engineering" class="rp-toc-item rp-link" title="9. Inner Loop、Durable Runtime 与 Loop Engineering" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">9. Inner Loop、Durable Runtime 与 Loop Engineering</span></a><a href="#10-multi-agent-的准入条件" class="rp-toc-item rp-link" title="10. Multi-Agent 的准入条件" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">10. Multi-Agent 的准入条件</span></a><a href="#11-委派不能只传一段自然语言" class="rp-toc-item rp-link" title="11. 委派不能只传一段自然语言" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">11. 委派不能只传一段自然语言</span></a><a href="#实践为-resolution-desk-组装最小-harness" class="rp-toc-item rp-link" title="实践：为 Resolution Desk 组装最小 Harness" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">实践：为 Resolution Desk 组装最小 Harness</span></a><a href="#进入本章时已有能力" class="rp-toc-item rp-link" title="进入本章时已有能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">进入本章时已有能力</span></a><a href="#本章增加的能力" class="rp-toc-item rp-link" title="本章增加的能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">本章增加的能力</span></a><a href="#验收证据" class="rp-toc-item rp-link" title="验收证据" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">验收证据</span></a><a href="#常见误区" class="rp-toc-item rp-link" title="常见误区" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">常见误区</span></a><a href="#本章小结" class="rp-toc-item rp-link" title="本章小结" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章小结</span></a><a href="#延伸阅读" class="rp-toc-item rp-link" title="延伸阅读" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">延伸阅读</span></a></nav><div class="rp-outline__divider"></div><div class="rp-outline__bottom"></div></div></aside></div></div>
+</ul><!--/$--></div><footer class="rp-doc-footer"><div class="rp-doc-footer__edit"><div class="rp-last-updated"><p>最后更新于<!-- -->: <span>2026/7/19 05:16:12</span></p></div></div><div class="rp-doc-footer__divider"></div><div class="rp-prev-next-page"><a href="/masterpiece-static-docs/05-模型接口与Agent内核/06-Agent-Loop与状态机" class="rp-prev-next-page__item rp-prev-next-page__prev rp-link"><span class="rp-prev-next-page__item__desc">上一页</span><span class="rp-prev-next-page__item__title"><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon rp-prev-next-page__rotate_180"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg><span>06 · Agent Loop 与状态机</span></span></a><a href="/masterpiece-static-docs/05-模型接口与Agent内核/08-框架与SDK学习优先级" class="rp-prev-next-page__item rp-prev-next-page__next rp-link"><span class="rp-prev-next-page__item__desc">下一页</span><span class="rp-prev-next-page__item__title"><span>08 · 如何学习和选择 Agent SDK</span><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></span></a></div></footer></main></div><aside class="rp-doc-layout__outline rp-scrollbar"><div class="rp-outline"><div class="rp-outline__title">目录<svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg></div><nav class="rp-outline__toc rp-scrollbar"><a href="#本章目标" class="rp-toc-item rp-link" title="本章目标" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章目标</span></a><a href="#1-agent-harness-包含什么" class="rp-toc-item rp-link" title="1. Agent Harness 包含什么" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">1. Agent Harness 包含什么</span></a><a href="#2-agent-harness-与-evaluation-harness" class="rp-toc-item rp-link" title="2. Agent Harness 与 Evaluation Harness" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">2. Agent Harness 与 Evaluation Harness</span></a><a href="#3-skill-是按需加载的程序性知识" class="rp-toc-item rp-link" title="3. Skill 是按需加载的程序性知识" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">3. Skill 是按需加载的程序性知识</span></a><a href="#4-hook-必须区分阻断与观察" class="rp-toc-item rp-link" title="4. Hook 必须区分阻断与观察" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">4. Hook 必须区分阻断与观察</span></a><a href="#5-从-context-engineering-到-harness-engineering" class="rp-toc-item rp-link" title="5. 从 Context Engineering 到 Harness Engineering" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">5. 从 Context Engineering 到 Harness Engineering</span></a><a href="#6-复杂度应按问题逐层增加" class="rp-toc-item rp-link" title="6. 复杂度应按问题逐层增加" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">6. 复杂度应按问题逐层增加</span></a><a href="#7-常见架构模式" class="rp-toc-item rp-link" title="7. 常见架构模式" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">7. 常见架构模式</span></a><a href="#反思不是一种单独的架构" class="rp-toc-item rp-link" title="反思不是一种单独的架构" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">反思不是一种单独的架构</span></a><a href="#8-react-与-plan-的工程化表达" class="rp-toc-item rp-link" title="8. ReAct 与 Plan 的工程化表达" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">8. ReAct 与 Plan 的工程化表达</span></a><a href="#9-loop-engineeringharness-持有目标与终止" class="rp-toc-item rp-link" title="9. Loop Engineering：Harness 持有目标与终止" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">9. Loop Engineering：Harness 持有目标与终止</span></a><a href="#91-四层-loop-不应混用预算和身份" class="rp-toc-item rp-link" title="9.1 四层 Loop 不应混用预算和身份" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">9.1 四层 Loop 不应混用预算和身份</span></a><a href="#92-durable-runtime-与-outer-orchestration" class="rp-toc-item rp-link" title="9.2 Durable Runtime 与 Outer Orchestration" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">9.2 Durable Runtime 与 Outer Orchestration</span></a><a href="#10-multi-agent-的准入条件" class="rp-toc-item rp-link" title="10. Multi-Agent 的准入条件" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">10. Multi-Agent 的准入条件</span></a><a href="#11-委派不能只传一段自然语言" class="rp-toc-item rp-link" title="11. 委派不能只传一段自然语言" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">11. 委派不能只传一段自然语言</span></a><a href="#实践为-resolution-desk-组装最小-harness" class="rp-toc-item rp-link" title="实践：为 Resolution Desk 组装最小 Harness" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">实践：为 Resolution Desk 组装最小 Harness</span></a><a href="#进入本章时已有能力" class="rp-toc-item rp-link" title="进入本章时已有能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">进入本章时已有能力</span></a><a href="#本章增加的能力" class="rp-toc-item rp-link" title="本章增加的能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">本章增加的能力</span></a><a href="#验收证据" class="rp-toc-item rp-link" title="验收证据" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">验收证据</span></a><a href="#常见误区" class="rp-toc-item rp-link" title="常见误区" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">常见误区</span></a><a href="#本章小结" class="rp-toc-item rp-link" title="本章小结" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章小结</span></a><a href="#延伸阅读" class="rp-toc-item rp-link" title="延伸阅读" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">延伸阅读</span></a></nav><div class="rp-outline__divider"></div><div class="rp-outline__bottom"></div></div></aside></div></div>
     <div id="__rspress_modal_container"></div>
   </body>
 </html>

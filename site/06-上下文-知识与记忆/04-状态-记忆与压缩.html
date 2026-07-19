@@ -9,7 +9,7 @@
 <script defer src="/masterpiece-static-docs/static/js/lib-react.153111d74d.js"></script>
 <script defer src="/masterpiece-static-docs/static/js/lib-router.575081ccc8.js"></script>
 <script defer src="/masterpiece-static-docs/static/js/5193.f8417e4998.js"></script>
-<script defer src="/masterpiece-static-docs/static/js/index.dd6441ccc4.js"></script>
+<script defer src="/masterpiece-static-docs/static/js/index.66035edb4b.js"></script>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="generator" content="Rspress v2.0.17">
 <meta property="og:type" content="website">
@@ -26,8 +26,11 @@
 <li>区分 Event Log、Runtime State、Context、Long-term Memory 与 Knowledge Corpus。</li>
 <li>区分 Provider Conversation Session、产品 Thread 与 Authentication Session 的生命周期。</li>
 <li>设计 Memory 的写入校验、读取策略、冲突处理和删除机制。</li>
+<li>建立 Capture、Curate、Publish / Activate、Retrieve、Inject、Forget 主路径，并把 Consolidation 设计为可选反馈回路。</li>
+<li>区分 Deterministic Capture 与 Semantic Capture，以及 Evergreen Memory 与 Decaying Memory。</li>
 <li>理解 Working、Semantic、Episodic 与 Procedural Memory 的用途。</li>
 <li>理解 Memory Consolidation（记忆巩固）与 Context Compaction（上下文压缩）的不同输入、产物和风险。</li>
+<li>在 Compaction 前持久化 Checkpoint 并 Flush 未落盘事实，避免压缩跨越不稳定边界。</li>
 <li>把 Compaction 作为可追溯的有损派生，而不是状态存储。</li>
 </ul>
 <h2 class="rp-toc-include" id="1-五类对象不能共用一个含糊的记忆概念"><a href="#1-五类对象不能共用一个含糊的记忆概念" class="rp-header-anchor rp-link" aria-hidden="true">#</a>1. 五类对象不能共用一个含糊的“记忆”概念</h2>
@@ -139,11 +142,74 @@
 <p>这是一组设计分类，不要求为每一类购买独立数据库。</p>
 <h2 class="rp-toc-include" id="4-memory-有显式生命周期"><a href="#4-memory-有显式生命周期" class="rp-header-anchor rp-link" aria-hidden="true">#</a>4. Memory 有显式生命周期</h2>
 <p>Long-term Memory 不应从一段文本直接变成“永久有效”。一个最小生命周期可以表示为：</p>
+<p>从系统视角看，Memory 还需要一条端到端处理链。主路径是 Capture（捕获）→ Curate（筛选）→ Publish / Activate（发布 / 激活）→ Retrieve（检索）→ Inject（注入）→ Forget（遗忘）；Consolidate（巩固）是从多条 Episode 与 Outcome 归纳新 Candidate 的可选反馈回路，不是每条记录的必经阶段。这些治理职责不能压缩成一次“向量化并保存”：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>阶段</th><th>输入与动作</th><th>输出</th><th>必须保持的不变量</th></tr></thead><tbody><tr><td>Capture</td><td>从 Message、Event、Receipt、表单或文档记录候选及来源</td><td>原始 Candidate 与 Source Ref</td><td>捕获不等于同意长期保存，也不扩大 Scope</td></tr><tr><td>Curate</td><td>校验用途、同意、敏感度、证据、Namespace、TTL 与冲突</td><td>被拒绝的候选，或待发布 Candidate</td><td>模型推断不能冒充用户明确陈述</td></tr><tr><td>Publish / Activate</td><td>以 CAS 提交通过 Curate 的版本，并更新可服务索引</td><td>带版本、Scope、Lifecycle Class 与 Source Ref 的 Active Record</td><td>只有已通过发布门禁的版本可被 Retrieve；并发发布不能静默覆盖</td></tr><tr><td>Retrieve</td><td>在合法分区中做精确、结构化、词法与语义召回</td><td>带分数和来源的候选集合</td><td>先授权再召回，召回分数不表示真实性</td></tr><tr><td>Inject</td><td>按任务、冲突、时效、预算与优先级选择 Context 项</td><td>Context Manifest</td><td>Memory 不得覆盖 Policy、Runtime State 与权威业务事实</td></tr><tr><td>Forget</td><td>Tombstone、索引失效、缓存清理、派生物重算与删除验证</td><td>不再可服务的记录及审计结果</td><td>先阻断读取，再完成异步物理清理</td></tr><tr><td>Consolidate（可选反馈回路）</td><td>对已去重、可追溯的 Episode 与 Outcome 归纳稳定模式</td><td>回到 Curate 的新 Candidate</td><td>显式偏好等直接 Candidate 不必经过此阶段；不按出现次数、点赞数或检索热度自动升级为事实</td></tr></tbody></table></div>
+<p>这条处理链描述数据如何流动；下面的状态机描述单条记录能否被服务。显式输入通过 Curate 后可以直接发布为 Active，不需要先做 Consolidation；Consolidation 产生的仍是 Candidate，必须重新进入同一 Curate 与发布门禁。某条记录可能被多次 Retrieve，但只有处于 <code>Active</code> 且通过当前策略时才能 Inject。</p>
 <div></div>
 <p>只有 <code>Active</code> 且通过当前读取策略的记录可以进入 Context。<code>Conflicted</code> 应触发澄清或确定性裁决；<code>Superseded</code>、<code>Expired</code> 与 <code>Tombstoned</code> 必须立即退出服务路径，即使物理清理尚未完成。Working Memory 通常跟随 Run State 生命周期，不需要进入这套长期记录状态机。</p>
 <h2 class="rp-toc-include" id="5-模型只能提出-memory-candidate"><a href="#5-模型只能提出-memory-candidate" class="rp-header-anchor rp-link" aria-hidden="true">#</a>5. 模型只能提出 Memory Candidate</h2>
 <p>模型在对话中推断“用户似乎偏好简洁回复”，这还不是可以跨 Thread 保存的事实。合理流程是：</p>
 <div></div>
+<p>Capture 应进一步分为两种模式：</p>
+<ul>
+<li><strong>Deterministic Capture（确定性捕获）</strong>：应用按固定规则复制用户明确提交的表单字段、消息引用、Receipt、资源版本和删除请求。它保存精确 Source Ref、内容摘要与捕获规则版本，不要求模型解释含义。权限、同意和 Scope 校验仍然不可省略。</li>
+<li><strong>Semantic Capture（语义捕获）</strong>：模型或分类器从自由文本中抽取偏好、主题或经验。它只能生成 <code>inferred</code> Candidate，并记录 Extractor Version、原始证据范围和不确定性；发布门槛高于确定性捕获。</li>
+</ul>
+<p>确定性不等于正确，语义化也不等于不可信。前者避免生成式改写造成事实漂移，后者用于发现固定字段无法覆盖的候选。两者都必须经过 Curate；差别在于证据形态和默认风险等级。</p>
+<p>Capture Window 在消息即将被删除、Conversation Rewind 或 Context Compaction 前必须关闭并持久化：先把仍需保留的 Event、用户显式选择、Receipt Ref 和删除意图写入权威存储并确认 Flush，再允许裁剪 Context。模型生成但尚未验证的摘要、已被判定错误的输出和被用户撤回的内容不得借此进入长期 Memory。</p>
 <p>候选记录写入前至少检查：</p>
 <ul>
 <li>是否对未来任务有稳定价值；</li>
@@ -170,12 +236,21 @@
 <span class="line"><span style="color:var(--shiki-foreground)">  value</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> unknown</span><span style="color:var(--shiki-foreground)">;</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  sourceRefs</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  assertion</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;explicit&quot;</span><span style="color:var(--shiki-token-keyword)"> |</span><span style="color:var(--shiki-token-string-expression)"> &quot;inferred&quot;</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  captureMode</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;deterministic&quot;</span><span style="color:var(--shiki-token-keyword)"> |</span><span style="color:var(--shiki-token-string-expression)"> &quot;semantic&quot;</span><span style="color:var(--shiki-foreground)">;</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  confidence</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  sensitivity</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;normal&quot;</span><span style="color:var(--shiki-token-keyword)"> |</span><span style="color:var(--shiki-token-string-expression)"> &quot;sensitive&quot;</span><span style="color:var(--shiki-foreground)">;</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  consentRef</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  purposeTags</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  validFrom</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  validUntil</span><span style="color:var(--shiki-token-keyword)">?:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  retention</span><span style="color:var(--shiki-token-keyword)">:</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">    |</span><span style="color:var(--shiki-foreground)"> { class</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;evergreen&quot;</span><span style="color:var(--shiki-foreground)">; reviewAfter</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)"> }</span></span>
+<span class="line"><span style="color:var(--shiki-token-keyword)">    |</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">        class</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-string-expression)"> &quot;decaying&quot;</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">        reviewAfter</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">        decayStartsAt</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">        decayPolicyVersion</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">      };</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  status</span><span style="color:var(--shiki-token-keyword)">:</span></span>
 <span class="line"><span style="color:var(--shiki-token-keyword)">    |</span><span style="color:var(--shiki-token-string-expression)"> &quot;candidate&quot;</span></span>
 <span class="line"><span style="color:var(--shiki-token-keyword)">    |</span><span style="color:var(--shiki-token-string-expression)"> &quot;active&quot;</span></span>
@@ -198,6 +273,8 @@
 <span class="line"><span style="color:var(--shiki-foreground)">  sourceRefs</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">};</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
 <p><code>confidence</code> 只适合表达推断的不确定性，不能覆盖权限和来源。高置信度的越权 Memory 仍然不可读；用户明确陈述的内容即使置信度较低，也不应被系统自动“纠正”。</p>
+<p>Evergreen Memory（常青记忆）表示在明确更正前长期有用，例如用户确认的无障碍需求或项目语言约定；它仍需 <code>reviewAfter</code>、来源可达性和删除能力，并不等于永久有效。Decaying Memory（衰减记忆）适合时效较强的 Episode、临时工作习惯和短期偏好，到期后退出服务路径或重新验证。</p>
+<p>衰减只能降低检索优先级或触发过期，不能改变事实本身。重复出现、被更多用户采用或更常被检索，也不能把一条推断自动晋升为 Evergreen；否则会形成 Popularity Bias（流行度偏差），让多数行为覆盖个人意图，让系统自己的历史输出循环强化。</p>
 <p>Memory Writer 还需要明确处理重复与并发：</p>
 <ul>
 <li>同一个 <code>idempotencyKey</code> 重试时返回同一写入结果，不重复创建版本。</li>
@@ -216,8 +293,35 @@
 <span class="line"><span>token budget</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
 <p>例如，用户的旅行偏好不应出现在代码审查任务中；一个项目的内部约定不能进入另一个客户项目；标记为冲突的偏好应触发澄清，而不是随机选择一个版本。</p>
 <p>读取方式也应服从记录类型。明确的项目偏好适合按 <code>memoryKey</code> 精确读取；Episodic Memory 可以在合法分区中做时间、标签或相似度检索；Procedural 内容优先由版本化 Skill / Workflow Registry 选择。三者不能只用一个全局 Vector Search 和相同 Top-K 策略处理。</p>
+<h3 class="rp-toc-include" id="71-hybrid-retrieval-先分区再并行召回"><a href="#71-hybrid-retrieval-先分区再并行召回" class="rp-header-anchor rp-link" aria-hidden="true">#</a>7.1 Hybrid Retrieval 先分区，再并行召回</h3>
+<p>Hybrid Retrieval（混合检索）不是把所有记录交给多个搜索器后简单取最高分。合理顺序是：</p>
+<ol>
+<li>用可信的 Tenant、Actor、Project、Purpose、Sensitivity 与 Lifecycle State 形成硬过滤分区；</li>
+<li>对明确 <code>memoryKey</code>、资源 ID 和配置项执行 Exact Lookup；</li>
+<li>在同一合法分区内并行执行结构化过滤、Lexical Search（词法检索）和 Vector Search（向量检索）；</li>
+<li>对 Episode 追加时间窗口、来源独立性与衰减规则，对程序性内容追加版本兼容检查；</li>
+<li>合并去重后重新校验 Source Ref、冲突、TTL、Tombstone 与当前授权；</li>
+<li>由 Context Builder 在 Token Budget 内选择，而不是让召回器直接写入 Prompt。</li>
+</ol>
+<p>不同检索器的分数不可直接当作置信度。融合规则应版本化并限制单一来源占比；同一错误回答的多个副本只算一个来源。全局点击量、使用频率和“多数用户都这样做”不能提升个人 Memory 的权威性。</p>
+<h3 class="rp-toc-include" id="72-inject-需要显式-context-manifest"><a href="#72-inject-需要显式-context-manifest" class="rp-header-anchor rp-link" aria-hidden="true">#</a>7.2 Inject 需要显式 Context Manifest</h3>
+<p>Inject 阶段应生成可审计的 Context Manifest，至少记录：</p>
+<div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> MemoryInjection</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  memoryId</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  memoryVersion</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  sourceRefs</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  retrievalChannels</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-function)"> Array</span><span style="color:var(--shiki-foreground)">&lt;</span><span style="color:var(--shiki-token-string-expression)">&quot;exact&quot;</span><span style="color:var(--shiki-token-keyword)"> |</span><span style="color:var(--shiki-token-string-expression)"> &quot;structured&quot;</span><span style="color:var(--shiki-token-keyword)"> |</span><span style="color:var(--shiki-token-string-expression)"> &quot;lexical&quot;</span><span style="color:var(--shiki-token-keyword)"> |</span><span style="color:var(--shiki-token-string-expression)"> &quot;vector&quot;</span><span style="color:var(--shiki-foreground)">&gt;;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  selectedBecause</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  excludedConflicts</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  tokenCost</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">};</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
+<p>Context Builder 应把权威事实、当前 Runtime State、Policy、用户本轮指令与 Memory 分成不同区块，并规定优先级。Memory 发生冲突时，系统应展示冲突、请求确认或回到无 Memory 默认值；不能选择相似度最高的一条静默覆盖。</p>
+<h3 class="rp-toc-include" id="73-检索故障按能力降级不按权限降级"><a href="#73-检索故障按能力降级不按权限降级" class="rp-header-anchor rp-link" aria-hidden="true">#</a>7.3 检索故障按能力降级，不按权限降级</h3>
 <p>Memory Store Outage（记忆存储不可用）时，应按任务风险显式降级：</p>
 <ul>
+<li>Vector Search 不可用时，可退回同一合法分区内的 Exact Lookup、结构化过滤和词法检索，并标记 <code>semantic_retrieval_unavailable</code>。</li>
+<li>词法索引也不可用时，只使用仍能验证版本与 Tombstone 的精确记录；不能扩大 Top-K、放宽 Namespace 或扫描未授权分区补量。</li>
+<li>Source Ref、删除索引或授权服务不可用时，停止 Inject，而不是相信本地副本。</li>
 <li>个性化偏好不可用时，回到经过评测的 No-memory Baseline，或向用户澄清，不得根据当前语气编造长期偏好。</li>
 <li>可访问性或沟通渠道等必要配置无法确认时，使用安全默认值并说明限制。</li>
 <li>不得绕过 Tombstone、TTL 或 Namespace 校验，退回未经治理的本地 Cache。</li>
@@ -286,12 +390,25 @@
 <li>Evidence Ref 与 Artifact Ref；</li>
 <li>预算、版本和恢复位置。</li>
 </ul>
+<p>Compaction 不能从仍在变化的内存缓冲区直接取一段聊天文本。执行前应建立稳定边界：</p>
+<ol>
+<li>暂停向待压缩区间追加新 Item，并取得单调递增的 Event Cursor；</li>
+<li>Flush 尚未落盘的 Message、Tool Result、Approval、Receipt Ref、Cancel Intent 与 Memory Candidate；</li>
+<li>提交包含 Runtime State Version、在途 Attempt、Effect Status、预算和 Cursor 的 Durable Checkpoint；</li>
+<li>等待事务、Outbox 或持久日志确认；失败时保留原 Context 并重试或暂停，不能先删除后补写；</li>
+<li>仅对 Checkpoint 已覆盖的稳定事件区间生成 <code>CompactionArtifact</code>；</li>
+<li>原始数据达到保留条件前，摘要只能替代模型输入中的展开文本，不能替代 Event Log、Checkpoint 或 Receipt。</li>
+</ol>
+<p>这里也要区分两类捕获。目标、资源 ID、状态枚举、版本、金额、Deadline、Approval Ref 与 Receipt Ref 应由确定性代码复制；模型只负责语义摘要、未决问题和解释性叙述。若二者冲突，以结构化字段为准并把摘要标记为无效，不能让“更通顺”的文本覆盖持久事实。</p>
 <p>一个 Compaction Artifact 应记录来源：</p>
 <div class="rp-codeblock language-ts"><div class="rp-codeblock__content"><div class="rp-codeblock__content__scroll-container rp-scrollbar rp-scrollbar--always"><pre class="shiki css-variables" style="background-color:var(--shiki-background);color:var(--shiki-foreground)" tabindex="0" data-lang="ts"><code><span class="line"><span style="color:var(--shiki-token-keyword)">type</span><span style="color:var(--shiki-token-function)"> CompactionArtifact</span><span style="color:var(--shiki-token-keyword)"> =</span><span style="color:var(--shiki-foreground)"> {</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  id</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  compactorVersion</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  checkpointRef</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  checkpointStateVersion</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">;</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  sourceEventRange</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-foreground)"> { from</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)">; to</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> number</span><span style="color:var(--shiki-foreground)"> };</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  sourceDigest</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
+<span class="line"><span style="color:var(--shiki-foreground)">  deterministicRefs</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  summary</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  preservedRefs</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">[];</span></span>
 <span class="line"><span style="color:var(--shiki-foreground)">  createdAt</span><span style="color:var(--shiki-token-keyword)">:</span><span style="color:var(--shiki-token-constant)"> string</span><span style="color:var(--shiki-foreground)">;</span></span>
@@ -307,6 +424,8 @@
 <span class="line"><span>analytics copy</span></span>
 <span class="line"><span>backup and third-party processor</span></span></code></pre></div><div class="rp-code-button-group"><button class="rp-code-button-group__button rp-code-wrap-button" title="切换代码换行" aria-label="切换代码换行"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrapped"><path fill="currentColor" d="M21 5H3v2h18zM3 19h7v-2H3zm0-6h15c1 0 2 .43 2 2s-1 2-2 2h-2v-2l-4 3 4 3v-2h2c2.95 0 4-1.27 4-4 0-2.72-1-4-4-4H3z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-button-group__icon--wrap"><path fill="currentColor" d="M16 7H3V5h13zM3 19h13v-2H3zm19-7-4-3v2H3v2h15v2z"></path></svg></button><button class="rp-code-button-group__button rp-code-copy-button" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--copy"><path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"></path><path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" class="rp-code-button-group__icon rp-code-copy-button__icon rp-code-copy-button__icon--success"><path fill="currentColor" d="m9.55 18-5.7-5.7 1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg></button></div></div></div>
 <p>生产系统应先通过 Tombstone 阻断读取，再异步清理，并通过删除验证（Deletion Verification）确认所有在线路径都不再返回相关内容。更正时应创建新版本，把旧版本标记为已取代（Superseded），并使依赖旧 Memory 的派生物失效。</p>
+<p>Forget 还必须沿依赖图传播：Memory 被 Tombstone 后，使用它生成的 Consolidation Candidate、Embedding、搜索片段、Context Snapshot 与离线样本都要失效或重新计算。仅删除主表记录而保留向量、摘要或缓存，等于仍然可以“记住”。</p>
+<p>物理备份可能无法立即逐项擦除，此时需要记录不可服务标记、备份到期时间和恢复后重放 Tombstone 的协议。删除完成的定义应是所有在线读取与恢复路径都无法重新注入该内容，而不是某个数据库返回了成功。</p>
 <p>Event Log 和 Audit Log 可能受不同保留义务约束。此时需要从可供模型使用的读取路径中移除敏感内容，同时按政策保留最小、受限的审计证据。</p>
 <h2 class="rp-toc-include" id="11-memory-必须独立评测"><a href="#11-memory-必须独立评测" class="rp-header-anchor rp-link" aria-hidden="true">#</a>11. Memory 必须独立评测</h2>
 
@@ -358,7 +477,15 @@
 
 
 
-<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>指标</th><th>要回答的问题</th></tr></thead><tbody><tr><td>Write precision</td><td>保存的内容有多少真正值得跨 Thread 保留？</td></tr><tr><td>Write recall</td><td>明确应该保留的低风险偏好是否被正确发布？</td></tr><tr><td>Retrieval precision / recall</td><td>相关合法 Memory 是否命中，无关内容是否污染 Context？</td></tr><tr><td>Source attribution</td><td>读取结果能否回到真实来源，而不是引用另一段派生回答？</td></tr><tr><td>Consolidation precision</td><td>聚合出的稳定模式有多少得到独立来源或用户确认支持？</td></tr><tr><td>Stale/conflict handling</td><td>过期、冲突、低置信记录是否被降级或拒绝？</td></tr><tr><td>Scope selection / leakage</td><td>合法 Scope 是否命中，是否发生跨用户、Tenant 或 Project 的泄漏？</td></tr><tr><td>Downstream utility</td><td>加入 Memory 后，真实任务是否优于无 Memory baseline？</td></tr><tr><td>Deletion effectiveness</td><td>删除后所有读取路径是否都不再返回？</td></tr><tr><td>Availability degradation</td><td>Store 不可用时是否安全回到 Baseline，而不是编造或读取过期副本？</td></tr></tbody></table></div>
+
+
+
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>指标</th><th>要回答的问题</th></tr></thead><tbody><tr><td>Write precision</td><td>保存的内容有多少真正值得跨 Thread 保留？</td></tr><tr><td>Write recall</td><td>明确应该保留的低风险偏好是否被正确发布？</td></tr><tr><td>Retrieval precision / recall</td><td>相关合法 Memory 是否命中，无关内容是否污染 Context？</td></tr><tr><td>Source attribution</td><td>读取结果能否回到真实来源，而不是引用另一段派生回答？</td></tr><tr><td>Consolidation precision</td><td>聚合出的稳定模式有多少得到独立来源或用户确认支持？</td></tr><tr><td>Stale/conflict handling</td><td>过期、冲突、低置信记录是否被降级或拒绝？</td></tr><tr><td>Scope selection / leakage</td><td>合法 Scope 是否命中，是否发生跨用户、Tenant 或 Project 的泄漏？</td></tr><tr><td>Injection precision</td><td>被召回的记录中，有多少真正应进入当前 Context，冲突项是否被排除？</td></tr><tr><td>Downstream utility</td><td>加入 Memory 后，真实任务是否优于无 Memory baseline？</td></tr><tr><td>Deletion effectiveness</td><td>删除后所有读取路径是否都不再返回？</td></tr><tr><td>Forget propagation</td><td>Tombstone 是否使 Embedding、Cache、Summary 与 Consolidation 派生物同步失效？</td></tr><tr><td>Availability degradation</td><td>Store 不可用时是否安全回到 Baseline，而不是编造或读取过期副本？</td></tr></tbody></table></div>
 <p>写入数量、向量库规模和“记住了多少用户信息”都不是质量指标。错误 Memory 会让一次模型失误跨 Thread 重复出现。</p>
 <h3 class="rp-toc-include" id="111-用顺序-fixture-验证跨-thread-行为"><a href="#111-用顺序-fixture-验证跨-thread-行为" class="rp-header-anchor rp-link" aria-hidden="true">#</a>11.1 用顺序 Fixture 验证跨 Thread 行为</h3>
 <p>单条写入与单条读取测试不足以证明跨 Thread 语义。至少保留一条按时间推进的 Fixture：</p>
@@ -458,7 +585,12 @@
 
 
 
-<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>Failure Mode</th><th>典型表现</th><th>必须验证的不变量</th></tr></thead><tbody><tr><td>Source Laundering（来源洗白）</td><td>Memory 影响模型回答，回答又被当作新的独立来源写回</td><td>保留完整 Source Chain；没有新外部证据或明确确认时拒绝循环升级</td></tr><tr><td>False Consolidation</td><td>少量偶发 Episode 被归纳为全局偏好</td><td>Consolidation 只生成 Candidate，Scope、独立证据与确认门槛生效</td></tr><tr><td>Namespace Collision（命名空间碰撞）</td><td>同名用户、项目或外部账号被映射到错误 Namespace</td><td>只使用可信稳定 ID 与 Tenant Predicate，显示名称不参与授权或主键</td></tr><tr><td>Duplicate / Concurrent Write（重复或并发写入）</td><td>Retry 或并发页面生成重复、互相覆盖的版本</td><td>Idempotency Key 去重，CAS 冲突可见，Last-write-wins 被拒绝</td></tr><tr><td>Retrieval Flooding（检索洪泛）</td><td>大量低价值 Memory 占满 Context</td><td>按 Scope、Kind、Relevance 与 Budget 过滤，并保留排除原因</td></tr><tr><td>Store Outage（存储不可用）</td><td>系统读取过期 Cache，或根据当前文本虚构旧偏好</td><td>进入显式降级路径，不绕过 Tombstone/TTL，不把默认值写回</td></tr></tbody></table></div>
+
+
+
+
+
+<div class="rp-table-scroll-container rp-scrollbar"><table><thead><tr><th>Failure Mode</th><th>典型表现</th><th>必须验证的不变量</th></tr></thead><tbody><tr><td>Source Laundering（来源洗白）</td><td>Memory 影响模型回答，回答又被当作新的独立来源写回</td><td>保留完整 Source Chain；没有新外部证据或明确确认时拒绝循环升级</td></tr><tr><td>False Consolidation</td><td>少量偶发 Episode 被归纳为全局偏好</td><td>Consolidation 只生成 Candidate，Scope、独立证据与确认门槛生效</td></tr><tr><td>Namespace Collision（命名空间碰撞）</td><td>同名用户、项目或外部账号被映射到错误 Namespace</td><td>只使用可信稳定 ID 与 Tenant Predicate，显示名称不参与授权或主键</td></tr><tr><td>Duplicate / Concurrent Write（重复或并发写入）</td><td>Retry 或并发页面生成重复、互相覆盖的版本</td><td>Idempotency Key 去重，CAS 冲突可见，Last-write-wins 被拒绝</td></tr><tr><td>Retrieval Flooding（检索洪泛）</td><td>大量低价值 Memory 占满 Context</td><td>按 Scope、Kind、Relevance 与 Budget 过滤，并保留排除原因</td></tr><tr><td>Popularity Bias（流行度偏差）</td><td>重复、点击量或多数行为把推断升级为稳定事实</td><td>来源先去重；频率只触发复核，不改变 Assertion、Scope、发布门槛或跨主体排序</td></tr><tr><td>Store Outage（存储不可用）</td><td>系统读取过期 Cache，或根据当前文本虚构旧偏好</td><td>进入显式降级路径，不绕过 Tombstone/TTL，不把默认值写回</td></tr></tbody></table></div>
 <h2 class="rp-toc-include" id="12-案例一句偏好如何进入系统"><a href="#12-案例一句偏好如何进入系统" class="rp-header-anchor rp-link" aria-hidden="true">#</a>12. 案例：一句偏好如何进入系统</h2>
 <p>用户明确说：“以后这个项目的发布报告都使用英文。”</p>
 <p>合理记录为：</p>
@@ -492,9 +624,12 @@
 </ul>
 <p>退款资格、金额、订单状态和政策结论始终来自权威系统，不能由 Memory 覆盖。</p>
 <p>随后执行第 11.1 节的跨 Thread 顺序 Fixture，并追加四个故障变体：同一 Candidate 重放、两个并发更正、旧 Memory 影响回答后被再次提交、Memory Store 在读取阶段不可用。为 Episodic Memory 保留 Event / Outcome Ref，但不复制完整 Event Log；模拟 Consolidation 时只生成待验证 Candidate，不自动扩大到 User 或 Tenant Scope。</p>
+<p>为每条 Candidate 标记 <code>captureMode</code> 与 <code>retention</code>：明确表单选择走 Deterministic Capture，模型从自由文本抽取的倾向走 Semantic Capture；项目语言约定可设为需要定期复核的 Evergreen，单次工单经验使用 Decaying。到达 <code>decayStartsAt</code> 只能降低 Episode 的检索优先级，不能自动改写内容或把它合并进长期偏好。</p>
+<p>读取阶段分别执行 Exact、Structured、Lexical 与 Vector 通道，保存 Context Manifest。模拟 Vector Search 不可用时，系统只能在原合法分区内退回其他通道；再模拟 Source Ref 服务不可用，此时停止 Inject。最后在 Context 接近预算前先 Flush Event 与 Candidate、提交 Checkpoint，再生成引用该 Checkpoint 的 <code>CompactionArtifact</code>；故意让 Flush 失败，验证旧 Context 未被删除。</p>
 <h3 class="rp-toc-include" id="验收证据"><a href="#验收证据" class="rp-header-anchor rp-link" aria-hidden="true">#</a>验收证据</h3>
 <p>为每条记录给出写入决策、读取决策、Namespace、TTL、Lifecycle State、Grader 和删除路径。比较启用与禁用 Memory 时，客户回复的语言和渠道是否更匹配，同时确认退款结果不变；来自其他 Tenant、由模型推断、已经过期、没有来源或已经删除的记录均不得进入 Context。</p>
 <p>顺序 Fixture 还必须证明：新 Authentication / Provider Session 不会丢失合法的 Project Memory；切换 Project 后不会越界召回；并发更正不会静默覆盖；撤销同意后清洁 Thread 无残留；Store Outage 时回到 No-memory Baseline。Source Laundering 和 False Consolidation 变体不能发布新的 Active Version。</p>
+<p>Hybrid Retrieval 的高频结果不得因此升级 Assertion、扩大 Scope 或自动成为 Evergreen。Context Manifest 应解释每条 Inject 和排除决策；Tombstone 后，主记录、Embedding、Cache、Compaction Artifact 与 Consolidation 派生物均退出服务路径。</p>
 <h2 class="rp-toc-include" id="常见误区"><a href="#常见误区" class="rp-header-anchor rp-link" aria-hidden="true">#</a>常见误区</h2>
 <ul>
 <li>保存全部聊天记录等于建立长期 Memory。</li>
@@ -502,21 +637,23 @@
 <li>模型最适合自行决定保存、冲突和删除。</li>
 <li>Provider Conversation Session、Product Thread 与 Authentication Session 是同一种状态容器。</li>
 <li>多次重复出现的 Episode 可以自动巩固成全局事实。</li>
+<li>高频、热门或被多次召回的 Memory 更接近事实。</li>
 <li>Last-write-wins 足以处理并发 Memory 更新。</li>
 <li>从 Memory 生成的回答可以作为新的独立来源写回。</li>
 <li>Compaction summary 可以覆盖原始 receipt 和 Runtime State。</li>
+<li>可以先删除旧 Context，再异步补写 Checkpoint 和 Memory Candidate。</li>
 <li>Memory Store 不可用时可以退回任意本地 Cache。</li>
 <li>用户偏好一旦保存就永久有效。</li>
 </ul>
 <h2 class="rp-toc-include" id="本章小结"><a href="#本章小结" class="rp-header-anchor rp-link" aria-hidden="true">#</a>本章小结</h2>
-<p>Event Log、Runtime State、Context、Knowledge 与 Long-term Memory 具有不同的权威性和生命周期。Provider Conversation Session、Product Thread 与 Authentication Session 也不能互相替代。Memory 必须具备 Scope、Candidate Validation、幂等写入、CAS 更新、Consolidation 门禁、读取授权、冲突处理和删除验证；Context Compaction 只能生成可追溯的有损派生物。</p>
-<p>固定检索仍无法覆盖多跳补证、关系遍历或全局语料归纳时，可以先进入进阶专题 <a href="/masterpiece-static-docs/06-上下文-知识与记忆/05-复杂知识检索-Agentic-RAG与GraphRAG" class="rp-link">Agentic RAG 与 GraphRAG</a>做对照实验；其他场景继续主线，从<a href="/masterpiece-static-docs/07-工具-协议与行动控制/01-工具契约与错误模型" class="rp-link">工具契约与错误模型</a>进入行动面。</p>
+<p>Event Log、Runtime State、Context、Knowledge 与 Long-term Memory 具有不同的权威性和生命周期。Provider Conversation Session、Product Thread 与 Authentication Session 也不能互相替代。Memory 主路径必须覆盖 Capture、Curate、Publish / Activate、Retrieve、Inject 与 Forget；只有需要从 Episode 与 Outcome 归纳模式时，才运行 Consolidation，并把产物作为新 Candidate 重新送入 Curate。整套系统还要具备 Scope、Candidate Validation、幂等写入、CAS 更新、读取授权、冲突处理和删除验证。Hybrid Retrieval 只能在已授权分区内提高召回，不能提高记录权威性；Evergreen 与 Decaying 是 Retention / Lifecycle Class，决定复核和失效节奏，不允许按流行度自动晋升。Context Compaction 必须在 Flush 与 Durable Checkpoint 之后运行，并且只能生成可追溯的有损派生物。</p>
+<p>固定检索仍无法覆盖多跳补证、关系遍历或全局语料归纳时，可以先进入进阶专题 <a href="/masterpiece-static-docs/06-上下文-知识与记忆/05-复杂知识检索-Agentic-RAG与GraphRAG" class="rp-link">Agentic RAG 与 GraphRAG</a>做对照实验；其他场景继续主线，从 <a href="/masterpiece-static-docs/07-工具-协议与行动控制/01-工具契约与错误模型" class="rp-link">工具契约与错误模型</a>进入行动面。</p>
 <h2 class="rp-toc-include" id="延伸阅读"><a href="#延伸阅读" class="rp-header-anchor rp-link" aria-hidden="true">#</a>延伸阅读</h2>
 <ul>
 <li><a href="https://arxiv.org/abs/2309.02427" target="_blank" rel="noopener noreferrer" class="rp-link">CoALA: Cognitive Architectures for Language Agents</a></li>
 <li><a href="https://arxiv.org/abs/2310.08560" target="_blank" rel="noopener noreferrer" class="rp-link">MemGPT</a></li>
 <li><a href="https://developers.openai.com/api/docs/guides/conversation-state" target="_blank" rel="noopener noreferrer" class="rp-link">OpenAI: Conversation state</a></li>
-</ul><!--/$--></div><footer class="rp-doc-footer"><div class="rp-doc-footer__edit"><div class="rp-last-updated"><p>最后更新于<!-- -->: <span>2026/7/19 04:20:17</span></p></div></div><div class="rp-doc-footer__divider"></div><div class="rp-prev-next-page"><a href="/masterpiece-static-docs/06-上下文-知识与记忆/03-检索-RAG与重排" class="rp-prev-next-page__item rp-prev-next-page__prev rp-link"><span class="rp-prev-next-page__item__desc">上一页</span><span class="rp-prev-next-page__item__title"><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon rp-prev-next-page__rotate_180"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg><span>03 · Retrieval、RAG 与 Reranking</span></span></a><a href="/masterpiece-static-docs/07-工具-协议与行动控制/01-工具契约与错误模型" class="rp-prev-next-page__item rp-prev-next-page__next rp-link"><span class="rp-prev-next-page__item__desc">下一页</span><span class="rp-prev-next-page__item__title"><span>01 · Tool Contract 与错误模型</span><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></span></a></div></footer></main></div><aside class="rp-doc-layout__outline rp-scrollbar"><div class="rp-outline"><div class="rp-outline__title">目录<svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg></div><nav class="rp-outline__toc rp-scrollbar"><a href="#本章目标" class="rp-toc-item rp-link" title="本章目标" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章目标</span></a><a href="#1-五类对象不能共用一个含糊的记忆概念" class="rp-toc-item rp-link" title="1. 五类对象不能共用一个含糊的“记忆”概念" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">1. 五类对象不能共用一个含糊的“记忆”概念</span></a><a href="#2-先确定-scope再谈记住多久" class="rp-toc-item rp-link" title="2. 先确定 Scope，再谈“记住多久”" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">2. 先确定 Scope，再谈“记住多久”</span></a><a href="#3-实用的-memory-分类" class="rp-toc-item rp-link" title="3. 实用的 Memory 分类" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">3. 实用的 Memory 分类</span></a><a href="#working-memory" class="rp-toc-item rp-link" title="Working Memory" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">Working Memory</span></a><a href="#semantic-memory" class="rp-toc-item rp-link" title="Semantic Memory" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">Semantic Memory</span></a><a href="#episodic-memory" class="rp-toc-item rp-link" title="Episodic Memory" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">Episodic Memory</span></a><a href="#procedural-memory" class="rp-toc-item rp-link" title="Procedural Memory" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">Procedural Memory</span></a><a href="#4-memory-有显式生命周期" class="rp-toc-item rp-link" title="4. Memory 有显式生命周期" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">4. Memory 有显式生命周期</span></a><a href="#5-模型只能提出-memory-candidate" class="rp-toc-item rp-link" title="5. 模型只能提出 Memory Candidate" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">5. 模型只能提出 Memory Candidate</span></a><a href="#6-memory-record-与更新协议需要结构化" class="rp-toc-item rp-link" title="6. Memory Record 与更新协议需要结构化" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">6. Memory Record 与更新协议需要结构化</span></a><a href="#7-读取-memory-时重新做权限与相关性判断" class="rp-toc-item rp-link" title="7. 读取 Memory 时重新做权限与相关性判断" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">7. 读取 Memory 时重新做权限与相关性判断</span></a><a href="#8-state-不应从自然语言摘要反向恢复" class="rp-toc-item rp-link" title="8. State 不应从自然语言摘要反向恢复" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">8. State 不应从自然语言摘要反向恢复</span></a><a href="#9-memory-consolidation-不等于-context-compaction" class="rp-toc-item rp-link" title="9. Memory Consolidation 不等于 Context Compaction" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">9. Memory Consolidation 不等于 Context Compaction</span></a><a href="#91-consolidation-只能生成新-candidate" class="rp-toc-item rp-link" title="9.1 Consolidation 只能生成新 Candidate" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">9.1 Consolidation 只能生成新 Candidate</span></a><a href="#92-compaction-是有损派生" class="rp-toc-item rp-link" title="9.2 Compaction 是有损派生" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">9.2 Compaction 是有损派生</span></a><a href="#10-删除与更正不是单表操作" class="rp-toc-item rp-link" title="10. 删除与更正不是单表操作" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">10. 删除与更正不是单表操作</span></a><a href="#11-memory-必须独立评测" class="rp-toc-item rp-link" title="11. Memory 必须独立评测" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">11. Memory 必须独立评测</span></a><a href="#111-用顺序-fixture-验证跨-thread-行为" class="rp-toc-item rp-link" title="11.1 用顺序 Fixture 验证跨 Thread 行为" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">11.1 用顺序 Fixture 验证跨 Thread 行为</span></a><a href="#112-把失败模式变成可定位的测试" class="rp-toc-item rp-link" title="11.2 把失败模式变成可定位的测试" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">11.2 把失败模式变成可定位的测试</span></a><a href="#12-案例一句偏好如何进入系统" class="rp-toc-item rp-link" title="12. 案例：一句偏好如何进入系统" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">12. 案例：一句偏好如何进入系统</span></a><a href="#实践治理-resolution-desk-的沟通偏好-memory" class="rp-toc-item rp-link" title="实践：治理 Resolution Desk 的沟通偏好 Memory" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">实践：治理 Resolution Desk 的沟通偏好 Memory</span></a><a href="#进入本章时已有能力" class="rp-toc-item rp-link" title="进入本章时已有能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">进入本章时已有能力</span></a><a href="#本章增加的能力" class="rp-toc-item rp-link" title="本章增加的能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">本章增加的能力</span></a><a href="#验收证据" class="rp-toc-item rp-link" title="验收证据" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">验收证据</span></a><a href="#常见误区" class="rp-toc-item rp-link" title="常见误区" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">常见误区</span></a><a href="#本章小结" class="rp-toc-item rp-link" title="本章小结" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章小结</span></a><a href="#延伸阅读" class="rp-toc-item rp-link" title="延伸阅读" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">延伸阅读</span></a></nav><div class="rp-outline__divider"></div><div class="rp-outline__bottom"></div></div></aside></div></div>
+</ul><!--/$--></div><footer class="rp-doc-footer"><div class="rp-doc-footer__edit"><div class="rp-last-updated"><p>最后更新于<!-- -->: <span>2026/7/19 05:16:12</span></p></div></div><div class="rp-doc-footer__divider"></div><div class="rp-prev-next-page"><a href="/masterpiece-static-docs/06-上下文-知识与记忆/03-检索-RAG与重排" class="rp-prev-next-page__item rp-prev-next-page__prev rp-link"><span class="rp-prev-next-page__item__desc">上一页</span><span class="rp-prev-next-page__item__title"><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon rp-prev-next-page__rotate_180"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg><span>03 · Retrieval、RAG 与 Reranking</span></span></a><a href="/masterpiece-static-docs/07-工具-协议与行动控制/01-工具契约与错误模型" class="rp-prev-next-page__item rp-prev-next-page__next rp-link"><span class="rp-prev-next-page__item__desc">下一页</span><span class="rp-prev-next-page__item__title"><span>01 · Tool Contract 与错误模型</span><svg width="1em" height="1em" viewBox="0 0 32 32" class="rp-prev-next-page__icon"><path fill="currentColor" d="M22 16 12 26l-1.4-1.4 8.6-8.6-8.6-8.6L12 6z"></path></svg></span></a></div></footer></main></div><aside class="rp-doc-layout__outline rp-scrollbar"><div class="rp-outline"><div class="rp-outline__title">目录<svg width="14" height="14" class="rp-progress-circle"><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-divider-light)" stroke-width="2"></circle><circle cx="7" cy="7" r="6" stroke-linecap="round" fill="none" stroke="var(--rp-c-brand)" stroke-width="2" stroke-dasharray="37.69911184307752" stroke-dashoffset="37.69911184307752" transform="rotate(-90 7 7)" style="transition:stroke-dashoffset 0.3s"></circle></svg></div><nav class="rp-outline__toc rp-scrollbar"><a href="#本章目标" class="rp-toc-item rp-link" title="本章目标" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章目标</span></a><a href="#1-五类对象不能共用一个含糊的记忆概念" class="rp-toc-item rp-link" title="1. 五类对象不能共用一个含糊的“记忆”概念" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">1. 五类对象不能共用一个含糊的“记忆”概念</span></a><a href="#2-先确定-scope再谈记住多久" class="rp-toc-item rp-link" title="2. 先确定 Scope，再谈“记住多久”" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">2. 先确定 Scope，再谈“记住多久”</span></a><a href="#3-实用的-memory-分类" class="rp-toc-item rp-link" title="3. 实用的 Memory 分类" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">3. 实用的 Memory 分类</span></a><a href="#working-memory" class="rp-toc-item rp-link" title="Working Memory" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">Working Memory</span></a><a href="#semantic-memory" class="rp-toc-item rp-link" title="Semantic Memory" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">Semantic Memory</span></a><a href="#episodic-memory" class="rp-toc-item rp-link" title="Episodic Memory" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">Episodic Memory</span></a><a href="#procedural-memory" class="rp-toc-item rp-link" title="Procedural Memory" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">Procedural Memory</span></a><a href="#4-memory-有显式生命周期" class="rp-toc-item rp-link" title="4. Memory 有显式生命周期" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">4. Memory 有显式生命周期</span></a><a href="#5-模型只能提出-memory-candidate" class="rp-toc-item rp-link" title="5. 模型只能提出 Memory Candidate" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">5. 模型只能提出 Memory Candidate</span></a><a href="#6-memory-record-与更新协议需要结构化" class="rp-toc-item rp-link" title="6. Memory Record 与更新协议需要结构化" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">6. Memory Record 与更新协议需要结构化</span></a><a href="#7-读取-memory-时重新做权限与相关性判断" class="rp-toc-item rp-link" title="7. 读取 Memory 时重新做权限与相关性判断" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">7. 读取 Memory 时重新做权限与相关性判断</span></a><a href="#71-hybrid-retrieval-先分区再并行召回" class="rp-toc-item rp-link" title="7.1 Hybrid Retrieval 先分区，再并行召回" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">7.1 Hybrid Retrieval 先分区，再并行召回</span></a><a href="#72-inject-需要显式-context-manifest" class="rp-toc-item rp-link" title="7.2 Inject 需要显式 Context Manifest" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">7.2 Inject 需要显式 Context Manifest</span></a><a href="#73-检索故障按能力降级不按权限降级" class="rp-toc-item rp-link" title="7.3 检索故障按能力降级，不按权限降级" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">7.3 检索故障按能力降级，不按权限降级</span></a><a href="#8-state-不应从自然语言摘要反向恢复" class="rp-toc-item rp-link" title="8. State 不应从自然语言摘要反向恢复" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">8. State 不应从自然语言摘要反向恢复</span></a><a href="#9-memory-consolidation-不等于-context-compaction" class="rp-toc-item rp-link" title="9. Memory Consolidation 不等于 Context Compaction" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">9. Memory Consolidation 不等于 Context Compaction</span></a><a href="#91-consolidation-只能生成新-candidate" class="rp-toc-item rp-link" title="9.1 Consolidation 只能生成新 Candidate" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">9.1 Consolidation 只能生成新 Candidate</span></a><a href="#92-compaction-是有损派生" class="rp-toc-item rp-link" title="9.2 Compaction 是有损派生" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">9.2 Compaction 是有损派生</span></a><a href="#10-删除与更正不是单表操作" class="rp-toc-item rp-link" title="10. 删除与更正不是单表操作" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">10. 删除与更正不是单表操作</span></a><a href="#11-memory-必须独立评测" class="rp-toc-item rp-link" title="11. Memory 必须独立评测" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">11. Memory 必须独立评测</span></a><a href="#111-用顺序-fixture-验证跨-thread-行为" class="rp-toc-item rp-link" title="11.1 用顺序 Fixture 验证跨 Thread 行为" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">11.1 用顺序 Fixture 验证跨 Thread 行为</span></a><a href="#112-把失败模式变成可定位的测试" class="rp-toc-item rp-link" title="11.2 把失败模式变成可定位的测试" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">11.2 把失败模式变成可定位的测试</span></a><a href="#12-案例一句偏好如何进入系统" class="rp-toc-item rp-link" title="12. 案例：一句偏好如何进入系统" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">12. 案例：一句偏好如何进入系统</span></a><a href="#实践治理-resolution-desk-的沟通偏好-memory" class="rp-toc-item rp-link" title="实践：治理 Resolution Desk 的沟通偏好 Memory" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">实践：治理 Resolution Desk 的沟通偏好 Memory</span></a><a href="#进入本章时已有能力" class="rp-toc-item rp-link" title="进入本章时已有能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">进入本章时已有能力</span></a><a href="#本章增加的能力" class="rp-toc-item rp-link" title="本章增加的能力" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">本章增加的能力</span></a><a href="#验收证据" class="rp-toc-item rp-link" title="验收证据" style="padding-left:12px" data-depth="1"><span class="rp-toc-item__text rp-doc">验收证据</span></a><a href="#常见误区" class="rp-toc-item rp-link" title="常见误区" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">常见误区</span></a><a href="#本章小结" class="rp-toc-item rp-link" title="本章小结" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">本章小结</span></a><a href="#延伸阅读" class="rp-toc-item rp-link" title="延伸阅读" style="padding-left:0" data-depth="0"><span class="rp-toc-item__text rp-doc">延伸阅读</span></a></nav><div class="rp-outline__divider"></div><div class="rp-outline__bottom"></div></div></aside></div></div>
     <div id="__rspress_modal_container"></div>
   </body>
 </html>
